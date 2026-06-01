@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบันทึกเวลางาน SNAC</title>
+    <title>ระบบบันทึกเวลางาน - จิ</title>
     <style>
         :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --purple: #6f42c1; --info: #17a2b8; }
         body { font-family: 'Sarabun', sans-serif; padding: 20px; background: #f0f2f5; position: relative; }
@@ -90,7 +90,7 @@
     <div class="modal-box" id="modal-content-area"></div>
 </div>
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw7IqI-anLT9OPqA6zoqO8PQKliPIdS2lsre9f_LjGlznVv045m_CcvNQ288couyOI/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzZYGmqn1_gUkYiU8POgyvPtt0meyn8-DxTwtlM4rHwtPvRHoeHYv16NftFtOJ3XdJc/exec"; 
     const video = document.getElementById('video'), canvas = document.getElementById('canvas'), startBtn = document.getElementById('start-camera'), snapBtn = document.getElementById('snap'), cameraBox = document.getElementById('camera-box'), selectEl = document.getElementById('employee-select');
     const modal = document.getElementById('common-modal'), modalArea = document.getElementById('modal-content-area');
 
@@ -106,21 +106,22 @@
     };
 
 function checkButtonDisplay() {
-        let now = new Date();
-        let totalMinutes = (now.getHours() * 60) + now.getMinutes();
-        let switchTime = (11 * 60) + 30; // 💡 ตั้งเวลาเปิดปุ่มบ่ายที่ 11:30 น.
+    let now = new Date();
+    let totalMinutes = (now.getHours() * 60) + now.getMinutes();
+    let switchTime = (11 * 60) + 30; // 💡 ตั้งเวลาเปิดปุ่มบ่ายที่ 11:30 น.
 
-        // ค้นหาปุ่มเข้างานบ่ายจาก ID (แนะนำให้เติม id="btn-afternoon" ที่ตัวปุ่มใน HTML)
-        let afternoonBtn = document.getElementById('btn-afternoon'); 
+    // ค้นหาปุ่มเข้างานบ่ายจาก ID
+    let afternoonBtn = document.getElementById('btn-afternoon'); 
 
-        if (afternoonBtn) {
-            if (totalMinutes >= switchTime) {
-                afternoonBtn.style.style.setProperty('display', 'block', 'important'); // แสดงปุ่มบ่าย
-            } else {
-                afternoonBtn.style.style.setProperty('display', 'none', 'important');  // ซ่อนปุ่มบ่าย
-            }
+    if (afternoonBtn) {
+        // 🎯 แก้ไขจุดพิมพ์สไตล์ซ้ำซ้อน และใช้คำสั่งซ่อน-แสดงที่ถูกต้อง
+        if (totalMinutes >= switchTime) {
+            afternoonBtn.style.setProperty('display', 'block', 'important'); // แสดงปุ่มบ่าย (ลบ .style ตัวที่เกินออกแล้ว)
+        } else {
+            afternoonBtn.style.setProperty('display', 'none', 'important');  // ซ่อนปุ่มบ่าย (ลบ .style ตัวที่เกินออกแล้ว)
         }
     }
+}
 
     // สั่งให้ระบบคำนวณเวลาทันทีหลังจากโหลดรายชื่อพนักงานเสร็จ
     window.addEventListener('DOMContentLoaded', checkButtonDisplay);
