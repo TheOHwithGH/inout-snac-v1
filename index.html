@@ -90,7 +90,7 @@
     <div class="modal-box" id="modal-content-area"></div>
 </div>
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwkrrvgc6EoPBa-7doEWnUYaBvgVT6f_H_wPvBJ_lzGc7YMlMsZ0N2sqE-bk0bbENnC/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwrcdjHKACYaXwNVj1IzR7BT-CFhKyO8cCe1Bffw4AhFtJX5cdqHa5Z1R0sCAjpDvlp/exec"; 
     const video = document.getElementById('video'), canvas = document.getElementById('canvas'), startBtn = document.getElementById('start-camera'), snapBtn = document.getElementById('snap'), cameraBox = document.getElementById('camera-box'), selectEl = document.getElementById('employee-select');
     const modal = document.getElementById('common-modal'), modalArea = document.getElementById('modal-content-area');
 
@@ -175,58 +175,65 @@ function checkButtonDisplay() {
         document.getElementById('result').style.display = document.getElementById('btn-group').style.display = document.getElementById('special-group').style.display = 'flex';
     };
 
-    function openModal(html) { modalArea.innerHTML = html; modal.style.display = 'flex'; }
-    function closeModal() { modal.style.display = 'none'; }
-    function confirmAndSend(status) {
-        // 🔒 บล็อกปุ่มออกงานก่อนเวลา 13:00 น.
-        if (status === 'Out') {
-            let now = new Date();
-            if (now.getHours() < 13) {
-                return alert("🛑 ยังไม่ถึงเวลาเลิกงาน! ปุ่มออกงานจะเปิดให้ใช้งานหลังเวลา 13:00 น. เป็นต้นไปครับ");
-            }
+    // 🎯 1. อัปเดตฟังก์ชัน openModal ให้สั่งเช็คปุ่มบ่ายทันทีเมื่อหน้าต่างแจ้งเตือนเด้งขึ้นมา
+function openModal(html) { 
+    modalArea.innerHTML = html; 
+    modal.style.display = 'flex'; 
+    
+    // 🔥 สั่งให้ตรวจเช็คเวลาและซ่อน/แสดงปุ่มบ่ายทันทีที่หน้าต่างป๊อปอัปนี้เปิดขึ้นมา
+    if (typeof checkButtonDisplay === 'function') {
+        checkButtonDisplay(); 
+    }
+}
+
+function closeModal() { modal.style.display = 'none'; }
+
+function confirmAndSend(status) {
+    // 🔒 บล็อกปุ่มออกงานก่อนเวลา 13:00 น.
+    if (status === 'Out') {
+        let now = new Date();
+        if (now.getHours() < 13) {
+            return alert("🛑 ยังไม่ถึงเวลาเลิกงาน! ปุ่มออกงานจะเปิดให้ใช้งานหลังเวลา 13:00 น. เป็นต้นไปครับ");
         }
+    }
 
-        // 😭 เช็คสิทธิ์วันลาพักร้อนหมด
-        if (status === 'Vacation' || status === 'VacationHalf') {
-            let remain = Number(selectEl.options[selectEl.selectedIndex].getAttribute('data-vacation-remain'));
-            if (remain <= 0) {
-                let count = 5;
-                openModal(`
-                    <div class="cry-emoji">😭</div>
-                    <div class="cry-text">วันลาพักร้อนหมด</div>
-                    <div class="countdown-text" id="cd-timer">ระบบจะกลับสู่หน้าหลักอัตโนมัติใน 5 วินาที...</div>
-                `);
-                let timer = setInterval(() => { count--; document.getElementById('cd-timer').innerText = `ระบบจะกลับสู่หน้าหลักอัตโนมัติใน ${count} วินาที...`; if (count <= 0) { clearInterval(timer); location.reload(); } }, 1000);
-                return;
-            }
+    // 😭 เช็คสิทธิ์วันลาพักร้อนหมด
+    if (status === 'Vacation' || status === 'VacationHalf') {
+        let remain = Number(selectEl.options[selectEl.selectedIndex].getAttribute('data-vacation-remain'));
+        if (remain <= 0) {
+            let count = 5;
+            openModal(`
+                <div class="cry-emoji">😭</div>
+                <div class="cry-text">วันลาพักร้อนหมด</div>
+                <div class="countdown-text" id="cd-timer">ระบบจะกลับสู่หน้าหลักอัตโนมัติใน 5 วินาที...</div>
+            `);
+            let timer = setInterval(() => { count--; document.getElementById('cd-timer').innerText = `ระบบจะกลับสู่หน้าหลักอัตโนมัติใน ${count} วินาที...`; if (count <= 0) { clearInterval(timer); location.reload(); } }, 1000);
+            return;
         }
+    }
 
-        // ⏱️ ระบบคัดกรองเวลาสาย 08:30 น.
-        if (status === 'In') {
-            let limitHours = 8, limitMinutes = 30;
-            let now = new Date();
-            if ((now.getHours() > limitHours) || (now.getHours() === limitHours && now.getMinutes() > limitMinutes)) {
-                openModal(`
-                    <div style="font-size: 50px; text-align: center;">⏰</div>
-                    <h3 style="font-size:22px; font-weight:bold; text-align:center; color:var(--danger); margin-bottom:5px;">เข้างานสาย !!!</h3>
-                    <p style="text-align:center; font-size:14px; color:#555; margin-bottom:15px;">ขณะนี้เกินเวลากำหนดเข้างาน (08:30 น.) แล้ว</p>
-                    <div style="display:flex; flex-direction:column; gap:10px;">
 
-		       <button  type="button"class="btn btn-vacation-half" style="margin:0; padding:12px; background:#ffc107; color:#000; "onclick="closeModal(); confirmAndSend('VacationHalf');">
-  ⛱️ ลาพักร้อน 1/2 วัน (ครึ่งเช้า)</button>
-                       <button class="btn btn-leave" style="display: none; margin:0; padding:12px; background:#4a148c;" onclick="setLateStatus('Vacation')">🌴 ใช้ ลาพักร้อน 1 วัน (ลาเต็มวัน)</button>
-                       <button class="btn btn-absent" style="display: none; margin:0; padding:12px;" onclick="setLateStatus('Absent')">🚫 ใช้ ขาดงาน</button> 
+   // 1. ดึงรายชื่อพนักงาน + เวลเข้างาน สายจากช่อง M1
+  if (action === "getEmployeeList") {
+    let sheet = monthlySS.getSheetByName("DAY"); 
+    if (!sheet) return sendJson({ status: "error", message: "ไม่พบแท็บ DAY" });
 
-                        <button type="button" id="btn-afternoon" class="btn btn-in" style="margin:0; padding:12px; background:var(--success);" 
-        onclick="closeModal(); confirmAndSend('เข้างานบ่าย'); ">
-  ☀️ เข้างานบ่าย (ลาครึ่งเช้ามาแล้ว)</button>
-                    </div>
+    // 🎯 ดึงค่าเวลาสายจากเซลล์ M1 (สมมติในชีตพิมพ์คำว่า 08:30)
+    let lateLimitTime = sheet.getRange("M1").getValue().toString().trim(); 
+    if (lateLimitTime === "") { lateLimitTime = "08:30"; } // ถ้าในชีตว่าง ให้ใช้ 08:30 เป็นค่าเริ่มต้น
 
-                    <button class="btn-info-personal" style="width:100%; border:none; padding:10px; border-radius:8px; font-weight:bold; margin-top:15px; background:#eee;" onclick="location.reload()">❌ ยกเลิก&กลับหน้าหลัก ❌</button>
-                `);
-                return;
-            }
-        }
+    let data = sheet.getRange("C3:L30").getValues(), list = [];
+    data.forEach(r => { 
+      if (r[0]) { 
+        list.push({ 
+          name: r[0].toString().trim(), 
+          vacationRemain: Number(r[9]), 
+          lateLimit: lateLimitTime // 🎯 ส่งเวลาที่ดึงจาก M1 ไปให้หน้าเว็บใช้
+        }); 
+      } 
+    });
+    return sendJson(list);
+  }
 
         const labels = { 'In': 'เข้างาน', 'Out': 'ออกงาน', 'Vacation': 'พักร้อนเต็มวัน / ลาต่อบ่าย', 'VacationHalf': 'พักร้อน 1/2 วัน', 'Absent': 'ขาดงาน', 'Sick': 'ป่วย' };
         openModal(`<h3 style="font-size:20px;font-weight:bold;text-align:center;">🔔 ยืนยันบันทึก "${labels[status]}"</h3>
