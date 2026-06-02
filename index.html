@@ -11,20 +11,19 @@
         .container { max-width: 450px; margin: 45px auto auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         h2 { text-align: center; margin-bottom: 20px; color: #1a1a1a; font-size: 22px; font-weight: bold; }
         #camera-box { display: none; margin-bottom: 15px; text-align: center; }
-        video { width: 100%; border-radius: 8px; background: #000; }
-        canvas { display: none; }
+        video { width: 100%; border-radius: 8px; background: #000; }canvas { display: none; }
         .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; margin-bottom: 10px; transition: 0.2s; }
         .btn-camera { background: var(--primary); color: white; }
         .btn-snap { background: var(--warning); color: #000; }
-        .btn-group { display: none; gap: 10px; }
+        .btn-group { display: none; gap: 10px; width: 100%; }
         .btn-in { background: var(--success); color: white; flex: 1; }
+        .btn-afternoon { background: #fd7e14; color: white; flex: 1; display: none; } /* ☀️ เพิ่มสไตล์ปุ่มเข้างานบ่าย */
         .btn-out { background: var(--danger); color: white; flex: 1; }
         .special-group { display: none; flex-direction: column; margin-top: 10px; border-top: 2px dashed #eee; padding-top: 15px; }
         .btn-leave { background: var(--purple); color: white; }
         .btn-absent { background: #6c757d; color: white; }
         .btn-sick { background: var(--info); color: white; }
-        #result { display: none; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid var(--primary); }
-        select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 15px; font-size: 16px; }
+        #result { display: none; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid var(--primary); flex-direction: column; }select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 15px; font-size: 16px; }
         #loader { display: none; text-align: center; color: var(--primary); font-weight: bold; margin-top: 10px; }
         .btn-info-personal { background: #fff; color: #333; border: 2px solid #ccc; margin-top: 5px; }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
@@ -37,15 +36,12 @@
         .modal-btn-group { display: flex; gap: 10px; margin-top: 15px; }
         .cry-emoji { font-size: 80px; animation: bounce 1s infinite alternate; text-align: center; margin-bottom: 10px; }
         .cry-text { font-size: 22px; font-weight: bold; color: var(--danger); text-align: center; margin-bottom: 15px; }
-        .countdown-text { text-align: center; color: #666; font-size: 14px; }
-        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+        .countdown-text { text-align: center; color: #666; font-size: 14px; }@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
     </style>
 </head>
 <body>
 <script>
-  // ตรวจสอบว่าเปิดในแอป LINE หรือไม่
   if (navigator.userAgent.indexOf('Line') > -1) {
-    // บังคับให้เด้งออกไปเปิดที่เบราว์เซอร์หลักของเครื่อง
     window.location.href = window.location.href + (window.location.href.indexOf('?') > -1 ? '&' : '?') + 'openExternalBrowser=1';
   }
 </script>
@@ -60,21 +56,20 @@
     <label>2. ทำรายการ:</label>
     <button class="btn btn-camera" id="start-camera">📸 เปิดกล้องถ่ายรูป</button>
     <button class="btn btn-info-personal" id="get-personal-info">🔎 ข้อมูลบุคคล</button>
+    
     <div id="camera-box">
         <video id="video" autoplay playsinline muted></video>
         <button class="btn btn-snap" id="snap">📷 กดเพื่อถ่ายภาพ</button>
     </div>
-
-    <canvas id="canvas"></canvas>
+	  <canvas id="canvas"></canvas>
     <div id="result">
-        <p><b>ชื่อ:</b> <span id="res-name"></span></p>
-        <p><b>เวลา:</b> <span id="res-time"></span></p>
+        <p style="margin:5px 0;"><b>ชื่อ:</b> <span id="res-name"></span></p>
+        <p style="margin:5px 0;"><b>เวลา:</b> <span id="res-time"></span></p>
     </div>
 
     <div class="btn-group" id="btn-group">
         <button class="btn btn-in" onclick="confirmAndSend('In')">เข้างาน</button>
-        <button class="btn btn-out" onclick="confirmAndSend('Out')">ออกงาน</button>
-	
+        <button class="btn btn-afternoon" id="btn-afternoon" onclick="confirmAndSend('เข้างานบ่าย')">เข้างานบ่าย</button> <button class="btn btn-out" onclick="confirmAndSend('Out')">ออกงาน</button>
     </div>
 
     <div class="special-group" id="special-group">
@@ -88,9 +83,8 @@
 
 <div class="modal-overlay" id="common-modal">
     <div class="modal-box" id="modal-content-area"></div>
-</div>
-<script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbygFIpnC0RBw0Q9ZKVH9YOfTo7lm4z-il0e5eGaMqUkKs83s0sO31jvaBQaHJF0S2W9/exec"; 
+</div><script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyHO0VM1eqp7Et2Ow41TARMlyAVYcV0YyaY96GCxICXDlhLa5xKVH3cXgALcCtMBCWi/exec"; 
     const video = document.getElementById('video'), canvas = document.getElementById('canvas'), startBtn = document.getElementById('start-camera'), snapBtn = document.getElementById('snap'), cameraBox = document.getElementById('camera-box'), selectEl = document.getElementById('employee-select');
     const modal = document.getElementById('common-modal'), modalArea = document.getElementById('modal-content-area');
 
@@ -105,130 +99,80 @@
         }).catch(err => console.error("โหลดรายชื่อไม่สำเร็จ:", err));
     };
 
-// ⏱️ 1. ปรับปรุงระบบตรวจสอบและควบคุมปุ่มบ่ายให้ฉลาดและ Real-time
-function checkButtonDisplay() {
-    let now = new Date();
-    let totalMinutes = (now.getHours() * 60) + now.getMinutes();
-    let switchTime = (11 * 60) + 30; // 💡 ตั้งเวลาเปิดปุ่มบ่ายที่ 11:30 น.
+    // ⏱️ ระบบตรวจสอบควบคุมปุ่มบ่ายให้ฉลาดและ Real-time
+    function checkButtonDisplay() {
+        let now = new Date();
+        let totalMinutes = (now.getHours() * 60) + now.getMinutes();
+        let switchTime = (11 * 60) + 30; // 💡 ตั้งเวลาเปิดปุ่มบ่ายที่ 11:30 น.
 
-    // ค้นหาปุ่มเข้างานบ่ายจาก ID (ไม่ว่าจะอยู่ในหน้าหลัก หรือในป๊อปอัป Modal)
-    let afternoonBtn = document.getElementById('btn-afternoon'); 
-
-    if (afternoonBtn) {
-        if (totalMinutes >= switchTime) {
-            afternoonBtn.style.setProperty('display', 'block', 'important'); // เกิน 11:30 น. เปิดให้กด
-        } else {
-            afternoonBtn.style.setProperty('display', 'none', 'important');  // ยังไม่ถึง 11:30 น. บังคับซ่อนสนิท
+        let afternoonBtn = document.getElementById('btn-afternoon'); 
+        if (afternoonBtn) {
+            if (totalMinutes >= switchTime) {
+                afternoonBtn.style.setProperty('display', 'block', 'important'); 
+            } else {
+                afternoonBtn.style.setProperty('display', 'none', 'important');  
+            }
         }
     }
-}
-
-// 🎯 สั่งให้ระบบคอยรีเฟรชเช็คเวลากลุ่มปุ่มบ่าย "ทุก ๆ 1 วินาที" (Real-time) 
-// วิธีนี้จะช่วยแก้ปัญหาปุ่มเกิดช้า หรือปัญหาเปิดปุ่มค้างก่อนเวลาได้แน่นอนครับคุณจิ
-setInterval(checkButtonDisplay, 1000);
-
-//****************************************************
+    setInterval(checkButtonDisplay, 1000);
 startBtn.onclick = async () => {
-    if (!selectEl.value) return alert("กรุณาเลือกชื่อก่อนครับ");
-    try {
-        const constraints = {
-            video: {
-                facingMode: { ideal: "user" },
-                width: { ideal: 320 },
-                height: { ideal: 240 }
-            },
-            audio: false
-        };
-
-        let stream;
+        if (!selectEl.value) return alert("กรุณาเลือกชื่อก่อนครับ");
         try {
-            stream = await navigator.mediaDevices.getUserMedia(constraints);
-        } catch (e) {
-            console.warn("กล้องหน้าไม่ได้ ลอง fallback:", e);
-            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            const constraints = {
+                video: { facingMode: { ideal: "user" }, width: { ideal: 320 }, height: { ideal: 240 } },
+                audio: false
+            };
+
+            let stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+            } catch (e) {
+                console.warn("กล้องหน้าไม่ได้ ลอง fallback:", e);
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            }
+
+            video.srcObject = stream;
+            await video.play(); 
+            cameraBox.style.display = 'block';
+            startBtn.style.display = 'none';
+            document.getElementById('get-personal-info').style.display = 'none';
+
+        } catch (err) {
+            alert("Error: " + err.name + "\n\n" + err.message);
         }
+    };
 
-        video.srcObject = stream;
-        await video.play(); 
-        cameraBox.style.display = 'block';
-        startBtn.style.display = 'none';
-        document.getElementById('get-personal-info').style.display = 'none';
-
-    } catch (err) {
-        alert("Error: " + err.name + "\n\n" + err.message);
-    }
-};
-
-snapBtn.onclick = () => {
-    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width = video.videoWidth, canvas.height = video.videoHeight);
-    video.srcObject.getTracks().forEach(t => t.stop());
-    cameraBox.style.display = 'none';
-    window.capturedTime = new Date().toLocaleString('th-TH', { hour12: false, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
-    document.getElementById('res-name').innerText = window.workerName = selectEl.value;
-    document.getElementById('res-time').innerText = window.capturedTime;
-    document.getElementById('result').style.display = document.getElementById('btn-group').style.display = document.getElementById('special-group').style.display = 'flex';
-    
-     // 📸 ฟังก์ชันเมื่อกดปุ่มถ่ายรูป (สแนปหน้า + ดึงพิกัด + เช็คเวลาปุ่มบ่าย)
+    // 📸 ฟังก์ชันเมื่อกดปุ่มถ่ายรูป (ลอจิกทำความสะอาดใหม่ ไม่ดึง GPS ของ PC ตามที่สั่ง)
     snapBtn.onclick = () => {
-        // 1. ถ่ายภาพสแนปลงแคนวาส และปิดแทร็กกล้องเพื่อคืนสิทธิ์ระบบ
         canvas.getContext('2d').drawImage(video, 0, 0, canvas.width = video.videoWidth, canvas.height = video.videoHeight);
         video.srcObject.getTracks().forEach(t => t.stop()); 
         cameraBox.style.display = 'none';
         
-        // 2. บันทึกเวลาปัจจุบันฟอร์แมตไทย และแสดงชื่อพนักงาน
         window.capturedTime = new Date().toLocaleString('th-TH', { hour12: false, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
         document.getElementById('res-name').innerText = window.workerName = selectEl.value;
-        document.getElementById('res-time').innerText = window.capturedTime;
+        document.getElementById('res-time').innerText = window.capturedTime;document.getElementById('result').style.display = 'flex';
+        document.getElementById('btn-group').style.display = 'flex';
+        document.getElementById('special-group').style.display = 'flex';
         
-        // เปิดการแสดงผลกลุ่มปุ่มกดบันทึกเวลาต่าง ๆ
-        document.getElementById('result').style.display = document.getElementById('btn-group').style.display = document.getElementById('special-group').style.display = 'flex';
-        
-        // 🎯 ระบบดักจับพิกัดสำหรับ PC และ มือถือ (กันพัง)
-        window.userLocation = "PC/No GPS (ดึงจาก IP หรือไม่ได้เปิดสิทธิ์พิกัด)"; 
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    let lat = position.coords.latitude;
-                    let lng = position.coords.longitude;
-                    window.userLocation = lat + "," + lng; 
-                    console.log("📌 พิกัดที่บันทึกได้สำเร็จ: ", window.userLocation);
-                }, 
-                (error) => {
-                    console.warn("⚠️ การดึงพิกัดเกิดข้อผิดพลาด: ", error.message);
-                    if (error.code === error.PERMISSION_DENIED) {
-                        window.userLocation = "ผู้ใช้ปฏิเสธสิทธิ์การเข้าถึงพิกัด (Blocked)";
-                    }
-                },
-                { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
-            );
-        }
-
-        // ⏱️ ตรวจสอบเวลาเปิด-ปิดปุ่มเข้างานบ่ายทันทีหลังจากถ่ายรูปเสร็จ
         if (typeof checkButtonDisplay === 'function') {
             checkButtonDisplay(); 
         }
-    }; // <-- ปีกกาปิด snapBtn ที่ถูกต้องอยู่ตรงนี้ครับ
+    };
 
-    // 🎯 ฟังก์ชันอัปเดต openModal ให้สั่งเช็คปุ่มบ่ายทันทีเมื่อหน้าต่างแจ้งเตือนเด้งขึ้นมา
     function openModal(html) { 
         modalArea.innerHTML = html; 
         modal.style.display = 'flex'; 
-        
-        // สั่งให้ตรวจเช็คเวลาและซ่อน/แสดงปุ่มบ่ายทันทีที่หน้าต่างป๊อปอัปนี้เปิดขึ้นมา
         if (typeof checkButtonDisplay === 'function') {
             checkButtonDisplay(); 
         }
     }
 
-    // ฟังก์ชันปิดหน้าต่างข้อความ
     function closeModal() { 
         modal.style.display = 'none'; 
     }
 
     // 📩 ฟังก์ชันคัดกรองเงื่อนไข และเตรียมส่งข้อมูลไปหลังบ้าน
     function confirmAndSend(status) {
-        // 🔒 บล็อกปุ่มออกงานก่อนเวลา 13:00 น.
         if (status === 'Out') {
             let now = new Date();
             if (now.getHours() < 13) {
@@ -236,7 +180,6 @@ snapBtn.onclick = () => {
             }
         }
 
-        // 😭 เช็คสิทธิ์วันลาพักร้อนหมด
         if (status === 'Vacation' || status === 'VacationHalf') {
             let remain = Number(selectEl.options[selectEl.selectedIndex].getAttribute('data-vacation-remain'));
             if (remain <= 0) {
@@ -247,8 +190,7 @@ snapBtn.onclick = () => {
                     <div class="countdown-text" id="cd-timer">ระบบจะกลับสู่หน้าหลักอัตโนมัติใน 5 วินาที...</div>
                 `);
                 let timer = setInterval(() => { 
-                    count--; 
-                    document.getElementById('cd-timer').innerText = `ระบบจะกลับสู่หน้าหลักอัตโนมัติใน ${count} วินาที...`; 
+                    count--;document.getElementById('cd-timer').innerText = `ระบบจะกลับสู่หน้าหลักอัตโนมัติใน ${count} วินาที...`; 
                     if (count <= 0) { 
                         clearInterval(timer); 
                         location.reload(); 
@@ -257,55 +199,8 @@ snapBtn.onclick = () => {
                 return;
             }
         }
-  
 
-    // 1. ดึงรายชื่อพนักงาน + เวลาเข้างานสายจากช่อง M1 (เวอร์ชันจัดรูปแบบให้เสถียร 100%)
-  if (action === "getEmployeeList") {
-    let sheet = monthlySS.getSheetByName("DAY"); 
-    if (!sheet) return sendJson({ status: "error", message: "ไม่พบแท็บ DAY" });
-
-    // 🎯 [เพิ่มระบบจัดรูปแบบ M1] ดึงค่าจากเซลล์ M1 ขึ้นมาตรวจสอบ
-    let m1Value = sheet.getRange("M1").getValue();
-    let lateLimitTime = "08:30"; // ตั้งค่าเริ่มต้นเผื่อระบบผิดพลาดหรือช่องว่าง
-
-    if (m1Value !== null && m1Value !== "") {
-      if (m1Value instanceof Date) {
-        // 🔹 กรณี Google Sheets มองค่าเป็น Object วันเวลา -> ดึงเฉพาะชั่วโมงและนาที "HH:mm"
-        lateLimitTime = Utilities.formatDate(m1Value, Session.getScriptTimeZone(), "HH:mm");
-      } else {
-        // 🔹 กรณีเป็นข้อความธรรมดา (String) หรือตัวเลข -> ล้างช่องว่างแล้วจัดรูปแบบ
-        let strValue = m1Value.toString().trim();
-        
-        // เช็คว่ามีเครื่องหมาย : ไหม
-        if (strValue.indexOf(":") !== -1) {
-          // ดึงเฉพาะตัวเลขและเครื่องหมาย : ป้องกันกรณีมีตัวอักษรอื่นปนมา
-          let match = strValue.match(/\d{1,2}:\d{2}/);
-          if (match) {
-            let parts = match[0].split(":");
-            // ปรับตัวเลขชั่วโมงและนาทีให้เป็น 2 หลักเสมอ (เช่น "8:30" -> "08:30")
-            let hh = parts[0].padStart(2, "0");
-            let mm = parts[1].padStart(2, "0");
-            lateLimitTime = hh + ":" + mm;
-          }
-        }
-      }
-    }
-
-    // 📊 วนลูปสร้างรายชื่อพนักงาน และแนบเวลาสายที่จัดรูปแบบแล้วส่งไปหน้าเว็บ
-    let data = sheet.getRange("C3:L30").getValues(), list = [];
-    data.forEach(r => { 
-      if (r[0]) { 
-        list.push({ 
-          name: r[0].toString().trim(), 
-          vacationRemain: Number(r[9]), 
-          lateLimit: lateLimitTime // ✨ ส่งค่าเวลาที่ผ่านการจัดฟอร์แมตชัวร์ ๆ ไปใช้งาน
-        }); 
-      } 
-    });
-    return sendJson(list);
-  }
-
-        const labels = { 'In': 'เข้างาน', 'Out': 'ออกงาน', 'Vacation': 'พักร้อนเต็มวัน / ลาต่อบ่าย', 'VacationHalf': 'พักร้อน 1/2 วัน', 'Absent': 'ขาดงาน', 'Sick': 'ป่วย' };
+        const labels = { 'In': 'เข้างาน', 'เข้างานบ่าย': 'เข้างานบ่าย', 'Out': 'ออกงาน', 'Vacation': 'พักร้อนเต็มวัน / ลาต่อบ่าย', 'VacationHalf': 'พักร้อน 1/2 วัน', 'Absent': 'ขาดงาน', 'Sick': 'ป่วย' };
         openModal(`<h3 style="font-size:20px;font-weight:bold;text-align:center;">🔔 ยืนยันบันทึก "${labels[status]}"</h3>
             <div style="background:#f8f9fa;padding:12px;border-radius:8px;text-align:left;border-left:5px solid var(--primary);margin:15px 0;">
                 <p style="margin:5px 0;"><b>ชื่อ:</b> ${window.workerName}</p>
@@ -316,13 +211,7 @@ snapBtn.onclick = () => {
                 <button id="cancel-submit-btn" class="btn-absent" style="border:none;padding:12px;border-radius:8px;font-weight:bold;" onclick="location.reload()">❌ ยกเลิก</button>
             </div>`);
     }
-
-    function setLateStatus(chosenStatus) {
-        closeModal();
-        confirmAndSend(chosenStatus);
-    }
-
-    function sendToSheet(status) {
+function sendToSheet(status) {
         const confirmBtn = document.getElementById('confirm-submit-btn');
         const cancelBtn = document.getElementById('cancel-submit-btn');
         if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.style.opacity = "0.6"; confirmBtn.innerHTML = "⌛ กำลังบันทึก..."; }
@@ -343,12 +232,19 @@ snapBtn.onclick = () => {
             })
             .then(res => res.json())
             .then(data => {
-                if (data.status === "success") { alert("บันทึกสำเร็จ! 🎉"); location.reload(); } 
-                else { alert("ล้มเหลว: " + data.message); closeModal(); showButtons(); }
+                if (data.status === "success" || data.status === "failed") { 
+                    alert(data.message || "บันทึกสำเร็จ! 🎉"); 
+                    location.reload(); 
+                } else { 
+                    alert("ล้มเหลว: " + data.message); 
+                    closeModal(); 
+                    showButtons(); 
+                }
             })
             .catch(() => { alert("ข้อผิดพลาดการเชื่อมต่อ"); closeModal(); showButtons(); });
         };
 
+        // 📱 ดึง GPS ของกล้องมือถือผ่าน Geolocation มาตรฐานปกติร้อยเปอร์เซ็นต์
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -356,10 +252,10 @@ snapBtn.onclick = () => {
                     executeFetch(gpsCoords);
                 },
                 (error) => {
-                    executeFetch("ปิด GPS หรือไม่ได้รับสิทธิ์");
+                    executeFetch("ไม่ได้เปิดพิกัดหรือปิดสิทธิ์");
                 },
                 { enableHighAccuracy: true, timeout: 5000 }
-            );
+   );
         } else {
             executeFetch("อุปกรณ์ไม่รองรับ GPS");
         }
@@ -367,8 +263,10 @@ snapBtn.onclick = () => {
 
     function showButtons() { 
         document.getElementById('loader').style.display = 'none'; 
-        document.getElementById('btn-group').style.display = document.getElementById('special-group').style.display = 'flex'; 
+        document.getElementById('btn-group').style.display = 'flex';
+        document.getElementById('special-group').style.display = 'flex'; 
     }
+
     document.getElementById('get-personal-info').onclick = () => {
         if(!selectEl.value) return alert("กรุณาเลือกชื่อก่อนครับ");
         openModal(`<h3 style="font-size:18px;font-weight:bold;text-align:center;">🔐 ยืนยันตัวตน</h3>
@@ -378,7 +276,7 @@ snapBtn.onclick = () => {
         document.getElementById('single-pin').focus();
     };
 
-        function handlePinInput(el) {
+    function handlePinInput(el) {
         if(el.value.length === 4) {
             const pin = el.value, name = selectEl.value;
             closeModal();
@@ -387,12 +285,10 @@ snapBtn.onclick = () => {
 
             fetch(`${WEB_APP_URL}?action=getEmployeeSummary&name=${encodeURIComponent(name)}&idLast4=${pin}`)
             .then(res => res.json()).then(data => {
-                document.getElementById('loader').style.display = 'none';
-                if(data.status === "success") {
+                document.getElementById('loader').style.display = 'none';if(data.status === "success") {
                     let rows = '';
-                    data.logs.forEach(r => rows += `<tr><td>${r.date.split("T")[0]}</td><td>${r.vacation==1?'💡':(r.vacation==0.5?'🌗':'-')}</td><td>${r.absent==1?'❌':'-'}</td><td>${r.sick==1?'😭':'-'}</td><td>${r.work==1?'✅':'-'}</td></tr>`);
+                    data.logs.forEach(r => rows += `<tr><td>${r.date.split("T")[0]}</td><td>${r.vacation==1?'💡':(r.vacation==0.5||r.vacation==-0.5?'🌗':'-')}</td><td>${r.absent==1?'❌':'-'}</td><td>${r.sick==1?'😭':'-'}</td><td>${r.work==1?'✅':'-'}</td></tr>`);
                     
-                    // 🎯 [แก้ไขจุดนี้] สร้างตัวแปรก่อนดึงไปแสดงผลด้านล่าง เพื่อไม่ให้ระบบ Error
                     let remainingVacation = data.dashboard.remainingVacation !== undefined ? data.dashboard.remainingVacation : "0";
 
                     openModal(`<h3 style="font-size:18px;font-weight:bold;color:var(--success);text-align:center;margin-bottom:10px;">📊 ข้อมูลบุคคล</h3>
@@ -413,7 +309,7 @@ snapBtn.onclick = () => {
                         <p style="font-weight:bold;font-size:13px;margin:5px 0;">📅 ประวัติย้อนหลัง:</p>
                         <div class="table-wrap"><table style="width:100%;text-align:center;border-collapse:collapse;"><thead style="background:#f1f1f1;position:sticky;top:0;"><tr><th>วันที่</th><th>ลา</th><th>ขาด</th><th>ป่วย</th><th>งาน</th></tr></thead><tbody>${rows}</tbody></table></div>
                         <button class="btn-absent" style="width:100%;border:none;padding:12px;border-radius:8px;font-weight:bold;margin-top:15px;background:#333;color:#fff;" onclick="location.reload()">🔒 ปิดหน้านี้</button>`);
-                } else { 
+						} else { 
                     alert('🛑 รหัสไม่ถูกต้อง!'); 
                     location.reload(); 
                 }
@@ -423,7 +319,6 @@ snapBtn.onclick = () => {
             });
         }
     }
-
 </script>
 </body>
 </html>
