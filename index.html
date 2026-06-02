@@ -17,7 +17,7 @@
         .btn-snap { background: var(--warning); color: #000; }
         .btn-group { display: none; gap: 10px; width: 100%; }
         .btn-in { background: var(--success); color: white; flex: 1; }
-        .btn-afternoon { background: #fd7e14; color: white; flex: 1; display: none; } /* ☀️ เพิ่มสไตล์ปุ่มเข้างานบ่าย */
+        .btn-afternoon { background-color: #2196F3 !important; color: white !important; display: none; } /* ☀️ เพิ่มสไตล์ปุ่มเข้างานบ่าย */
         .btn-out { background: var(--danger); color: white; flex: 1; }
         .special-group { display: none; flex-direction: column; margin-top: 10px; border-top: 2px dashed #eee; padding-top: 15px; }
         .btn-leave { background: var(--purple); color: white; }
@@ -70,6 +70,7 @@
     <div class="btn-group" id="btn-group">
         <button class="btn btn-in" onclick="confirmAndSend('In')">เข้างาน</button>
 		<button class="btn btn-out" onclick="confirmAndSend('Out')">ออกงาน</button>
+		<button class="btn btn-afternoon" id="btn-afternoon" onclick="confirmAndSend('เข้างานบ่าย')">เข้างานบ่าย</button>
     </div>
 
     <div class="special-group" id="special-group">
@@ -159,9 +160,10 @@ startBtn.onclick = async () => {
         }
     };
 
-    function openModal(html) { 
+    function openModal(html) {
+	
         modalArea.innerHTML = html; 
-        modal.style.display = 'flex'; 
+		modal.style.display = 'flex'; 
         if (typeof checkButtonDisplay === 'function') {
             checkButtonDisplay(); 
         }
