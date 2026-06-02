@@ -168,45 +168,96 @@ snapBtn.onclick = () => {
     document.getElementById('res-time').innerText = window.capturedTime;
     document.getElementById('result').style.display = document.getElementById('btn-group').style.display = document.getElementById('special-group').style.display = 'flex';
     
-    // 🎯 [เพิ่มจุดนี้] หลังจากพนักงานกดถ่ายรูปสแนปหน้าเสร็จ ให้สั่งเช็คเวลาปุ่มบ่ายทันที 
-    // เพื่อให้คนที่มาสแกนรอบบ่ายปกติ (ที่ไม่ได้สาย) สามารถเห็นปุ่มสีเขียวนี้ขึ้นมาให้กดเลือกได้ครับ
-    checkButtonDisplay(); 
-};
+     // 📸 ฟังก์ชันเมื่อกดปุ่มถ่ายรูป (สแนปหน้า + ดึงพิกัด + เช็คเวลาปุ่มบ่าย)
+    snapBtn.onclick = () => {
+        // 1. ถ่ายภาพสแนปลงแคนวาส และปิดแทร็กกล้องเพื่อคืนสิทธิ์ระบบ
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width = video.videoWidth, canvas.height = video.videoHeight);
+        video.srcObject.getTracks().forEach(t => t.stop()); 
+        cameraBox.style.display = 'none';
+        
+        // 2. บันทึกเวลาปัจจุบันฟอร์แมตไทย และแสดงชื่อพนักงาน
+        window.capturedTime = new Date().toLocaleString('th-TH', { hour12: false, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+        document.getElementById('res-name').innerText = window.workerName = selectEl.value;
+        document.getElementById('res-time').innerText = window.capturedTime;
+        
+        // เปิดการแสดงผลกลุ่มปุ่มกดบันทึกเวลาต่าง ๆ
+        document.getElementById('result').style.display = document.getElementById('btn-group').style.display = document.getElementById('special-group').style.display = 'flex';
+        
+        // 🎯 ระบบดักจับพิกัดสำหรับ PC และ มือถือ (กันพัง)
+        window.userLocation = "PC/No GPS (ดึงจาก IP หรือไม่ได้เปิดสิทธิ์พิกัด)"; 
 
-// 🎯 2. อัปเดตฟังก์ชัน openModal
-function openModal(html) { 
-    modalArea.innerHTML = html; 
-    modal.style.display = 'flex'; 
-    
-    // สั่งให้ตรวจเช็คเวลาและซ่อน/แสดงปุ่มบ่ายทันทีที่หน้าต่างป๊อปอัปนี้เปิดขึ้นมา
-    checkButtonDisplay(); 
-}
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    let lat = position.coords.latitude;
+                    let lng = position.coords.longitude;
+                    window.userLocation = lat + "," + lng; 
+                    console.log("📌 พิกัดที่บันทึกได้สำเร็จ: ", window.userLocation);
+                }, 
+                (error) => {
+                    console.warn("⚠️ การดึงพิกัดเกิดข้อผิดพลาด: ", error.message);
+                    if (error.code === error.PERMISSION_DENIED) {
+                        window.userLocation = "ผู้ใช้ปฏิเสธสิทธิ์การเข้าถึงพิกัด (Blocked)";
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+            );
+        }
 
-function closeModal() { modal.style.display = 'none'; }
+        // ⏱️ ตรวจสอบเวลาเปิด-ปิดปุ่มเข้างานบ่ายทันทีหลังจากถ่ายรูปเสร็จ
+        if (typeof checkButtonDisplay === 'function') {
+            checkButtonDisplay(); 
+        }
+    }; // <-- ปีกกาปิด snapBtn ที่ถูกต้องอยู่ตรงนี้ครับ
 
-function confirmAndSend(status) {
-    // 🔒 บล็อกปุ่มออกงานก่อนเวลา 13:00 น.
-    if (status === 'Out') {
-        let now = new Date();
-        if (now.getHours() < 13) {
-            return alert("🛑 ยังไม่ถึงเวลาเลิกงาน! ปุ่มออกงานจะเปิดให้ใช้งานหลังเวลา 13:00 น. เป็นต้นไปครับ");
+    // 🎯 ฟังก์ชันอัปเดต openModal ให้สั่งเช็คปุ่มบ่ายทันทีเมื่อหน้าต่างแจ้งเตือนเด้งขึ้นมา
+    function openModal(html) { 
+        modalArea.innerHTML = html; 
+        modal.style.display = 'flex'; 
+        
+        // สั่งให้ตรวจเช็คเวลาและซ่อน/แสดงปุ่มบ่ายทันทีที่หน้าต่างป๊อปอัปนี้เปิดขึ้นมา
+        if (typeof checkButtonDisplay === 'function') {
+            checkButtonDisplay(); 
         }
     }
 
-    // 😭 เช็คสิทธิ์วันลาพักร้อนหมด
-    if (status === 'Vacation' || status === 'VacationHalf') {
-        let remain = Number(selectEl.options[selectEl.selectedIndex].getAttribute('data-vacation-remain'));
-        if (remain <= 0) {
-            let count = 5;
-            openModal(`
-                <div class="cry-emoji">😭</div>
-                <div class="cry-text">วันลาพักร้อนหมด</div>
-                <div class="countdown-text" id="cd-timer">ระบบจะกลับสู่หน้าหลักอัตโนมัติใน 5 วินาที...</div>
-            `);
-            let timer = setInterval(() => { count--; document.getElementById('cd-timer').innerText = `ระบบจะกลับสู่หน้าหลักอัตโนมัติใน ${count} วินาที...`; if (count <= 0) { clearInterval(timer); location.reload(); } }, 1000);
-            return;
-        }
+    // ฟังก์ชันปิดหน้าต่างข้อความ
+    function closeModal() { 
+        modal.style.display = 'none'; 
     }
+
+    // 📩 ฟังก์ชันคัดกรองเงื่อนไข และเตรียมส่งข้อมูลไปหลังบ้าน
+    function confirmAndSend(status) {
+        // 🔒 บล็อกปุ่มออกงานก่อนเวลา 13:00 น.
+        if (status === 'Out') {
+            let now = new Date();
+            if (now.getHours() < 13) {
+                return alert("🛑 ยังไม่ถึงเวลาเลิกงาน! ปุ่มออกงานจะเปิดให้ใช้งานหลังเวลา 13:00 น. เป็นต้นไปครับ");
+            }
+        }
+
+        // 😭 เช็คสิทธิ์วันลาพักร้อนหมด
+        if (status === 'Vacation' || status === 'VacationHalf') {
+            let remain = Number(selectEl.options[selectEl.selectedIndex].getAttribute('data-vacation-remain'));
+            if (remain <= 0) {
+                let count = 5;
+                openModal(`
+                    <div class="cry-emoji">😭</div>
+                    <div class="cry-text">วันลาพักร้อนหมด</div>
+                    <div class="countdown-text" id="cd-timer">ระบบจะกลับสู่หน้าหลักอัตโนมัติใน 5 วินาที...</div>
+                `);
+                let timer = setInterval(() => { 
+                    count--; 
+                    document.getElementById('cd-timer').innerText = `ระบบจะกลับสู่หน้าหลักอัตโนมัติใน ${count} วินาที...`; 
+                    if (count <= 0) { 
+                        clearInterval(timer); 
+                        location.reload(); 
+                    } 
+                }, 1000);
+                return;
+            }
+        }
+  
 
     // 1. ดึงรายชื่อพนักงาน + เวลาเข้างานสายจากช่อง M1 (เวอร์ชันจัดรูปแบบให้เสถียร 100%)
   if (action === "getEmployeeList") {
