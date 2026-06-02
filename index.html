@@ -90,7 +90,7 @@
     <div class="modal-box" id="modal-content-area"></div>
 </div>
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwrcdjHKACYaXwNVj1IzR7BT-CFhKyO8cCe1Bffw4AhFtJX5cdqHa5Z1R0sCAjpDvlp/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbygFIpnC0RBw0Q9ZKVH9YOfTo7lm4z-il0e5eGaMqUkKs83s0sO31jvaBQaHJF0S2W9/exec"; 
     const video = document.getElementById('video'), canvas = document.getElementById('canvas'), startBtn = document.getElementById('start-camera'), snapBtn = document.getElementById('snap'), cameraBox = document.getElementById('camera-box'), selectEl = document.getElementById('employee-select');
     const modal = document.getElementById('common-modal'), modalArea = document.getElementById('modal-content-area');
 
@@ -105,85 +105,81 @@
         }).catch(err => console.error("โหลดรายชื่อไม่สำเร็จ:", err));
     };
 
+// ⏱️ 1. ปรับปรุงระบบตรวจสอบและควบคุมปุ่มบ่ายให้ฉลาดและ Real-time
 function checkButtonDisplay() {
     let now = new Date();
     let totalMinutes = (now.getHours() * 60) + now.getMinutes();
     let switchTime = (11 * 60) + 30; // 💡 ตั้งเวลาเปิดปุ่มบ่ายที่ 11:30 น.
 
-    // ค้นหาปุ่มเข้างานบ่ายจาก ID
+    // ค้นหาปุ่มเข้างานบ่ายจาก ID (ไม่ว่าจะอยู่ในหน้าหลัก หรือในป๊อปอัป Modal)
     let afternoonBtn = document.getElementById('btn-afternoon'); 
 
     if (afternoonBtn) {
-        // 🎯 แก้ไขจุดพิมพ์สไตล์ซ้ำซ้อน และใช้คำสั่งซ่อน-แสดงที่ถูกต้อง
         if (totalMinutes >= switchTime) {
-            afternoonBtn.style.setProperty('display', 'block', 'important'); // แสดงปุ่มบ่าย (ลบ .style ตัวที่เกินออกแล้ว)
+            afternoonBtn.style.setProperty('display', 'block', 'important'); // เกิน 11:30 น. เปิดให้กด
         } else {
-            afternoonBtn.style.setProperty('display', 'none', 'important');  // ซ่อนปุ่มบ่าย (ลบ .style ตัวที่เกินออกแล้ว)
+            afternoonBtn.style.setProperty('display', 'none', 'important');  // ยังไม่ถึง 11:30 น. บังคับซ่อนสนิท
         }
     }
 }
 
-    // สั่งให้ระบบคำนวณเวลาทันทีหลังจากโหลดรายชื่อพนักงานเสร็จ
-    window.addEventListener('DOMContentLoaded', checkButtonDisplay);
+// 🎯 สั่งให้ระบบคอยรีเฟรชเช็คเวลากลุ่มปุ่มบ่าย "ทุก ๆ 1 วินาที" (Real-time) 
+// วิธีนี้จะช่วยแก้ปัญหาปุ่มเกิดช้า หรือปัญหาเปิดปุ่มค้างก่อนเวลาได้แน่นอนครับคุณจิ
+setInterval(checkButtonDisplay, 1000);
+
 //****************************************************
-    startBtn.onclick = async () => {
-        if (!selectEl.value) return alert("กรุณาเลือกชื่อก่อนครับ");
+startBtn.onclick = async () => {
+    if (!selectEl.value) return alert("กรุณาเลือกชื่อก่อนครับ");
+    try {
+        const constraints = {
+            video: {
+                facingMode: { ideal: "user" },
+                width: { ideal: 320 },
+                height: { ideal: 240 }
+            },
+            audio: false
+        };
+
+        let stream;
         try {
-            // ลองเปิดกล้องหน้าก่อน (ideal = ไม่บังคับ ถ้าไม่มีก็ใช้กล้องอื่นแทน)
-            const constraints = {
-                video: {
-                    facingMode: { ideal: "user" },
-                    width: { ideal: 320 },
-                    height: { ideal: 240 }
-                },
-                audio: false
-            };
+            stream = await navigator.mediaDevices.getUserMedia(constraints);
+        } catch (e) {
+            console.warn("กล้องหน้าไม่ได้ ลอง fallback:", e);
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        }
 
-            let stream;
-            try {
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
-            } catch (e) {
-                // Fallback: ถ้ากล้องหน้าไม่ได้เลย ลองกล้องทั่วไป
-                console.warn("กล้องหน้าไม่ได้ ลอง fallback:", e);
-                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-            }
+        video.srcObject = stream;
+        await video.play(); 
+        cameraBox.style.display = 'block';
+        startBtn.style.display = 'none';
+        document.getElementById('get-personal-info').style.display = 'none';
 
-            video.srcObject = stream;
-            await video.play(); // await ให้มั่นใจว่า iOS เล่นได้จริง
-            cameraBox.style.display = 'block';
-            startBtn.style.display = 'none';
-            document.getElementById('get-personal-info').style.display = 'none';
+    } catch (err) {
+        alert("Error: " + err.name + "\n\n" + err.message);
+    }
+};
 
-       // } catch (err) {
-       //     console.error("เปิดกล้องไม่สำเร็จ:", err);
-       //     alert("ไม่สามารถเปิดกล้องได้\n\n✅ วิธีแก้:\n- เปิดลิงก์นี้ด้วย Chrome หรือ Safari\n- อย่าเปิดในแอป 
-       //LINE\n- กด 'อนุญาต' เมื่อระบบขอสิทธิ์กล้องครับ");
-       // }
-       } catch (err) {
-    // แสดง error จริงๆ ออกมาเลย
-    alert("Error: " + err.name + "\n\n" + err.message);
-}
-    };
+snapBtn.onclick = () => {
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width = video.videoWidth, canvas.height = video.videoHeight);
+    video.srcObject.getTracks().forEach(t => t.stop());
+    cameraBox.style.display = 'none';
+    window.capturedTime = new Date().toLocaleString('th-TH', { hour12: false, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    document.getElementById('res-name').innerText = window.workerName = selectEl.value;
+    document.getElementById('res-time').innerText = window.capturedTime;
+    document.getElementById('result').style.display = document.getElementById('btn-group').style.display = document.getElementById('special-group').style.display = 'flex';
+    
+    // 🎯 [เพิ่มจุดนี้] หลังจากพนักงานกดถ่ายรูปสแนปหน้าเสร็จ ให้สั่งเช็คเวลาปุ่มบ่ายทันที 
+    // เพื่อให้คนที่มาสแกนรอบบ่ายปกติ (ที่ไม่ได้สาย) สามารถเห็นปุ่มสีเขียวนี้ขึ้นมาให้กดเลือกได้ครับ
+    checkButtonDisplay(); 
+};
 
-    snapBtn.onclick = () => {
-        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width = video.videoWidth, canvas.height = video.videoHeight);
-        video.srcObject.getTracks().forEach(t => t.stop());
-        cameraBox.style.display = 'none';
-        window.capturedTime = new Date().toLocaleString('th-TH', { hour12: false, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
-        document.getElementById('res-name').innerText = window.workerName = selectEl.value;
-        document.getElementById('res-time').innerText = window.capturedTime;
-        document.getElementById('result').style.display = document.getElementById('btn-group').style.display = document.getElementById('special-group').style.display = 'flex';
-    };
-
-    // 🎯 1. อัปเดตฟังก์ชัน openModal ให้สั่งเช็คปุ่มบ่ายทันทีเมื่อหน้าต่างแจ้งเตือนเด้งขึ้นมา
+// 🎯 2. อัปเดตฟังก์ชัน openModal
 function openModal(html) { 
     modalArea.innerHTML = html; 
     modal.style.display = 'flex'; 
     
-    // 🔥 สั่งให้ตรวจเช็คเวลาและซ่อน/แสดงปุ่มบ่ายทันทีที่หน้าต่างป๊อปอัปนี้เปิดขึ้นมา
-    if (typeof checkButtonDisplay === 'function') {
-        checkButtonDisplay(); 
-    }
+    // สั่งให้ตรวจเช็คเวลาและซ่อน/แสดงปุ่มบ่ายทันทีที่หน้าต่างป๊อปอัปนี้เปิดขึ้นมา
+    checkButtonDisplay(); 
 }
 
 function closeModal() { modal.style.display = 'none'; }
@@ -212,23 +208,46 @@ function confirmAndSend(status) {
         }
     }
 
-
-   // 1. ดึงรายชื่อพนักงาน + เวลเข้างาน สายจากช่อง M1
+    // 1. ดึงรายชื่อพนักงาน + เวลาเข้างานสายจากช่อง M1 (เวอร์ชันจัดรูปแบบให้เสถียร 100%)
   if (action === "getEmployeeList") {
     let sheet = monthlySS.getSheetByName("DAY"); 
     if (!sheet) return sendJson({ status: "error", message: "ไม่พบแท็บ DAY" });
 
-    // 🎯 ดึงค่าเวลาสายจากเซลล์ M1 (สมมติในชีตพิมพ์คำว่า 08:30)
-    let lateLimitTime = sheet.getRange("M1").getValue().toString().trim(); 
-    if (lateLimitTime === "") { lateLimitTime = "08:30"; } // ถ้าในชีตว่าง ให้ใช้ 08:30 เป็นค่าเริ่มต้น
+    // 🎯 [เพิ่มระบบจัดรูปแบบ M1] ดึงค่าจากเซลล์ M1 ขึ้นมาตรวจสอบ
+    let m1Value = sheet.getRange("M1").getValue();
+    let lateLimitTime = "08:30"; // ตั้งค่าเริ่มต้นเผื่อระบบผิดพลาดหรือช่องว่าง
 
+    if (m1Value !== null && m1Value !== "") {
+      if (m1Value instanceof Date) {
+        // 🔹 กรณี Google Sheets มองค่าเป็น Object วันเวลา -> ดึงเฉพาะชั่วโมงและนาที "HH:mm"
+        lateLimitTime = Utilities.formatDate(m1Value, Session.getScriptTimeZone(), "HH:mm");
+      } else {
+        // 🔹 กรณีเป็นข้อความธรรมดา (String) หรือตัวเลข -> ล้างช่องว่างแล้วจัดรูปแบบ
+        let strValue = m1Value.toString().trim();
+        
+        // เช็คว่ามีเครื่องหมาย : ไหม
+        if (strValue.indexOf(":") !== -1) {
+          // ดึงเฉพาะตัวเลขและเครื่องหมาย : ป้องกันกรณีมีตัวอักษรอื่นปนมา
+          let match = strValue.match(/\d{1,2}:\d{2}/);
+          if (match) {
+            let parts = match[0].split(":");
+            // ปรับตัวเลขชั่วโมงและนาทีให้เป็น 2 หลักเสมอ (เช่น "8:30" -> "08:30")
+            let hh = parts[0].padStart(2, "0");
+            let mm = parts[1].padStart(2, "0");
+            lateLimitTime = hh + ":" + mm;
+          }
+        }
+      }
+    }
+
+    // 📊 วนลูปสร้างรายชื่อพนักงาน และแนบเวลาสายที่จัดรูปแบบแล้วส่งไปหน้าเว็บ
     let data = sheet.getRange("C3:L30").getValues(), list = [];
     data.forEach(r => { 
       if (r[0]) { 
         list.push({ 
           name: r[0].toString().trim(), 
           vacationRemain: Number(r[9]), 
-          lateLimit: lateLimitTime // 🎯 ส่งเวลาที่ดึงจาก M1 ไปให้หน้าเว็บใช้
+          lateLimit: lateLimitTime // ✨ ส่งค่าเวลาที่ผ่านการจัดฟอร์แมตชัวร์ ๆ ไปใช้งาน
         }); 
       } 
     });
