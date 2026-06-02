@@ -172,7 +172,36 @@ startBtn.onclick = async () => {
     }
 
     // 📩 ฟังก์ชันคัดกรองเงื่อนไข และเตรียมส่งข้อมูลไปหลังบ้าน
+       // 📩 ฟังก์ชันคัดกรองเงื่อนไข และเตรียมส่งข้อมูลไปหลังบ้าน
     function confirmAndSend(status) {
+        // 1️⃣ [เพิ่มระบบคัดกรองสายอัตโนมัติ] เฉพาะตอนกดปุ่ม "เข้างาน" (In) ช่วงเช้า
+        if (status === 'In') {
+            // ดึงค่า lateLimit (เช่น "08:30") ที่ติดมากับข้อมูลชื่อที่พนักงานเลือก
+            const selectEl = document.getElementById('employee-select');
+            const selectedOption = selectEl.options[selectEl.selectedIndex];
+            
+            // ป้องกันกรณีที่ยังดึงข้อมูลพนักงานไม่เสร็จ
+            if (selectedOption) {
+                // ค้นหาค่าเวลาสายที่เราส่งมาจากหลังบ้าน
+                const currentEmployee = window.employeeDataList ? window.employeeDataList.find(e => e.name === selectEl.value) : null;
+                const lateLimitTime = currentEmployee ? currentEmployee.lateLimit : "08:30"; 
+
+                // ดึงเวลาปัจจุบันมาแตก ชั่วโมง และ นาที เพื่อเปรียบเทียบ
+                let now = new Date();
+                let currentMinutes = (now.getHours() * 60) + now.getMinutes();
+                
+                // แตกเวลาสายจาก M1 มาคำนวณเป็นนาทีรวม
+                let limitParts = lateLimitTime.split(":");
+                let limitMinutes = (parseInt(limitParts[0]) * 60) + parseInt(limitParts[1]);
+
+                // 🎯 ถ้าเวลากดปุ่ม เกินกว่า เวลาสายที่ระบุใน M1 -> ให้เปลี่ยนสถานะส่งไปหลังบ้านเป็น "Late" ทันที
+                if (currentMinutes > limitMinutes) {
+                    status = 'Late'; 
+                }
+            }
+        }
+
+        // 🔒 บล็อกปุ่มออกงานก่อนเวลา 13:00 น.
         if (status === 'Out') {
             let now = new Date();
             if (now.getHours() < 13) {
@@ -180,6 +209,7 @@ startBtn.onclick = async () => {
             }
         }
 
+        // 😭 เช็คสิทธิ์วันลาพักร้อนหมด
         if (status === 'Vacation' || status === 'VacationHalf') {
             let remain = Number(selectEl.options[selectEl.selectedIndex].getAttribute('data-vacation-remain'));
             if (remain <= 0) {
@@ -190,7 +220,8 @@ startBtn.onclick = async () => {
                     <div class="countdown-text" id="cd-timer">ระบบจะกลับสู่หน้าหลักอัตโนมัติใน 5 วินาที...</div>
                 `);
                 let timer = setInterval(() => { 
-                    count--;document.getElementById('cd-timer').innerText = `ระบบจะกลับสู่หน้าหลักอัตโนมัติใน ${count} วินาที...`; 
+                    count--; 
+                    document.getElementById('cd-timer').innerText = `ระบบจะกลับสู่หน้าหลักอัตโนมัติใน ${count} วินาที...`; 
                     if (count <= 0) { 
                         clearInterval(timer); 
                         location.reload(); 
@@ -200,17 +231,30 @@ startBtn.onclick = async () => {
             }
         }
 
-        const labels = { 'In': 'เข้างาน', 'เข้างานบ่าย': 'เข้างานบ่าย', 'Out': 'ออกงาน', 'Vacation': 'พักร้อนเต็มวัน / ลาต่อบ่าย', 'VacationHalf': 'พักร้อน 1/2 วัน', 'Absent': 'ขาดงาน', 'Sick': 'ป่วย' };
+        // ข้อความแสดงผลบนหน้าต่างยืนยัน (เพิ่มป้ายคำว่า 'เข้างานสาย' รองรับสถานะ Late)
+        const labels = { 
+            'In': 'เข้างานปกติ', 
+            'Late': 'เข้างานสาย ⚠️', 
+            'เข้างานบ่าย': 'เข้างานบ่าย', 
+            'Out': 'ออกงาน', 
+            'Vacation': 'พักร้อนเต็มวัน / ลาต่อบ่าย', 
+            'VacationHalf': 'พักร้อน 1/2 วัน', 
+            'Absent': 'ขาดงาน', 
+            'Sick': 'ป่วย' 
+        };
+        
         openModal(`<h3 style="font-size:20px;font-weight:bold;text-align:center;">🔔 ยืนยันบันทึก "${labels[status]}"</h3>
             <div style="background:#f8f9fa;padding:12px;border-radius:8px;text-align:left;border-left:5px solid var(--primary);margin:15px 0;">
                 <p style="margin:5px 0;"><b>ชื่อ:</b> ${window.workerName}</p>
                 <p style="margin:5px 0;"><b>เวลา:</b> ${window.capturedTime}</p>
+                ${status === 'Late' ? '<p style="margin:5px 0;color:red;"><b>หมายเหตุ:</b> เช็คอินสายกว่าเวลาที่กำหนด</p>' : ''}
             </div>
             <div class="modal-btn-group">
                 <button id="confirm-submit-btn" class="btn-in" style="border:none;padding:12px;border-radius:8px;font-weight:bold;" onclick="sendToSheet('${status}')">✅ ยืนยัน</button>
                 <button id="cancel-submit-btn" class="btn-absent" style="border:none;padding:12px;border-radius:8px;font-weight:bold;" onclick="location.reload()">❌ ยกเลิก</button>
             </div>`);
     }
+
 function sendToSheet(status) {
         const confirmBtn = document.getElementById('confirm-submit-btn');
         const cancelBtn = document.getElementById('cancel-submit-btn');
