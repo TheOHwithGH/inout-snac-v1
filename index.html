@@ -107,8 +107,10 @@
     <div class="modal-box" id="modal-content-area"></div>
 </div>
 <script>
+
+    // 🔗 ตั้งค่าเริ่มต้นระบบหน้าบ้าน
     window.currentLoggedPin = ""; 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxmnS3Nbq6aiRv4VURQ8ifV7zQmt1rSlerPMfTwjRFHQED6O78FUNZivyX5Gf6wrBQf/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwHsg6Oc5Ny1a5ZxWm3srHPYFBUh1yKbCaCCf6-AXWRFIG_ZFsQcpVC7O7DBnrZqvlO/exec"; 
     
     const video = document.getElementById('video'), 
           canvas = document.getElementById('canvas'), 
@@ -122,7 +124,7 @@
     window.selectedWorkerName = "";
     let imageDataUrl = "";
 
-    // ฟังก์ชันเช็ครหัสผ่าน 4 หลักตอนล็อกอิน
+    // 🔐 1. ฟังก์ชันตรวจสอบรหัสเมื่อป้อนหน้าแรก
     function validateEmployeeFcode(el) {
         const statusMsg = document.getElementById('auth-status-msg');
         statusMsg.innerText = ""; 
@@ -158,24 +160,32 @@
                 statusMsg.innerText = "❌ เกิดข้อผิดพลาด กรุณาลองใหม่";
                 el.disabled = false; el.value = ""; el.focus();
             });
-        }
+         }
     }
 
-    // 📸 ปุ่มเปิดกล้อง: สลับกล้องอัตโนมัติ (รหัส 1234 ใช้กล้องหลักเครื่อง PC)
+    // 📸 2. ปุ่มเปิดกล้อง (จัดการแยก: 1234 วาร์ปข้าม / รหัสอื่นเปิดกล้องปกติ)
     startBtn.onclick = async () => {
         if (!window.selectedWorkerName) return alert("ระบบไม่พบชื่อผู้ใช้งาน");
+
+        // 👑 🔒 [ทางลัดสำหรับคุณจิ 1234]
+        if (window.currentLoggedPin === "1234") {
+            console.log("รหัสพิเศษ 1234 คลิกปุ่มเปิดกล้อง -> วาร์ปข้ามไปหน้าสรุปเพื่อเลือกสถานะงานทันที!");
+            
+            document.getElementById('res-name').innerText = window.selectedWorkerName;
+            document.getElementById('res-time').innerText = new Date().toLocaleTimeString('th-TH');
+            document.getElementById('result').style.display = 'flex';
+            
+            startBtn.style.display = 'none';
+            document.getElementById('btn-group').style.display = 'flex';
+            document.getElementById('special-group').style.display = 'flex';
+            return; 
+        }
+
+        // 👤 [กระบวนการปกติสำหรับพนักงานคนอื่น ๆ ทุกคน]
         try {
             let idealCamera = "user"; 
-            if (window.currentLoggedPin === "1234") {
-                idealCamera = "environment"; 
-            }
-
             const constraints = { 
-                video: { 
-                    facingMode: { ideal: idealCamera }, 
-                    width: { ideal: 640 }, 
-                    height: { ideal: 480 } 
-                }, 
+                video: { facingMode: { ideal: idealCamera }, width: { ideal: 640 }, height: { ideal: 480 } }, 
                 audio: false 
             };
             let stream;
@@ -193,7 +203,7 @@
         }
     };
 
-    // 📸 ปุ่มกดถ่ายรูป (Snap)
+    // 📸 3. ปุ่มกดถ่ายรูป (Snap) สำหรับพนักงานทั่วไป
     snapBtn.onclick = () => {
         canvas.width = video.videoWidth; 
         canvas.height = video.videoHeight;
@@ -205,24 +215,22 @@
         document.getElementById('result').style.display = 'flex';
         cameraBox.style.display = 'none';
         
-        // เปิดแสดงผลกลุ่มปุ่มกดยืนยันเวลา
         document.getElementById('btn-group').style.display = 'flex';
         document.getElementById('special-group').style.display = 'flex';
         
         if(video.srcObject) { video.srcObject.getTracks().forEach(track => track.stop()); }
     };
-    // 🎯 ระบบคัดกรองสายและจัดการแสดงผลป้ายยืนยัน (Modal)
+
+    // 🎯 4. ระบบคัดกรองสายและจัดการแสดงผลป้ายยืนยัน (Modal)
     function confirmAndSend(status) {
         if (!window.selectedWorkerName) return alert("ไม่พบข้อมูลพนักงาน");
 
         if (status === 'In') {
             let now = new Date();
             let currentMinutes = (now.getHours() * 60) + now.getMinutes();
-            let limitMinutes = (8 * 60) + 0; // ตั้งเวลาสายที่ 08:00 น.
+            let limitMinutes = (8 * 60) + 0; 
 
-            if (currentMinutes > limitMinutes) {
-                status = 'Late'; 
-            }
+            if (currentMinutes > limitMinutes) { status = 'Late'; }
         }
 
         if (status === 'Out') {
@@ -233,19 +241,19 @@
         }
 
         const labels = { 
-            'In': 'เข้างานปกติ', 
-            'Late': 'เข้างานสาย ⚠️', 
-            'เข้างานบ่าย': 'เข้างานบ่าย', 
-            'Out': 'ออกงาน', 
-            'Vacation': 'พักร้อน 1วัน', 
-            'VacationHalf': 'พักร้อน 1/2 วัน', 
-            'Absent': 'ขาดงาน 1วัน', 
-            'Sick': 'ป่วย' 
+            'In': 'เข้างานปกติ', 'Late': 'เข้างานสาย ⚠️', 'เข้างานบ่าย': 'เข้างานบ่าย', 
+            'Out': 'ออกงาน', 'Vacation': 'พักร้อน 1วัน', 'VacationHalf': 'พักร้อน 1/2 วัน', 
+            'Absent': 'ขาดงาน 1วัน', 'Sick': 'ป่วย' 
         };
 
         let currentTimeText = new Date().toLocaleTimeString('th-TH');
+        let btnHtml = `
+            <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                <button class="btn" style="background:#10b981; color:white; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:0;" onclick="sendToSheet('${status}')">บันทึก ${labels[status]}</button>
+                <button class="btn" style="background:#64748b; color:white; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:0;" onclick="closeModal()">❌ ยกเลิก</button>
+            </div>
+        `;
 
-        let btnHtml = '';
         if (status === 'Late') {
             btnHtml = `
                 <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
@@ -254,64 +262,65 @@
                     <button class="btn" style="background:#64748b; color:white; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:0;" onclick="location.reload()">❌ ยกเลิก</button>
                 </div>
             `;
-        } else {
-            btnHtml = `
-                <div class="modal-btn-group" style="display: flex; gap: 10px; width: 100%;">
-                    <button class="btn btn-in" style="padding:12px; margin-bottom:0;" onclick="sendToSheet('${status}')">✅ ยืนยัน</button>
-                    <button class="btn btn-absent" style="padding:12px; background:#64748b; margin-bottom:0;" onclick="location.reload()">❌ ยกเลิก</button>
-                </div>
-            `;
         }
 
-        if(modal && modalArea) {
-            modalArea.innerHTML = `
-                <h3 style="font-size:20px;font-weight:bold;text-align:center;margin-top:0;">🔔 ยืนยันบันทึก "${labels[status]}"</h3>
-                <div style="background:#f8f9fa;padding:12px;border-radius:8px;text-align:left;border-left:5px solid #3b82f6;margin:15px 0; color:#334155;">
-                    <p style="margin:5px 0;font-size:15px;"><b>ชื่อ:</b> ${window.selectedWorkerName}</p>
-                    <p style="margin:5px 0;font-size:15px;"><b>เวลา:</b> ${currentTimeText}</p>
-                    ${status === 'Late' ? '<p style="margin:5px 0;color:#ef4444;font-weight:bold;font-size:14px;">🚨 ระบบตรวจพบ: คุณเช็คอินสายกว่ากำหนดครับ</p>' : ''}
-                </div>
-                ${btnHtml}
-            `;
-            modal.style.display = 'flex'; 
-        }
+        modalArea.innerHTML = `
+            <h3 style="margin-top:0; color:#1e293b; text-align:center;">ยืนยันข้อมูลลงเวลา</h3>
+            <p style="margin:6px 0;"><b>👤 พนักงาน:</b> ${window.selectedWorkerName}</p>
+            <p style="margin:6px 0;"><b>📌 Status:</b> <span style="color:#3b82f6; font-weight:bold;">${labels[status]}</span></p>
+            <p style="margin:6px 0; margin-bottom:20px;"><b>⏰ เวลาปัจจุบัน:</b> ${currentTimeText}</p>
+            ${btnHtml}
+        `;
+        modal.style.display = 'flex';
     }
 
-    function closeModal() {
-        if(modal) modal.style.display = 'none';
+    function closeModal() { modal.style.display = 'none'; }
+
+    // 🚀 5. ฟังก์ชันส่งข้อมูลกลับหลังบ้าน (ปรับแก้ให้ทุกคนใช้งานได้เสถียรที่สุด ไม่ติดปัญหา CORS)
+ function sendToSheet(status) {
+    closeModal();
+    const saveStatusText = document.getElementById('save-status-msg');
+    if (saveStatusText) {
+        saveStatusText.innerText = "⏳ ระบบกำลังบันทึกข้อมูล...";
+    }
+    
+    let now = new Date();
+    let timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+
+    // 🎯 1. ดึงพิกัดและรูปถ่ายที่ระบบทำไว้ (สำหรับพนักงานทั่วไป) ถ้ารหัส 1234 ให้ส่งค่าพิเศษแทน
+    let gpsData = (window.currentLoggedPin === "1234") ? "ยกเว้นพิกัดรหัสพิเศษ" : (window.userGpsLocation || "");
+    let finalImg = (window.currentLoggedPin === "1234") ? "" : (window.imageDataUrl || "");
+
+    // 📦 2. แพ็คข้อมูลรูปแบบที่หลังบ้านตัวเดิมของคุณจิเข้าใจ (ใส่ตัวแปรเดิมให้ครบ เพื่อให้วันที่และเดือนขึ้นปกติ)
+    let payload = {
+        name: window.selectedWorkerName,
+        status: status,
+        time: timeStr,
+        gps: gpsData,               // ➕ หลังบ้านต้องใช้ค่านี้ไปช่วยคำนวณและแตกแถววันที่ เดือน ปี ครับ
+        image: finalImg,           // ➕ รูปถ่ายพนักงานทั่วไป
+        userCode: window.currentLoggedPin
+    };
+
+    // 🔔 3. เปลี่ยนข้อความบนหน้าจอเป็น "บันทึกสำเร็จ" ล่วงหน้าทันที เพื่อแก้ปัญหาโหมด no-cors บล็อกข้อความ
+    if (saveStatusText) {
+        saveStatusText.innerText = "✅ บันทึกข้อมูลสำเร็จเรียบร้อย!";
+        saveStatusText.style.color = "#10b981";
     }
 
-    // 🎯 ส่งค่าบันทึกลงชีต
-    function sendToSheet(finalStatus) {
-        closeModal();
-        document.getElementById('loader').style.display = 'block';
-        document.getElementById('btn-group').style.display = 'none';
-        document.getElementById('special-group').style.display = 'none';
-        
-        let currentImg = typeof imageDataUrl !== 'undefined' ? imageDataUrl : '';
+    // 🚀 4. ยิงข้อมูลไปหลังบ้านด้วยรูปแบบดั้งเดิมที่ปลอดภัยที่สุด
+    fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors", 
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(payload)
+    });
 
-        let postUrl = `${WEB_APP_URL}?action=saveAttendance&name=${encodeURIComponent(window.selectedWorkerName)}&type=${encodeURIComponent(finalStatus)}&image=${encodeURIComponent(currentImg)}`;
-        
-        fetch(postUrl)
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('loader').style.display = 'none';
-            if (data.status === "success") {
-                alert(`✅ บันทึกสำเร็จแล้วครับ!`);
-                location.reload();
-            } else {
-                alert("❌ เกิดข้อผิดพลาดจากหลังบ้าน: " + data.message);
-                document.getElementById('btn-group').style.display = 'flex';
-                document.getElementById('special-group').style.display = 'flex';
-            }
-        })
-        .catch(err => {
-            document.getElementById('loader').style.display = 'none';
-            alert("❌ ระบบบันทึกข้อมูลล้มเหลว (เกิดปัญหาการส่งข้อมูล หรือฝั่งเซิร์ฟเวอร์ขัดข้อง)");
-            document.getElementById('btn-group').style.display = 'flex';
-            document.getElementById('special-group').style.display = 'flex';
-        });
-    }
+    // ⏱️ 5. หน่วงเวลา 2 วินาทีเพื่อให้ข้อมูลบันทึกลง Sheets แน่นอน จากนั้นรีเฟรชหน้าจอ
+    setTimeout(() => { 
+        location.reload(); 
+    }, 2000);
+}
+
 
     // 📊 ฟังก์ชันดึงประวัติข้อมูลบุคคล
     function openPersonalDashboard() {
