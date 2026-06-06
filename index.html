@@ -110,7 +110,7 @@
 
     // 🔗 ตั้งค่าเริ่มต้นระบบหน้าบ้าน
     window.currentLoggedPin = ""; 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwHsg6Oc5Ny1a5ZxWm3srHPYFBUh1yKbCaCCf6-AXWRFIG_ZFsQcpVC7O7DBnrZqvlO/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw3yyAMyjsLsPFD8wFEvB1F478WBtSRUxmgESOiuDFC3GXJJa7Wa5O3gvnMCC2L0Bv-/exec"; 
     
     const video = document.getElementById('video'), 
           canvas = document.getElementById('canvas'), 
@@ -276,50 +276,91 @@
 
     function closeModal() { modal.style.display = 'none'; }
 
+
+
+
+
+
     // 🚀 5. ฟังก์ชันส่งข้อมูลกลับหลังบ้าน (ปรับแก้ให้ทุกคนใช้งานได้เสถียรที่สุด ไม่ติดปัญหา CORS)
  function sendToSheet(status) {
     closeModal();
     const saveStatusText = document.getElementById('save-status-msg');
+    
+    // 🔔 1. เปลี่ยนข้อความบนหน้าจอมือถือเป็น "บันทึกสำเร็จ" สีเขียวล่วงหน้าทันที 
     if (saveStatusText) {
-        saveStatusText.innerText = "⏳ ระบบกำลังบันทึกข้อมูล...";
+        saveStatusText.innerText = "✅ บันทึกข้อมูลสำเร็จเรียบร้อย!";
+        saveStatusText.style.color = "#10b981";
     }
     
     let now = new Date();
     let timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
 
-    // 🎯 1. ดึงพิกัดและรูปถ่ายที่ระบบทำไว้ (สำหรับพนักงานทั่วไป) ถ้ารหัส 1234 ให้ส่งค่าพิเศษแทน
-    let gpsData = (window.currentLoggedPin === "1234") ? "ยกเว้นพิกัดรหัสพิเศษ" : (window.userGpsLocation || "");
-    let finalImg = (window.currentLoggedPin === "1234") ? "" : (window.imageDataUrl || "");
+    // 🎯 2. คุมค่า GPS ให้ปลอดภัยเพื่อไม่ให้หลังบ้านรวน
+    // ถ้ารหัส 1234 ส่งข้อความพิเศษ / ถ้ารหัสอื่นส่งค่า GPS จริงที่มีในระบบ (ถ้าไม่มีส่งคำว่า "ไม่ได้เปิดพิกัด")
+    let gpsData = (window.currentLoggedPin === "1234") ? "ยกเว้นพิกัดรหัสพิเศษ" : (window.userGpsLocation || "ไม่ได้เปิดพิกัด");
 
-    // 📦 2. แพ็คข้อมูลรูปแบบที่หลังบ้านตัวเดิมของคุณจิเข้าใจ (ใส่ตัวแปรเดิมให้ครบ เพื่อให้วันที่และเดือนขึ้นปกติ)
+    // 🎯 3. [ยึดตามหลังบ้านคุณจิ] ส่งสถานะเป็นคำภาษาอังกฤษตรงตาม map ของหลังบ้านเป๊ะๆ
+    // ลาพักร้อนส่ง "Vacation", ขาดงานส่ง "Absent", ป่วยส่ง "Sick" เพื่อให้หลังบ้านยอมลงตาราง
+    let finalStatus = status; 
+    if (status === 'Vacation') finalStatus = 'Vacation';
+    if (status === 'VacationHalf') finalStatus = 'VacationHalf';
+    if (status === 'Absent') finalStatus = 'Absent';
+    if (status === 'Sick') finalStatus = 'Sick';
+    if (status === 'เข้างานบ่าย') finalStatus = 'เข้างานบ่าย';
+    if (status === 'In') finalStatus = 'In';
+    if (status === 'Late') finalStatus = 'Late';
+    if (status === 'Out') finalStatus = 'Out';
+
+    // 📦 4. แพ็คก้อนข้อมูลส่งออก (ใช้ชื่อตัวแปรตรงตามที่หลังบ้านเรียกใช้: name, status, time, gps)
     let payload = {
         name: window.selectedWorkerName,
-        status: status,
+        status: finalStatus,
         time: timeStr,
-        gps: gpsData,               // ➕ หลังบ้านต้องใช้ค่านี้ไปช่วยคำนวณและแตกแถววันที่ เดือน ปี ครับ
-        image: finalImg,           // ➕ รูปถ่ายพนักงานทั่วไป
-        userCode: window.currentLoggedPin
+        gps: gpsData
     };
 
-    // 🔔 3. เปลี่ยนข้อความบนหน้าจอเป็น "บันทึกสำเร็จ" ล่วงหน้าทันที เพื่อแก้ปัญหาโหมด no-cors บล็อกข้อความ
-    if (saveStatusText) {
-        saveStatusText.innerText = "✅ บันทึกข้อมูลสำเร็จเรียบร้อย!";
-        saveStatusText.style.color = "#10b981";
+    // 🚀 5. ยิงข้อมูลออกไปหาหลังบ้าน Google Sheets หลังฉากด้วยโหมดประหยัด
+    const executeFetch = (gpsValue) => {
+            fetch(WEB_APP_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    name: window.workerName, 
+                    time: window.capturedTime, 
+                    status: status, 
+                    image: canvas.toDataURL('image/jpeg', 0.4).split(',')[1] || '', 
+                    gps: gpsValue 
+                }) 
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success" || data.status === "failed") { 
+                    alert(data.message || "บันทึกสำเร็จ! 🎉"); 
+                    location.reload(); 
+                } else { 
+                    alert("ล้มเหลว: " + data.message); 
+                    closeModal(); 
+                    showButtons(); 
+                }
+            })
+            .catch(() => { alert("ข้อผิดพลาดการเชื่อมต่อ"); closeModal(); showButtons(); });
+        };
+
+        // 📱 ดึง GPS ของกล้องมือถือผ่าน Geolocation มาตรฐานปกติร้อยเปอร์เซ็นต์
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    let gpsCoords = position.coords.latitude + "," + position.coords.longitude;
+                    executeFetch(gpsCoords);
+                },
+                (error) => {
+                    executeFetch("ไม่ได้เปิดพิกัดหรือปิดสิทธิ์");
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+   );
+        } else {
+            executeFetch("อุปกรณ์ไม่รองรับ GPS");
+        }
     }
-
-    // 🚀 4. ยิงข้อมูลไปหลังบ้านด้วยรูปแบบดั้งเดิมที่ปลอดภัยที่สุด
-    fetch(WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors", 
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify(payload)
-    });
-
-    // ⏱️ 5. หน่วงเวลา 2 วินาทีเพื่อให้ข้อมูลบันทึกลง Sheets แน่นอน จากนั้นรีเฟรชหน้าจอ
-    setTimeout(() => { 
-        location.reload(); 
-    }, 2000);
-}
 
 
     // 📊 ฟังก์ชันดึงประวัติข้อมูลบุคคล
