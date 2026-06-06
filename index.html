@@ -107,10 +107,9 @@
     <div class="modal-box" id="modal-content-area"></div>
 </div>
 <script>
-
     // 🔗 ตั้งค่าเริ่มต้นระบบหน้าบ้าน
     window.currentLoggedPin = ""; 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw3yyAMyjsLsPFD8wFEvB1F478WBtSRUxmgESOiuDFC3GXJJa7Wa5O3gvnMCC2L0Bv-/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzUHAUWU_FJ0S-_4t6zwfyOsVdVv5B6Qhqro-2RoxA7G-Zzqb6Ddg5ElZjVpHvp4_fr/exec"; 
     
     const video = document.getElementById('video'), 
           canvas = document.getElementById('canvas'), 
@@ -123,6 +122,7 @@
     
     window.selectedWorkerName = "";
     let imageDataUrl = "";
+    let userGpsLocation = ""; // ตัวแปรเก็บพิกัดจริง
 
     // 🔐 1. ฟังก์ชันตรวจสอบรหัสเมื่อป้อนหน้าแรก
     function validateEmployeeFcode(el) {
@@ -145,6 +145,13 @@
                     statusMsg.innerText = "✅ รหัสถูกต้อง กำลังเข้าสู่ระบบ...";
                     window.selectedWorkerName = data.name;
 
+                    // ขอพิกัด GPS สแตนด์บายไว้ (ทุกคนรวมถึง 1234)
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(pos => {
+                            userGpsLocation = pos.coords.latitude + "," + pos.coords.longitude;
+                        }, err => { userGpsLocation = "ไม่ได้เปิดพิกัด"; });
+                    }
+
                     setTimeout(() => {
                         document.getElementById('auth-screen').style.display = 'none';
                         document.getElementById('display-worker-name').innerText = "👤 ผู้ใช้งาน: " + data.name;
@@ -163,33 +170,32 @@
          }
     }
 
-    // 📸 ปุ่มเปิดกล้อง (ทุกคนทำเหมือนกันหมด ไม่มีข้ามหน้าจอ)
-startBtn.onclick = async () => {
-    if (!window.selectedWorkerName) return alert("ระบบไม่พบชื่อผู้ใช้งาน");
+    // 📸 2. ปุ่มเปิดกล้อง (ทุกคนทำเงื่อนไขเหมือนกันหมด บังคับเปิดกล้องส่องหน้า)
+    startBtn.onclick = async () => {
+        if (!window.selectedWorkerName) return alert("ระบบไม่พบชื่อผู้ใช้งาน");
 
-    try {
-        let idealCamera = "user"; 
-        const constraints = { 
-            video: { facingMode: { ideal: idealCamera }, width: { ideal: 640 }, height: { ideal: 480 } }, 
-            audio: false 
-        };
-        let stream;
-        try { 
-            stream = await navigator.mediaDevices.getUserMedia(constraints); 
-        } catch (e) { 
-            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); 
+        try {
+            let idealCamera = "user"; 
+            const constraints = { 
+                video: { facingMode: { ideal: idealCamera }, width: { ideal: 640 }, height: { ideal: 480 } }, 
+                audio: false 
+            };
+            let stream;
+            try { 
+                stream = await navigator.mediaDevices.getUserMedia(constraints); 
+            } catch (e) { 
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); 
+            }
+            video.srcObject = stream;
+            await video.play(); 
+            cameraBox.style.display = 'block';
+            startBtn.style.display = 'none';
+        } catch (err) { 
+            alert("กล้องขัดข้อง: " + err.message); 
         }
-        video.srcObject = stream;
-        await video.play(); 
-        cameraBox.style.display = 'block';
-        startBtn.style.display = 'none';
-    } catch (err) { 
-        alert("กล้องขัดข้อง: " + err.message); 
-    }
-};
+    };
 
-
-    // 📸 3. ปุ่มกดถ่ายรูป (Snap) สำหรับพนักงานทั่วไป
+    // 📸 3. ปุ่มกดถ่ายรูป (Snap) 
     snapBtn.onclick = () => {
         canvas.width = video.videoWidth; 
         canvas.height = video.videoHeight;
@@ -262,61 +268,53 @@ startBtn.onclick = async () => {
 
     function closeModal() { modal.style.display = 'none'; }
 
+    // 🚀 5. ฟังก์ชันส่งข้อมูลกลับหลังบ้าน (จับคู่ภาษาอังกฤษให้ตรงล็อกกับชุด let map หลังบ้านเป๊ะๆ)
+    function sendToSheet(status) {
+        closeModal();
+        const saveStatusText = document.getElementById('save-status-msg');
+        
+        if (saveStatusText) {
+            saveStatusText.innerText = "✅ บันทึกข้อมูลสำเร็จเรียบร้อย!";
+            saveStatusText.style.color = "#10b981";
+        }
+        
+        let now = new Date();
+        let timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
 
+        let gpsData = userGpsLocation || "ไม่ได้เปิดพิกัด";
+        let finalImg = imageDataUrl || "";
 
+        // 🎯 ส่งค่าภาษาอังกฤษและไทย ตรงตามคีย์แมปหลังบ้านเป๊ะๆ เพื่อให้กฎเหล็กตรวจสอบซ้ำทำงานได้สมบูรณ์
+        let finalStatus = status; 
+        if (status === 'Vacation') finalStatus = 'Vacation';
+        if (status === 'VacationHalf') finalStatus = 'VacationHalf';
+        if (status === 'Absent') finalStatus = 'Absent';
+        if (status === 'Sick') finalStatus = 'Sick';
+        if (status === 'เข้างานบ่าย') finalStatus = 'เข้างานบ่าย';
+        if (status === 'In') finalStatus = 'In';
+        if (status === 'Late') finalStatus = 'Late';
+        if (status === 'Out') finalStatus = 'Out';
 
+        let payload = {
+            name: window.selectedWorkerName,
+            status: finalStatus,
+            time: timeStr,
+            gps: gpsData,
+            image: finalImg
+        };
 
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            mode: "no-cors", 
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify(payload)
+        });
 
- function sendToSheet(status) {
-    closeModal();
-    const saveStatusText = document.getElementById('save-status-msg');
-    
-    // เปลี่ยนข้อความบนหน้าจอมือถือเป็น "บันทึกสำเร็จ" สีเขียวล่วงหน้าทันที เพื่อแก้ปัญหาโหมด no-cors บล็อกข้อความ
-    if (saveStatusText) {
-        saveStatusText.innerText = "✅ บันทึกข้อมูลสำเร็จเรียบร้อย!";
-        saveStatusText.style.color = "#10b981";
+        setTimeout(() => { 
+            location.reload(); 
+        }, 2000);
     }
-    
-    let now = new Date();
-    let timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-
-    // ดึงค่า GPS จริงจากระบบหน้าบ้านที่แอบเก็บไว้ (ถ้าไม่มีค่าจะส่ง "ไม่ได้เปิดพิกัด" เพื่อให้หลังบ้านไม่รวน)
-    let gpsData = window.userGpsLocation || "ไม่ได้เปิดพิกัด";
-    let finalImg = window.imageDataUrl || "";
-
-    // 🎯 แมปชื่อสถานะให้เป็นภาษาอังกฤษและไทย ตรงตามคำที่เขียนล็อกไว้ในโค้ดหลังบ้าน (let map) เป๊ะๆ
-    let finalStatus = status; 
-    if (status === 'Vacation') finalStatus = 'Vacation';
-    if (status === 'VacationHalf') finalStatus = 'VacationHalf';
-    if (status === 'Absent') finalStatus = 'Absent';
-    if (status === 'Sick') finalStatus = 'Sick';
-    if (status === 'เข้างานบ่าย') finalStatus = 'เข้างานบ่าย';
-    if (status === 'In') finalStatus = 'In';
-    if (status === 'Late') finalStatus = 'Late';
-    if (status === 'Out') finalStatus = 'Out';
-
-    // 📦 แพ็คก้อนข้อมูลส่งออก (โครงสร้างหลัก name, status, time, gps ตามหลังบ้านเรียกใช้)
-    let payload = {
-        name: window.selectedWorkerName,
-        status: finalStatus,
-        time: timeStr,
-        gps: gpsData,
-        image: finalImg
-    };
-
-    // ยิงข้อมูลออกไปหาหลังบ้าน Google Sheets แบบประหยัดเสถียรที่สุด
-    fetch(WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors", 
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify(payload)
-    });
-
-    // หน่วงเวลา 2 วินาทีให้ข้อมูลบันทึกในตาราง Sheets ชัวร์ๆ แล้วรีเฟรชหน้าจอ
-    setTimeout(() => { 
-        location.reload(); 
-    }, 2000);
-}
+</script>
 
 
     // 📊 ฟังก์ชันดึงประวัติข้อมูลบุคคล
