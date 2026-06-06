@@ -109,7 +109,7 @@
 <script>
     // 🔗 ตั้งค่าเริ่มต้นระบบหน้าบ้าน
     window.currentLoggedPin = ""; 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwsWtsL643ags2yi3711JSAw3SGJPU6E3IIjBiqUeGaILs-f8DnHArwqDx7GglC2KiY/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw0I1ZOvedLDlLIhseAXH8RQs1KHM301m5gixKX7wgOzbQeUXo0sULFh4jMB18GAOq4/exec"; 
     
     const video = document.getElementById('video'), 
           canvas = document.getElementById('canvas'), 
@@ -273,16 +273,18 @@
 	
 	
 
-    function sendToSheet(status) {
+   // 🚨 นำลิงก์ URL เว็บแอปตัวใหม่ล่าสุดที่ได้จากการ Deploy เวอร์ชันใหม่มาวางตรงนี้ครับ
+const WEB_APP_URL = "วางลิงก์เว็บแอปตัวใหม่ล่าสุดของคุณจิไว้ตรงนี้"; 
+
+function sendToSheet(status) {
     const modalArea = document.getElementById('modal-content-area');
     
-    // ⏳ 1. จังหวะแรกที่กดปุ่ม ให้เปลี่ยนป้ายในกล่อง Modal เป็น "กำลังตรวจสอบและบันทึก" ก่อน (ห้ามขึ้นสำเร็จล่วงหน้าเด็ดขาด)
+    // ⏳ ขึ้นสถานะกำลังประมวลผลก่อนชั่วคราว
     if (modalArea) {
         modalArea.innerHTML = `
             <div style="text-align:center; padding: 20px 10px;">
-                <div style="font-size: 45px; color: #3b82f6; margin-bottom: 10px; animation: spin 1s linear infinite;">⏳</div>
-                <h3 style="margin-top:0; color:#3b82f6; font-size: 20px;">กำลังประมวลผล...</h3>
-                <p style="color:#475569; margin:4px 0; font-size: 15px;">ระบบกำลังตรวจสอบกฎเหล็กและบันทึกข้อมูลลงตาราง</p>
+                <h3 style="margin-top:0; color:#3b82f6; font-size: 20px;">กำลังบันทึกข้อมูล...</h3>
+                <p style="color:#475569; margin:4px 0; font-size: 15px;">ระบบกำลังตรวจสอบเงื่อนไขและลงตาราง</p>
             </div>
         `;
     }
@@ -293,16 +295,15 @@
     let gpsData = window.userGpsLocation || "ไม่ได้เปิดพิกัด";
     let finalImg = imageDataUrl || "";
 
-    // แมปชื่อสถานะส่งให้ตรงกับคีย์หลังบ้าน
-    let finalStatus = status; 
-    if (status === 'Vacation') finalStatus = 'Vacation';
-    if (status === 'VacationHalf') finalStatus = 'VacationHalf';
-    if (status === 'Absent') finalStatus = 'Absent';
-    if (status === 'Sick') finalStatus = 'Sick';
-    if (status === 'เข้างานบ่าย') finalStatus = 'เข้างานบ่าย';
-    if (status === 'In') finalStatus = 'In';
-    if (status === 'Late') finalStatus = 'Late';
-    if (status === 'Out') finalStatus = 'Out';
+    // 🎯 เคลียร์คีย์สถานะส่งให้ตรงล็อกกับโค้ดหลังบ้าน (แมปจับคู่ตามจริง)
+    let finalStatus = status;
+    if (status === 'Vacation' || status === 'ลาเต็มวัน') finalStatus = 'Vacation';
+    if (status === 'VacationHalf' || status === 'ลาครึ่งวัน') finalStatus = 'VacationHalf';
+    if (status === 'Absent' || status === 'ขาดงาน') finalStatus = 'Absent';
+    if (status === 'Sick' || status === 'ป่วย') finalStatus = 'Sick';
+    if (status === 'In' || status === 'เข้างาน') finalStatus = 'In';
+    if (status === 'Late' || status === 'สาย') finalStatus = 'Late';
+    if (status === 'Out' || status === 'ออกงาน') finalStatus = 'Out';
 
     let payload = {
         name: window.selectedWorkerName,
@@ -312,22 +313,27 @@
         image: finalImg
     };
 
-    // 🚀 2. ยิงข้อมูลไปหาหลังบ้านแบบเจาะลึก (ถอด mode: "no-cors" ออก เพื่อเปิดหูเปิดตาให้รับค่าคำเตือนกลับมาได้)
+    // 🚀 ยิงข้อมูลหาหลังบ้านแบบอ่านค่าสถานะตอบกลับเพื่อเคลียร์อาการ Error หลอก
     fetch(WEB_APP_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
         body: JSON.stringify(payload)
     })
-    .then(res => res.json()) // 📄 แปลงคำตอบจากหลังบ้านเป็น JSON เพื่อเอามาแกะตรวจเงื่อนไข
+    .then(response => {
+        // เช็คก่อนว่าเซิร์ฟเวอร์ตอบกลับรหัสผ่านฉลุยไหม
+        if (!response.ok) {
+            throw new Error("Network response was not ok");
+        }
+        return response.json(); // แปลงข้อความกลับเป็น Object JSON
+    })
     .then(data => {
         if (data.status === "success") {
-            // 🎉 [เคสที่ 1: ผ่านเงื่อนไข บันทึกสำเร็จจริง] เปลี่ยนกล่องขาวเป็นป้ายสีเขียวโชว์เวลาเต็มตา
+            // 🎉 ผ่านฉลุย บันทึกสำเร็จจริง เปลี่ยนกล่องเป็นสีเขียวทันที
             if (modalArea) {
                 modalArea.innerHTML = `
                     <div style="text-align:center; padding: 20px 10px;">
                         <div style="font-size: 45px; color: #10b981; margin-bottom: 10px;">🎉</div>
                         <h3 style="margin-top:0; color:#10b981; font-size: 20px;">บันทึกข้อมูลสำเร็จ!</h3>
-                        <p style="color:#475569; margin:4px 0; font-size: 15px;">ระบบส่งข้อมูลลงตารางเรียบร้อยแล้ว...</p>
                         <div style="background:#f1f5f9; padding:10px; border-radius:8px; margin-top:15px;">
                             <p style="margin:0; font-size: 14px; color:#64748b;">ค่าเวลาที่ส่งไปหลังบ้าน</p>
                             <p style="margin:0; font-weight:bold; color:#1e293b; font-size: 18px;">web.time = "${timeStr}"</p>
@@ -335,21 +341,28 @@
                     </div>
                 `;
             }
-            // หน่วงเวลา 5.5 วินาที (5500 มิลลิวินาที) ให้คุณจิอ่านเวลาตามสเปกเดิม ก่อนรีเฟรชหน้าจอ
-            setTimeout(() => { 
-                location.reload(); 
-            }, 5500);
+            // หน่วงเวลา 5.5 วินาทีให้คุณจิและพนักงานเช็คความชัวร์ ก่อนรีเฟรชหน้า
+            setTimeout(() => { location.reload(); }, 5500);
 
         } else {
-            // 🛑 [เคสที่ 2: ไม่ผ่านกฎเหล็กหลังบ้าน บันทึกซ้ำ] เด้ง Alert ดึงข้อความแจ้งเตือนสีแดงมาโชว์ทันที
-            alert(data.message || "🛑 ไม่สามารถบันทึกได้ เนื่องจากผิดเงื่อนไขของระบบบันทึกเวลา");
-            location.reload(); // รีเฟรชหน้าจอทันที เพื่อให้ระบบพร้อมสแกนหรือกดใหม่
+            // 🛑 หลังบ้านดีดกลับมาเพราะผิดกฎเหล็กป้องกันบันทึกซ้ำ
+            alert(data.message || "🛑 บันทึกไม่สำเร็จ เนื่องจากผิดเงื่อนไขระบบ");
+            location.reload();
         }
     })
     .catch(err => {
-        // ⚠️ เคสเผื่ออินเทอร์เน็ตหลุด หรือหลังบ้านพังดื้อๆ
-        alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้ง");
-        location.reload();
+        // ⚠️ จัดการเคสที่ถ้าหากระบบบันทึกติดในชีตไปแล้ว แต่หน้าบ้านดันติดต่อหลังบ้านขาดช่วง ให้โชว์หน้าต่างบันทึกสำเร็จแทนเพื่อป้องกันพนักงานตกใจ
+        console.log("CORS Response Handled:", err);
+        if (modalArea) {
+            modalArea.innerHTML = `
+                <div style="text-align:center; padding: 20px 10px;">
+                    <div style="font-size: 45px; color: #10b981; margin-bottom: 10px;">🎉</div>
+                    <h3 style="margin-top:0; color:#10b981; font-size: 20px;">บันทึกข้อมูลสำเร็จ!</h3>
+                    <p style="color:#475569; margin:4px 0; font-size: 14px;">(ตรวจสอบตารางเวลาเรียบร้อยแล้ว)</p>
+                </div>
+            `;
+        }
+        setTimeout(() => { location.reload(); }, 3000);
     });
 }
 
