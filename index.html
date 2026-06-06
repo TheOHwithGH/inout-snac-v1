@@ -109,7 +109,7 @@
 <script>
     // 🔗 ตั้งค่าเริ่มต้นระบบหน้าบ้าน
     window.currentLoggedPin = ""; 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwkiYdooA-e7NEgpvgr7rw7fKiGXwHCc1PGhpCtx-DRSTOd4m5fIheiopRlXLtioFoT/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwsWtsL643ags2yi3711JSAw3SGJPU6E3IIjBiqUeGaILs-f8DnHArwqDx7GglC2KiY/exec"; 
     
     const video = document.getElementById('video'), 
           canvas = document.getElementById('canvas'), 
@@ -273,27 +273,22 @@
 	
 	
 
-    // 🚀 5. ฟังก์ชันส่งข้อมูลกลับหลังบ้าน (จับคู่ภาษาอังกฤษให้ตรงล็อกกับชุด let map หลังบ้านเป๊ะๆ)
     function sendToSheet(status) {
-    // ⏰ 1. ดึงเวลาปัจจุบันในเครื่องมาทำค่าเวลา (web.time)
-    let now = new Date();
-    let timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-
-    // 🎯 2. เปลี่ยนข้อความในกล่อง Pop-up สีขาวเดิม ให้แสดงผลสำเร็จและโชว์ค่าเวลาทันที!
     const modalArea = document.getElementById('modal-content-area');
+    
+    // ⏳ 1. จังหวะแรกที่กดปุ่ม ให้เปลี่ยนป้ายในกล่อง Modal เป็น "กำลังตรวจสอบและบันทึก" ก่อน (ห้ามขึ้นสำเร็จล่วงหน้าเด็ดขาด)
     if (modalArea) {
         modalArea.innerHTML = `
             <div style="text-align:center; padding: 20px 10px;">
-                <div style="font-size: 45px; color: #10b981; margin-bottom: 10px;">🎉</div>
-                <h3 style="margin-top:0; color:#10b981; font-size: 20px;">บันทึกข้อมูลสำเร็จ!</h3>
-                <p style="color:#475569; margin:4px 0; font-size: 15px;">ระบบกำลังส่งข้อมูลลงตาราง...</p>
-                <div style="background:#f1f5f9; padding:10px; border-radius:8px; margin-top:15px;">
-                    <p style="margin:0; font-size: 14px; color:#64748b;">ค่าเวลาที่ส่งไปหลังบ้าน</p>
-                    <p style="margin:0; font-weight:bold; color:#1e293b; font-size: 18px;">web.time = "${timeStr}"</p>
-                </div>
+                <div style="font-size: 45px; color: #3b82f6; margin-bottom: 10px; animation: spin 1s linear infinite;">⏳</div>
+                <h3 style="margin-top:0; color:#3b82f6; font-size: 20px;">กำลังประมวลผล...</h3>
+                <p style="color:#475569; margin:4px 0; font-size: 15px;">ระบบกำลังตรวจสอบกฎเหล็กและบันทึกข้อมูลลงตาราง</p>
             </div>
         `;
     }
+    
+    let now = new Date();
+    let timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
     
     let gpsData = window.userGpsLocation || "ไม่ได้เปิดพิกัด";
     let finalImg = imageDataUrl || "";
@@ -312,23 +307,50 @@
     let payload = {
         name: window.selectedWorkerName,
         status: finalStatus,
-        time: timeStr,   // ข้อมูลก้อนนี้จะวิ่งไปเป็น web.time หลังบ้าน
+        time: timeStr,   
         gps: gpsData,
         image: finalImg
     };
 
-    // ยิงข้อมูลออกไปหลังบ้าน Google Sheets
+    // 🚀 2. ยิงข้อมูลไปหาหลังบ้านแบบเจาะลึก (ถอด mode: "no-cors" ออก เพื่อเปิดหูเปิดตาให้รับค่าคำเตือนกลับมาได้)
     fetch(WEB_APP_URL, {
         method: "POST",
-        mode: "no-cors", 
         headers: { "Content-Type": "text/plain" },
         body: JSON.stringify(payload)
-    });
+    })
+    .then(res => res.json()) // 📄 แปลงคำตอบจากหลังบ้านเป็น JSON เพื่อเอามาแกะตรวจเงื่อนไข
+    .then(data => {
+        if (data.status === "success") {
+            // 🎉 [เคสที่ 1: ผ่านเงื่อนไข บันทึกสำเร็จจริง] เปลี่ยนกล่องขาวเป็นป้ายสีเขียวโชว์เวลาเต็มตา
+            if (modalArea) {
+                modalArea.innerHTML = `
+                    <div style="text-align:center; padding: 20px 10px;">
+                        <div style="font-size: 45px; color: #10b981; margin-bottom: 10px;">🎉</div>
+                        <h3 style="margin-top:0; color:#10b981; font-size: 20px;">บันทึกข้อมูลสำเร็จ!</h3>
+                        <p style="color:#475569; margin:4px 0; font-size: 15px;">ระบบส่งข้อมูลลงตารางเรียบร้อยแล้ว...</p>
+                        <div style="background:#f1f5f9; padding:10px; border-radius:8px; margin-top:15px;">
+                            <p style="margin:0; font-size: 14px; color:#64748b;">ค่าเวลาที่ส่งไปหลังบ้าน</p>
+                            <p style="margin:0; font-weight:bold; color:#1e293b; font-size: 18px;">web.time = "${timeStr}"</p>
+                        </div>
+                    </div>
+                `;
+            }
+            // หน่วงเวลา 5.5 วินาที (5500 มิลลิวินาที) ให้คุณจิอ่านเวลาตามสเปกเดิม ก่อนรีเฟรชหน้าจอ
+            setTimeout(() => { 
+                location.reload(); 
+            }, 5500);
 
-    // หน่วงเวลา 2.5 วินาที ให้คุณจิและพนักงานได้อ่านค่าเวลาในกล่องนี้ ก่อนที่หน้าจอจะรีเฟรชกลับหน้าแรก
-    setTimeout(() => { 
-        location.reload(); 
-    }, 5500);
+        } else {
+            // 🛑 [เคสที่ 2: ไม่ผ่านกฎเหล็กหลังบ้าน บันทึกซ้ำ] เด้ง Alert ดึงข้อความแจ้งเตือนสีแดงมาโชว์ทันที
+            alert(data.message || "🛑 ไม่สามารถบันทึกได้ เนื่องจากผิดเงื่อนไขของระบบบันทึกเวลา");
+            location.reload(); // รีเฟรชหน้าจอทันที เพื่อให้ระบบพร้อมสแกนหรือกดใหม่
+        }
+    })
+    .catch(err => {
+        // ⚠️ เคสเผื่ออินเทอร์เน็ตหลุด หรือหลังบ้านพังดื้อๆ
+        alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้ง");
+        location.reload();
+    });
 }
 
 
