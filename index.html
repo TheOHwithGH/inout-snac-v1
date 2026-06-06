@@ -108,19 +108,25 @@
     <div class="modal-box" id="modal-content-area"></div>
 </div>
 <script>
-  // วางไว้แถวๆ ด้านบนสุดของ <script> ใกล้ๆ กับตัวแปร WEB_APP_URL ก็ได้ครับ
+    // 💾 1. สร้างตัวแปรส่วนกลางสำหรับจำรหัสที่พนักงานใช้ล็อกอินเข้ามา
+    window.currentLoggedPin = ""; 
 
-window.currentLoggedPin = ""; 
-
-    // ⚠️ ตรวจสอบ URL ของเว็บแอปหลังบ้านให้ถูกต้องตรงกันนะครับคุณจิ
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxRbjY3hfzbE8eupCt4KDV-Nm9gL12AXRF6s92RN78bi4Uj2NUdlNPprOYEbc5wu7oH/exec"; 
+    // ⚠️ ลิงก์เว็บแอปปัจจุบันของคุณจิ
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzRbjY3hfzbE8eupCt4KDV-Nm9gL12AXRF6s92RN78bi4Uj2NUdlNPprOYEbc5wu7oH/exec"; 
     
-    const video = document.getElementById('video'), canvas = document.getElementById('canvas'), startBtn = document.getElementById('start-camera'), snapBtn = document.getElementById('snap'), cameraBox = document.getElementById('camera-box');
-    const modal = document.getElementById('common-modal'), modalArea = document.getElementById('modal-content-area');
+    const video = document.getElementById('video'), 
+          canvas = document.getElementById('canvas'), 
+          startBtn = document.getElementById('start-camera'), 
+          snapBtn = document.getElementById('snap'), 
+          cameraBox = document.getElementById('camera-box');
+          
+    const modal = document.getElementById('common-modal'), 
+          modalArea = document.getElementById('modal-content-area');
     
     window.selectedWorkerName = "";
     let imageDataUrl = "";
 
+    // ฟังก์ชันเช็ครหัสผ่าน 4 หลักตอนล็อกอิน
     function validateEmployeeFcode(el) {
         const statusMsg = document.getElementById('auth-status-msg');
         statusMsg.innerText = ""; 
@@ -136,8 +142,7 @@ window.currentLoggedPin = "";
             .then(res => res.json())
             .then(data => {
                 if (data.status === "success") {
-
-                  // 🎯 2. เก็บจำรหัสที่ล็อกอินสำเร็จไว้ในระบบ เพื่อไปสั่งเปิดกล้อง PC/มือถือ
+                    // 🎯 เก็บจำรหัสที่ล็อกอินสำเร็จไว้ในระบบ เพื่อไปสั่งเปิดกล้อง PC/มือถือ
                     window.currentLoggedPin = codeValue; 
 
                     statusMsg.style.color = "#10b981";
@@ -162,14 +167,63 @@ window.currentLoggedPin = "";
         }
     }
 
-       function confirmAndSend(status) {
+    // 📸 ปุ่มเปิดกล้อง: สลับกล้อง PC อัตโนมัติสำหรับรหัส 1234
+    startBtn.onclick = async () => {
+        if (!window.selectedWorkerName) return alert("ระบบไม่พบชื่อผู้ใช้งาน");
+        try {
+            let idealCamera = "user"; 
+            if (window.currentLoggedPin === "1234") {
+                idealCamera = "environment"; // รหัส 1234 ให้ใช้กล้องหลักเครื่อง PC
+            }
+
+            const constraints = { 
+                video: { facingMode: { ideal: idealCamera } }, 
+                audio: false 
+            };
+
+            let stream;
+            try { 
+                stream = await navigator.mediaDevices.getUserMedia(constraints); 
+            } catch (innerErr) { 
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); 
+            }
+            
+            video.srcObject = stream;
+            await video.play(); 
+            cameraBox.style.display = 'block';
+            startBtn.style.display = 'none';
+        } catch (err) { 
+            alert("⚠️ ไม่สามารถเข้าถึงกล้องได้: " + err.message); 
+        }
+    };
+
+    // 📸 ปุ่มกดถ่ายรูป (Snap)
+    snapBtn.onclick = () => {
+        canvas.width = video.videoWidth; 
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        imageDataUrl = canvas.toDataURL('image/jpeg');
+        
+        document.getElementById('res-name').innerText = window.selectedWorkerName;
+        document.getElementById('res-time').innerText = new Date().toLocaleTimeString('th-TH');
+        document.getElementById('result').style.display = 'flex';
+        cameraBox.style.display = 'none';
+        
+        // 🔒 ดับไฟและปิดสวิตช์กล้องทันทีกรณีถ่ายรูปเสร็จเรียบร้อย
+        if(video.srcObject) { 
+            video.srcObject.getTracks().forEach(track => track.stop()); 
+        }
+    };
+
+    // 🎯 ระบบคัดกรองสายและจัดการแสดงผลป้ายยืนยัน (Modal)
+    function confirmAndSend(status) {
         if (!window.selectedWorkerName) return alert("ไม่พบข้อมูลพนักงาน");
 
-        // 1️⃣ [ระบบคัดกรองสายอัตโนมัติ]
+        // ตรวจสอบระบบคัดกรองสายอัตโนมัติ เฉพาะตอนกดปุ่ม "เข้างาน" (In)
         if (status === 'In') {
             let now = new Date();
             let currentMinutes = (now.getHours() * 60) + now.getMinutes();
-            let limitMinutes = (8 * 60) + 0; // ตั้งสายที่เวลา 08:00 น.
+            let limitMinutes = (8 * 60) + 0; // 🎯 ตั้งเวลาสายที่ 08:00 น. (ปรับเปลี่ยนได้ครับ)
 
             if (currentMinutes > limitMinutes) {
                 status = 'Late'; 
@@ -197,7 +251,7 @@ window.currentLoggedPin = "";
 
         let currentTimeText = new Date().toLocaleTimeString('th-TH');
 
-        // 2️⃣ สร้างปุ่มกดยืนยันตามเงื่อนไข
+        // สร้างปุ่มกดยืนยันตามสถานะ
         let btnHtml = '';
         if (status === 'Late') {
             btnHtml = `
@@ -216,9 +270,6 @@ window.currentLoggedPin = "";
             `;
         }
 
-        const modal = document.getElementById('common-modal');
-        const modalArea = document.getElementById('modal-content-area');
-        
         if(modal && modalArea) {
             modalArea.innerHTML = `
                 <h3 style="font-size:20px;font-weight:bold;text-align:center;margin-top:0;">🔔 ยืนยันบันทึก "${labels[status]}"</h3>
@@ -234,20 +285,17 @@ window.currentLoggedPin = "";
     }
 
     function closeModal() {
-        const modal = document.getElementById('common-modal');
         if(modal) modal.style.display = 'none';
     }
 
-    // 🎯 แก้จุดหลุด: การส่งข้อมูลแบบ Safe-mode ป้องกันการกวาดตัวแปรว่างเปล่า
+    // 🎯 ฟังก์ชันดั้งเดิม: สำหรับสั่งบันทึกข้อมูลและคัดแยกประเภท (ส่งไปใช้ใน confirmAndSend)
     function sendToSheet(finalStatus) {
         closeModal();
         document.getElementById('loader').style.display = 'block';
-        document.getElementById('btn-group').style.display = 'none';
-        document.getElementById('special-group').style.display = 'none';
-
-        // เช็คให้ชัวร์ว่ามีรูปถ่ายไหม ถ้าไม่มีให้ใส่ค่าว่าง เพื่อไม่ให้ยิงลิงก์เสีย
+        
         let currentImg = typeof imageDataUrl !== 'undefined' ? imageDataUrl : '';
 
+        // 🔗 บรรทัดส่งค่าสำเร็จ: ใช้ตัวแปรพิมพ์ใหญ่ WEB_APP_URL และดึงสถานะกับรูปถูกต้องไร้จุดสะดุด
         let postUrl = `${WEB_APP_URL}?action=saveAttendance&name=${encodeURIComponent(window.selectedWorkerName)}&type=${encodeURIComponent(finalStatus)}&image=${encodeURIComponent(currentImg)}`;
         
         fetch(postUrl)
@@ -259,18 +307,14 @@ window.currentLoggedPin = "";
                 location.reload();
             } else {
                 alert("❌ เกิดข้อผิดพลาดจากหลังบ้าน: " + data.message);
-                document.getElementById('btn-group').style.display = 'flex';
-                document.getElementById('special-group').style.display = 'flex';
             }
         })
         .catch(err => {
             document.getElementById('loader').style.display = 'none';
-            // ปรับแจ้งเตือนให้เห็นชัดเจนขึ้นว่าติดที่จุดไหน
-            alert("❌ ระบบบันทึกข้อมูลล้มเหลว (ตรวจพบปัญหาเน็ตเวิร์ก หรือ URL เว็บแอปไม่ถูกต้อง)");
-            document.getElementById('btn-group').style.display = 'flex';
-            document.getElementById('special-group').style.display = 'flex';
+            alert("❌ ระบบบันทึกข้อมูลล้มเหลว (เกิดปัญหาการส่งข้อมูล หรือฝั่งเซิร์ฟเวอร์ขัดข้อง)");
         });
     }
+
 
     function openPersonalDashboard() {
         if (!window.selectedWorkerName) {
