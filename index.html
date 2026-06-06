@@ -370,19 +370,15 @@ window.currentLoggedPin = "";
         if(video.srcObject) { video.srcObject.getTracks().forEach(track => track.stop()); }
     };
 
-      function confirmAndSend(status) {
+       function confirmAndSend(status) {
         if (!window.selectedWorkerName) return alert("ไม่พบข้อมูลพนักงาน");
 
-        // 1️⃣ [ระบบคัดกรองสายอัตโนมัติ] เฉพาะตอนกดปุ่ม "เข้างาน" (In)
+        // 1️⃣ [ระบบคัดกรองสายอัตโนมัติ]
         if (status === 'In') {
             let now = new Date();
             let currentMinutes = (now.getHours() * 60) + now.getMinutes();
-            
-            // 🎯 กำหนดเวลาเข้างานสาย (เช่น 08:00 น. = 8 * 60 = 480 นาที)
-            // คุณจิสามารถเปลี่ยนเป็น "08:30" (510 นาที) ได้ตามต้องการครับ
-            let limitMinutes = (8 * 60) + 0; 
+            let limitMinutes = (8 * 60) + 0; // ตั้งสายที่เวลา 08:00 น.
 
-            // ถ้าเวลากดปุ่ม เกินกว่าเวลาที่กำหนด -> เปลี่ยนสถานะตัวแปรเป็น 'Late' ทันที
             if (currentMinutes > limitMinutes) {
                 status = 'Late'; 
             }
@@ -396,7 +392,6 @@ window.currentLoggedPin = "";
             }
         }
 
-        // ข้อความแสดงผลบนหัวข้อแผงแจ้งเตือนโมดอล
         const labels = { 
             'In': 'เข้างานปกติ', 
             'Late': 'เข้างานสาย ⚠️', 
@@ -408,30 +403,27 @@ window.currentLoggedPin = "";
             'Sick': 'ป่วย' 
         };
 
-        // ดึงเวลาปัจจุบันมาแสดงผลในหน้าต่างยืนยัน
         let currentTimeText = new Date().toLocaleTimeString('th-TH');
 
-        // 2️⃣ สร้างปุ่มกดยืนยันตามเงื่อนไข (ถ้าสาย จะมีปุ่ม "เปลี่ยนใจลาครึ่งวัน" โผล่เพิ่มมาให้เลือก)
+        // 2️⃣ สร้างปุ่มกดยืนยันตามเงื่อนไข
         let btnHtml = '';
         if (status === 'Late') {
             btnHtml = `
                 <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
-                    <button id="confirm-submit-btn" class="btn-in" style="background:#ef4444; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="sendToSheet('Late')">⚠️ ยืนยันเข้างานสาย</button>
+                    <button class="btn-in" style="background:#ef4444; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="sendToSheet('Late')">⚠️ ยืนยันเข้างานสาย</button>
                     <button class="btn-leave" style="background:#8b5cf6; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="closeModal(); confirmAndSend('VacationHalf');">🌗 เปลี่ยนเป็นลาพักร้อน 1/2 วัน</button>
-                    <button id="cancel-submit-btn" class="btn-absent" style="background:#64748b; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="location.reload()">❌ ยกเลิก</button>
+                    <button class="btn-absent" style="background:#64748b; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="location.reload()">❌ ยกเลิก</button>
                 </div>
             `;
         } else {
-            // ปุ่มปกติสำหรับสถานะอื่นๆ (เช่น เข้างานปกติ, ออกงาน, ป่วย)
             btnHtml = `
                 <div class="modal-btn-group" style="display: flex; gap: 10px; width: 100%;">
-                    <button id="confirm-submit-btn" class="btn-in" style="flex: 1; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="sendToSheet('${status}')">✅ ยืนยัน</button>
-                    <button id="cancel-submit-btn" class="btn-absent" style="flex: 1; background:#64748b; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="location.reload()">❌ ยกเลิก</button>
+                    <button class="btn-in" style="flex: 1; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="sendToSheet('${status}')">✅ ยืนยัน</button>
+                    <button class="btn-absent" style="flex: 1; background:#64748b; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="location.reload()">❌ ยกเลิก</button>
                 </div>
             `;
         }
 
-        // ดึงตัวแปรกล่องโมดอลเดิมขึ้นมาแสดงผลตามฟอร์แมตดีไซน์ของคุณจิ
         const modal = document.getElementById('common-modal');
         const modalArea = document.getElementById('modal-content-area');
         
@@ -445,24 +437,26 @@ window.currentLoggedPin = "";
                 </div>
                 ${btnHtml}
             `;
-            modal.style.display = 'flex'; // แสดงหน้าต่างแจ้งเตือนขึ้นมาบนจอ
+            modal.style.display = 'flex'; 
         }
     }
 
-    // 🎯 อย่าลืมฟังก์ชันปิดโมดอล (ตู้รับคำสั่ง)
     function closeModal() {
         const modal = document.getElementById('common-modal');
         if(modal) modal.style.display = 'none';
     }
 
-    // 🎯 ฟังก์ชันเชื่อมโยงส่งค่าไปหาหลังบ้าน
+    // 🎯 แก้จุดหลุด: การส่งข้อมูลแบบ Safe-mode ป้องกันการกวาดตัวแปรว่างเปล่า
     function sendToSheet(finalStatus) {
         closeModal();
         document.getElementById('loader').style.display = 'block';
         document.getElementById('btn-group').style.display = 'none';
         document.getElementById('special-group').style.display = 'none';
 
-        let postUrl = `${WEB_APP_URL}?action=saveAttendance&name=${encodeURIComponent(window.selectedWorkerName)}&type=${finalStatus}&image=${encodeURIComponent(imageDataUrl)}`;
+        // เช็คให้ชัวร์ว่ามีรูปถ่ายไหม ถ้าไม่มีให้ใส่ค่าว่าง เพื่อไม่ให้ยิงลิงก์เสีย
+        let currentImg = typeof imageDataUrl !== 'undefined' ? imageDataUrl : '';
+
+        let postUrl = `${WEB_APP_URL}?action=saveAttendance&name=${encodeURIComponent(window.selectedWorkerName)}&type=${encodeURIComponent(finalStatus)}&image=${encodeURIComponent(currentImg)}`;
         
         fetch(postUrl)
         .then(res => res.json())
@@ -472,34 +466,19 @@ window.currentLoggedPin = "";
                 alert(`✅ บันทึกสำเร็จแล้วครับ!`);
                 location.reload();
             } else {
-                alert("❌ เกิดข้อผิดพลาด: " + data.message);
+                alert("❌ เกิดข้อผิดพลาดจากหลังบ้าน: " + data.message);
                 document.getElementById('btn-group').style.display = 'flex';
                 document.getElementById('special-group').style.display = 'flex';
             }
         })
         .catch(err => {
             document.getElementById('loader').style.display = 'none';
-            alert("❌ ระบบบันทึกข้อมูลล้มเหลว");
+            // ปรับแจ้งเตือนให้เห็นชัดเจนขึ้นว่าติดที่จุดไหน
+            alert("❌ ระบบบันทึกข้อมูลล้มเหลว (ตรวจพบปัญหาเน็ตเวิร์ก หรือ URL เว็บแอปไม่ถูกต้อง)");
             document.getElementById('btn-group').style.display = 'flex';
             document.getElementById('special-group').style.display = 'flex';
         });
     }
-
-
-    function showButtons() { 
-        document.getElementById('loader').style.display = 'none'; 
-        document.getElementById('btn-group').style.display = 'flex';
-        document.getElementById('special-group').style.display = 'flex'; 
-    }
-
-    document.getElementById('get-personal-info').onclick = () => {
-        if(!selectEl.value) return alert("กรุณาเลือกชื่อก่อนครับ");
-        openModal(`<h3 style="font-size:18px;font-weight:bold;text-align:center;">🔐 ยืนยันตัวตน</h3>
-            <p style="font-size:13px;color:#666;text-align:center;">กรอกเลขท้าย 4 ตัวเลขบัตรประชาชนของ<br><b>${selectEl.value}</b></p>
-            <input type="password" pattern="[0-9]*" inputmode="numeric" maxlength="4" class="pin-input" id="single-pin" oninput="handlePinInput(this)">
-            <button class="btn-absent" style="width:100%;border:none;padding:10px;border-radius:8px;font-weight:bold;" onclick="closeModal()">❌ ยกเลิก</button>`);
-        document.getElementById('single-pin').focus();
-    };
 
 </script>
 </body>
