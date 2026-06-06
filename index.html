@@ -370,26 +370,21 @@ window.currentLoggedPin = "";
         if(video.srcObject) { video.srcObject.getTracks().forEach(track => track.stop()); }
     };
 
-         function confirmAndSend(status) {
-        const selectEl = document.getElementById('employee-select');
+      function confirmAndSend(status) {
+        if (!window.selectedWorkerName) return alert("ไม่พบข้อมูลพนักงาน");
 
-        // 1️⃣ [เช็คระบบคัดกรองสายอัตโนมัติ] เฉพาะตอนกดปุ่ม "เข้างาน" (In) ช่วงเช้า
+        // 1️⃣ [ระบบคัดกรองสายอัตโนมัติ] เฉพาะตอนกดปุ่ม "เข้างาน" (In)
         if (status === 'In') {
-            const selectedOption = selectEl.options[selectEl.selectedIndex];
-            if (selectedOption) {
-                const currentEmployee = window.employeeDataList ? window.employeeDataList.find(e => e.name === selectEl.value) : null;
-                const lateLimitTime = currentEmployee ? currentEmployee.lateLimit : "08:30"; 
+            let now = new Date();
+            let currentMinutes = (now.getHours() * 60) + now.getMinutes();
+            
+            // 🎯 กำหนดเวลาเข้างานสาย (เช่น 08:00 น. = 8 * 60 = 480 นาที)
+            // คุณจิสามารถเปลี่ยนเป็น "08:30" (510 นาที) ได้ตามต้องการครับ
+            let limitMinutes = (8 * 60) + 0; 
 
-                let now = new Date();
-                let currentMinutes = (now.getHours() * 60) + now.getMinutes();
-                
-                let limitParts = lateLimitTime.split(":");
-                let limitMinutes = (parseInt(limitParts[0]) * 60) + parseInt(limitParts[1]);
-
-                // 🎯 ถ้าเวลากดปุ่ม เกินกว่าเวลาสาย -> เปลี่ยนสถานะเป็น 'Late' ทันที
-                if (currentMinutes > limitMinutes) {
-                    status = 'Late'; 
-                }
+            // ถ้าเวลากดปุ่ม เกินกว่าเวลาที่กำหนด -> เปลี่ยนสถานะตัวแปรเป็น 'Late' ทันที
+            if (currentMinutes > limitMinutes) {
+                status = 'Late'; 
             }
         }
 
@@ -401,68 +396,93 @@ window.currentLoggedPin = "";
             }
         }
 
-        // 😭 เช็คสิทธิ์วันลาพักร้อนหมด (รวมกรณีลาครึ่งวันด้วย)
-        if (status === 'Vacation' || status === 'VacationHalf') {
-            let remain = Number(selectEl.options[selectEl.selectedIndex].getAttribute('data-vacation-remain'));
-            if (remain <= 0) {
-                let count = 5;
-                openModal(`
-                    <div class="cry-emoji">😭</div>
-                    <div class="cry-text">วันลาพักร้อนหมด</div>
-                    <div class="countdown-text" id="cd-timer">ระบบจะกลับสู่หน้าหลักอัตโนมัติใน 5 วินาที...</div>
-                `);
-                let timer = setInterval(() => { 
-                    count--; 
-                    document.getElementById('cd-timer').innerText = `ระบบจะกลับสู่หน้าหลักอัตโนมัติใน ${count} วินาที...`; 
-                    if (count <= 0) { 
-                        clearInterval(timer); 
-                        location.reload(); 
-                    } 
-                }, 1000);
-                return;
-            }
-        }
-
-        // ข้อความแสดงผลบนหัวข้อแผงแจ้งเตือน
+        // ข้อความแสดงผลบนหัวข้อแผงแจ้งเตือนโมดอล
         const labels = { 
             'In': 'เข้างานปกติ', 
             'Late': 'เข้างานสาย ⚠️', 
             'เข้างานบ่าย': 'เข้างานบ่าย', 
             'Out': 'ออกงาน', 
-            'Vacation': 'พักร้อนเต็มวัน / ลาต่อบ่าย', 
+            'Vacation': 'พักร้อน 1วัน', 
             'VacationHalf': 'พักร้อน 1/2 วัน', 
-            'Absent': 'ขาดงาน', 
+            'Absent': 'ขาดงาน 1วัน', 
             'Sick': 'ป่วย' 
         };
-        
-        // 2️⃣ สร้างปุ่มกดยืนยันตามเงื่อนไข (ถ้าสาย จะมีปุ่ม "ลาครึ่งวัน" โผล่เพิ่มมาให้เลือก)
+
+        // ดึงเวลาปัจจุบันมาแสดงผลในหน้าต่างยืนยัน
+        let currentTimeText = new Date().toLocaleTimeString('th-TH');
+
+        // 2️⃣ สร้างปุ่มกดยืนยันตามเงื่อนไข (ถ้าสาย จะมีปุ่ม "เปลี่ยนใจลาครึ่งวัน" โผล่เพิ่มมาให้เลือก)
         let btnHtml = '';
         if (status === 'Late') {
-            // 💡 ถ้าสาย: ให้เลือก "ยืนยันเข้าสาย" หรือ "เปลี่ยนใจลา 1/2 วันแทน" หรือ "ยกเลิกกลับหน้าแรก"
             btnHtml = `
                 <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
-                    <button id="confirm-submit-btn" class="btn-in" style="background:var(--danger); border:none; padding:12px; border-radius:8px; font-weight:bold;" onclick="sendToSheet('Late')">⚠️ ยืนยันเข้างานสาย</button>
-                    <button class="btn-leave" style="background:var(--purple); color:white; border:none; padding:12px; border-radius:8px; font-weight:bold;" onclick="closeModal(); confirmAndSend('VacationHalf');">🌗 เปลี่ยนเป็นลาพักร้อน 1/2 วัน</button>
-                    <button id="cancel-submit-btn" class="btn-absent" style="border:none; padding:12px; border-radius:8px; font-weight:bold;" onclick="location.reload()">❌ ยกเลิก</button>
+                    <button id="confirm-submit-btn" class="btn-in" style="background:#ef4444; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="sendToSheet('Late')">⚠️ ยืนยันเข้างานสาย</button>
+                    <button class="btn-leave" style="background:#8b5cf6; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="closeModal(); confirmAndSend('VacationHalf');">🌗 เปลี่ยนเป็นลาพักร้อน 1/2 วัน</button>
+                    <button id="cancel-submit-btn" class="btn-absent" style="background:#64748b; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="location.reload()">❌ ยกเลิก</button>
                 </div>
             `;
         } else {
-            // ปุ่มปกติสำหรับสถานะอื่นๆ
+            // ปุ่มปกติสำหรับสถานะอื่นๆ (เช่น เข้างานปกติ, ออกงาน, ป่วย)
             btnHtml = `
-                <div class="modal-btn-group" style="width: 100%;">
-                    <button id="confirm-submit-btn" class="btn-in" style="border:none; padding:12px; border-radius:8px; font-weight:bold;" onclick="sendToSheet('${status}')">✅ ยืนยัน</button>
-                    <button id="cancel-submit-btn" class="btn-absent" style="border:none; padding:12px; border-radius:8px; font-weight:bold;" onclick="location.reload()">❌ ยกเลิก</button>
+                <div class="modal-btn-group" style="display: flex; gap: 10px; width: 100%;">
+                    <button id="confirm-submit-btn" class="btn-in" style="flex: 1; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="sendToSheet('${status}')">✅ ยืนยัน</button>
+                    <button id="cancel-submit-btn" class="btn-absent" style="flex: 1; background:#64748b; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="location.reload()">❌ ยกเลิก</button>
                 </div>
             `;
         }
 
-        openModal(`<h3 style="font-size:20px;font-weight:bold;text-align:center;">🔔 ยืนยันบันทึก "${labels[status]}"</h3>
-            <div style="background:#f8f9fa;padding:12px;border-radius:8px;text-align:left;border-left:5px solid var(--primary);margin:15px 0;">
-                <p style="margin:5px 0;"><b>ชื่อ:</b> ${window.workerName}</p>
-                <p style="margin:5px 0;"><b>เวลา:</b> ${window.capturedTime}</p>
-                ${status === 'Late' ? '<p style="margin:5px 0;color:var(--danger);font-weight:bold;">🚨 ระบบตรวจพบ: คุณเช็คอินสายกว่ากำหนดครับ</p>' : ''}
-            </div>
-            ${btnHtml}`);
+        // ดึงตัวแปรกล่องโมดอลเดิมขึ้นมาแสดงผลตามฟอร์แมตดีไซน์ของคุณจิ
+        const modal = document.getElementById('common-modal');
+        const modalArea = document.getElementById('modal-content-area');
+        
+        if(modal && modalArea) {
+            modalArea.innerHTML = `
+                <h3 style="font-size:20px;font-weight:bold;text-align:center;margin-top:0;">🔔 ยืนยันบันทึก "${labels[status]}"</h3>
+                <div style="background:#f8f9fa;padding:12px;border-radius:8px;text-align:left;border-left:5px solid #3b82f6;margin:15px 0; color:#334155;">
+                    <p style="margin:5px 0;font-size:15px;"><b>ชื่อ:</b> ${window.selectedWorkerName}</p>
+                    <p style="margin:5px 0;font-size:15px;"><b>เวลา:</b> ${currentTimeText}</p>
+                    ${status === 'Late' ? '<p style="margin:5px 0;color:#ef4444;font-weight:bold;font-size:14px;">🚨 ระบบตรวจพบ: คุณเช็คอินสายกว่ากำหนดครับ</p>' : ''}
+                </div>
+                ${btnHtml}
+            `;
+            modal.style.display = 'flex'; // แสดงหน้าต่างแจ้งเตือนขึ้นมาบนจอ
+        }
+    }
+
+    // 🎯 อย่าลืมฟังก์ชันปิดโมดอล (ตู้รับคำสั่ง)
+    function closeModal() {
+        const modal = document.getElementById('common-modal');
+        if(modal) modal.style.display = 'none';
+    }
+
+    // 🎯 ฟังก์ชันเชื่อมโยงส่งค่าไปหาหลังบ้าน
+    function sendToSheet(finalStatus) {
+        closeModal();
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('btn-group').style.display = 'none';
+        document.getElementById('special-group').style.display = 'none';
+
+        let postUrl = `${WEB_APP_URL}?action=saveAttendance&name=${encodeURIComponent(window.selectedWorkerName)}&type=${finalStatus}&image=${encodeURIComponent(imageDataUrl)}`;
+        
+        fetch(postUrl)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loader').style.display = 'none';
+            if (data.status === "success") {
+                alert(`✅ บันทึกสำเร็จแล้วครับ!`);
+                location.reload();
+            } else {
+                alert("❌ เกิดข้อผิดพลาด: " + data.message);
+                document.getElementById('btn-group').style.display = 'flex';
+                document.getElementById('special-group').style.display = 'flex';
+            }
+        })
+        .catch(err => {
+            document.getElementById('loader').style.display = 'none';
+            alert("❌ ระบบบันทึกข้อมูลล้มเหลว");
+            document.getElementById('btn-group').style.display = 'flex';
+            document.getElementById('special-group').style.display = 'flex';
+        });
     }
 
 function sendToSheet(status) {
