@@ -268,17 +268,14 @@
 
     function closeModal() { modal.style.display = 'none'; }	
 
-   // 🚨 นำลิงก์ URL เว็บแอปตัวใหม่ล่าสุดที่ได้จากการ Deploy เวอร์ชันใหม่มาวางตรงนี้ครับ
-//const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw0I1ZOvedLDlLIhseAXH8RQs1KHM301m5gixKX7wgOzbQeUXo0sULFh4jMB18GAOq4/exec";
-function sendToSheet(status) {
+ function sendToSheet(status) {
     const modalArea = document.getElementById('modal-content-area');
     
-    // ⏳ ขึ้นสถานะกำลังประมวลผลก่อนชั่วคราว
     if (modalArea) {
         modalArea.innerHTML = `
             <div style="text-align:center; padding: 20px 10px;">
-                <h3 style="margin-top:0; color:#3b82f6; font-size: 20px;">กำลังบันทึกข้อมูล...</h3>
-                <p style="color:#475569; margin:4px 0; font-size: 15px;">ระบบกำลังตรวจสอบเงื่อนไขและลงตาราง</p>
+                <h3 style="margin-top:0; color:#3b82f6; font-size: 20px;">กำลังตรวจสอบเงื่อนไข...</h3>
+                <p style="color:#475569; margin:4px 0; font-size: 15px;">ระบบกำลังเช็คกฎเหล็กการบันทึกเวลา</p>
             </div>
         `;
     }
@@ -289,7 +286,6 @@ function sendToSheet(status) {
     let gpsData = window.userGpsLocation || "ไม่ได้เปิดพิกัด";
     let finalImg = imageDataUrl || "";
 
-    // 🎯 เคลียร์คีย์สถานะส่งให้ตรงล็อกกับโค้ดหลังบ้าน (แมปจับคู่ตามจริง)
     let finalStatus = status;
     if (status === 'Vacation' || status === 'ลาเต็มวัน') finalStatus = 'Vacation';
     if (status === 'VacationHalf' || status === 'ลาครึ่งวัน') finalStatus = 'VacationHalf';
@@ -307,56 +303,54 @@ function sendToSheet(status) {
         image: finalImg
     };
 
-    // 🚀 ยิงข้อมูลหาหลังบ้านแบบอ่านค่าสถานะตอบกลับเพื่อเคลียร์อาการ Error หลอก
+    // 🚀 ยิงข้อมูลแบบเด็ดขาด (ใช้ text() แกะตรงๆ เพื่อไม่ให้เจอบั๊ก JSON พังกระโดดข้ามล็อก)
     fetch(WEB_APP_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
         body: JSON.stringify(payload)
     })
-    .then(response => {
-        // เช็คก่อนว่าเซิร์ฟเวอร์ตอบกลับรหัสผ่านฉลุยไหม
-        if (!response.ok) {
-            throw new Error("Network response was not ok");
-        }
-        return response.json(); // แปลงข้อความกลับเป็น Object JSON
-    })
-    .then(data => {
+    .then(response => response.text()) // 📄 รับค่ากลับมาเป็น Text ดิบป้องกันระบบแปลง JSON พัง
+    .then(textData => {
+        console.log("Responseจากหลังบ้านคือ:", textData);
+        let data = JSON.parse(textData); // นำมาแปลงเป็น Object ข้างใน
+
         if (data.status === "success") {
-            // 🎉 ผ่านฉลุย บันทึกสำเร็จจริง เปลี่ยนกล่องเป็นสีเขียวทันที
+            // 🎉 ผ่านฉลุยตัวจริง: หลังบ้านพิมพ์ลงชีตสำเร็จ
             if (modalArea) {
                 modalArea.innerHTML = `
                     <div style="text-align:center; padding: 20px 10px;">
                         <div style="font-size: 45px; color: #10b981; margin-bottom: 10px;">🎉</div>
                         <h3 style="margin-top:0; color:#10b981; font-size: 20px;">บันทึกข้อมูลสำเร็จ!</h3>
                         <div style="background:#f1f5f9; padding:10px; border-radius:8px; margin-top:15px;">
-                            <p style="margin:0; font-size: 14px; color:#64748b;">ค่าเวลาที่ส่งไปหลังบ้าน</p>
+                            <p style="margin:0; font-size: 14px; color:#64748b;">ค่าเวลาปัจจุบัน</p>
                             <p style="margin:0; font-weight:bold; color:#1e293b; font-size: 18px;">web.time = "${timeStr}"</p>
                         </div>
                     </div>
                 `;
             }
-            // หน่วงเวลา 5.5 วินาทีให้คุณจิและพนักงานเช็คความชัวร์ ก่อนรีเฟรชหน้า
             setTimeout(() => { location.reload(); }, 5500);
 
         } else {
-            // 🛑 หลังบ้านดีดกลับมาเพราะผิดกฎเหล็กป้องกันบันทึกซ้ำ
-            alert(data.message || "🛑 บันทึกไม่สำเร็จ เนื่องจากผิดเงื่อนไขระบบ");
-            location.reload();
+            // 🛑 ผิดกฎเหล็กตัวจริง: ดึงข้อความแจ้งเตือนสีแดงจากหลังบ้านมาดักตบทันที!
+            if (modalArea) {
+                modalArea.innerHTML = `
+                    <div style="text-align:center; padding: 20px 10px;">
+                        <div style="font-size: 45px; color: #ef4444; margin-bottom: 10px;">🛑</div>
+                        <h3 style="margin-top:0; color:#ef4444; font-size: 18px;">บันทึกไม่สำเร็จ!</h3>
+                        <p style="color:#1e293b; font-weight:bold; margin:10px 0; font-size: 15px;">${data.message}</p>
+                        <p style="color:#64748b; font-size: 13px;">(ระบบปฏิเสธการลงเวลาเนื่องจากผิดเงื่อนไข)</p>
+                    </div>
+                `;
+            }
+            // หน่วงเวลา 4 วินาทีให้เห็นหน้าต่างแจ้งเตือนสีแดงชัดๆ ว่าผิดเพราะอะไร แล้วค่อยรีเฟรชกลับหน้าแรก
+            setTimeout(() => { location.reload(); }, 4000);
         }
     })
     .catch(err => {
-        // ⚠️ จัดการเคสที่ถ้าหากระบบบันทึกติดในชีตไปแล้ว แต่หน้าบ้านดันติดต่อหลังบ้านขาดช่วง ให้โชว์หน้าต่างบันทึกสำเร็จแทนเพื่อป้องกันพนักงานตกใจ
-        console.log("CORS Response Handled:", err);
-        if (modalArea) {
-            modalArea.innerHTML = `
-                <div style="text-align:center; padding: 20px 10px;">
-                    <div style="font-size: 45px; color: #10b981; margin-bottom: 10px;">🎉</div>
-                    <h3 style="margin-top:0; color:#10b981; font-size: 20px;">บันทึกข้อมูลสำเร็จ!</h3>
-                    <p style="color:#475569; margin:4px 0; font-size: 14px;">(ตรวจสอบตารางเวลาเรียบร้อยแล้ว)</p>
-                </div>
-            `;
-        }
-        setTimeout(() => { location.reload(); }, 3000);
+        // ⚠️ สำหรับบล็อกนี้: ถ้าพังจากเน็ตหลุด/หรือสัญญาณข้ามค่ายมีปัญหา จะ "ไม่ยอมขึ้นป้ายเขียวสำเร็จเด็ดขาด" เพื่อความปลอดภัย
+        console.error("CORS/Network Error:", err);
+        alert("❌ การเชื่อมต่อขัดข้อง หรือตรวจพบความผิดพลาดของเงื่อนไขระบบ กรุณาสแกนหรือลองใหม่อีกครั้ง");
+        location.reload();
     });
 }
 
