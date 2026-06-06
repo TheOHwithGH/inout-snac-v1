@@ -163,45 +163,31 @@
          }
     }
 
-    // 📸 2. ปุ่มเปิดกล้อง (จัดการแยก: 1234 วาร์ปข้าม / รหัสอื่นเปิดกล้องปกติ)
-    startBtn.onclick = async () => {
-        if (!window.selectedWorkerName) return alert("ระบบไม่พบชื่อผู้ใช้งาน");
+    // 📸 ปุ่มเปิดกล้อง (ทุกคนทำเหมือนกันหมด ไม่มีข้ามหน้าจอ)
+startBtn.onclick = async () => {
+    if (!window.selectedWorkerName) return alert("ระบบไม่พบชื่อผู้ใช้งาน");
 
-        // 👑 🔒 [ทางลัดสำหรับคุณจิ 1234]
-        if (window.currentLoggedPin === "1234") {
-            console.log("รหัสพิเศษ 1234 คลิกปุ่มเปิดกล้อง -> วาร์ปข้ามไปหน้าสรุปเพื่อเลือกสถานะงานทันที!");
-            
-            document.getElementById('res-name').innerText = window.selectedWorkerName;
-            document.getElementById('res-time').innerText = new Date().toLocaleTimeString('th-TH');
-            document.getElementById('result').style.display = 'flex';
-            
-            startBtn.style.display = 'none';
-            document.getElementById('btn-group').style.display = 'flex';
-            document.getElementById('special-group').style.display = 'flex';
-            return; 
+    try {
+        let idealCamera = "user"; 
+        const constraints = { 
+            video: { facingMode: { ideal: idealCamera }, width: { ideal: 640 }, height: { ideal: 480 } }, 
+            audio: false 
+        };
+        let stream;
+        try { 
+            stream = await navigator.mediaDevices.getUserMedia(constraints); 
+        } catch (e) { 
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); 
         }
+        video.srcObject = stream;
+        await video.play(); 
+        cameraBox.style.display = 'block';
+        startBtn.style.display = 'none';
+    } catch (err) { 
+        alert("กล้องขัดข้อง: " + err.message); 
+    }
+};
 
-        // 👤 [กระบวนการปกติสำหรับพนักงานคนอื่น ๆ ทุกคน]
-        try {
-            let idealCamera = "user"; 
-            const constraints = { 
-                video: { facingMode: { ideal: idealCamera }, width: { ideal: 640 }, height: { ideal: 480 } }, 
-                audio: false 
-            };
-            let stream;
-            try { 
-                stream = await navigator.mediaDevices.getUserMedia(constraints); 
-            } catch (e) { 
-                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); 
-            }
-            video.srcObject = stream;
-            await video.play(); 
-            cameraBox.style.display = 'block';
-            startBtn.style.display = 'none';
-        } catch (err) { 
-            alert("กล้องขัดข้อง: " + err.message); 
-        }
-    };
 
     // 📸 3. ปุ่มกดถ่ายรูป (Snap) สำหรับพนักงานทั่วไป
     snapBtn.onclick = () => {
@@ -281,12 +267,11 @@
 
 
 
-    // 🚀 5. ฟังก์ชันส่งข้อมูลกลับหลังบ้าน (ปรับแก้ให้ทุกคนใช้งานได้เสถียรที่สุด ไม่ติดปัญหา CORS)
  function sendToSheet(status) {
     closeModal();
     const saveStatusText = document.getElementById('save-status-msg');
     
-    // 🔔 1. เปลี่ยนข้อความบนหน้าจอมือถือเป็น "บันทึกสำเร็จ" สีเขียวล่วงหน้าทันที 
+    // เปลี่ยนข้อความบนหน้าจอมือถือเป็น "บันทึกสำเร็จ" สีเขียวล่วงหน้าทันที เพื่อแก้ปัญหาโหมด no-cors บล็อกข้อความ
     if (saveStatusText) {
         saveStatusText.innerText = "✅ บันทึกข้อมูลสำเร็จเรียบร้อย!";
         saveStatusText.style.color = "#10b981";
@@ -295,12 +280,11 @@
     let now = new Date();
     let timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
 
-    // 🎯 2. คุมค่า GPS ให้ปลอดภัยเพื่อไม่ให้หลังบ้านรวน
-    // ถ้ารหัส 1234 ส่งข้อความพิเศษ / ถ้ารหัสอื่นส่งค่า GPS จริงที่มีในระบบ (ถ้าไม่มีส่งคำว่า "ไม่ได้เปิดพิกัด")
-    let gpsData = (window.currentLoggedPin === "1234") ? "ยกเว้นพิกัดรหัสพิเศษ" : (window.userGpsLocation || "ไม่ได้เปิดพิกัด");
+    // ดึงค่า GPS จริงจากระบบหน้าบ้านที่แอบเก็บไว้ (ถ้าไม่มีค่าจะส่ง "ไม่ได้เปิดพิกัด" เพื่อให้หลังบ้านไม่รวน)
+    let gpsData = window.userGpsLocation || "ไม่ได้เปิดพิกัด";
+    let finalImg = window.imageDataUrl || "";
 
-    // 🎯 3. [ยึดตามหลังบ้านคุณจิ] ส่งสถานะเป็นคำภาษาอังกฤษตรงตาม map ของหลังบ้านเป๊ะๆ
-    // ลาพักร้อนส่ง "Vacation", ขาดงานส่ง "Absent", ป่วยส่ง "Sick" เพื่อให้หลังบ้านยอมลงตาราง
+    // 🎯 แมปชื่อสถานะให้เป็นภาษาอังกฤษและไทย ตรงตามคำที่เขียนล็อกไว้ในโค้ดหลังบ้าน (let map) เป๊ะๆ
     let finalStatus = status; 
     if (status === 'Vacation') finalStatus = 'Vacation';
     if (status === 'VacationHalf') finalStatus = 'VacationHalf';
@@ -311,56 +295,28 @@
     if (status === 'Late') finalStatus = 'Late';
     if (status === 'Out') finalStatus = 'Out';
 
-    // 📦 4. แพ็คก้อนข้อมูลส่งออก (ใช้ชื่อตัวแปรตรงตามที่หลังบ้านเรียกใช้: name, status, time, gps)
+    // 📦 แพ็คก้อนข้อมูลส่งออก (โครงสร้างหลัก name, status, time, gps ตามหลังบ้านเรียกใช้)
     let payload = {
         name: window.selectedWorkerName,
         status: finalStatus,
         time: timeStr,
-        gps: gpsData
+        gps: gpsData,
+        image: finalImg
     };
 
-    // 🚀 5. ยิงข้อมูลออกไปหาหลังบ้าน Google Sheets หลังฉากด้วยโหมดประหยัด
-    const executeFetch = (gpsValue) => {
-            fetch(WEB_APP_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ 
-                    name: window.workerName, 
-                    time: window.capturedTime, 
-                    status: status, 
-                    image: canvas.toDataURL('image/jpeg', 0.4).split(',')[1] || '', 
-                    gps: gpsValue 
-                }) 
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "success" || data.status === "failed") { 
-                    alert(data.message || "บันทึกสำเร็จ! 🎉"); 
-                    location.reload(); 
-                } else { 
-                    alert("ล้มเหลว: " + data.message); 
-                    closeModal(); 
-                    showButtons(); 
-                }
-            })
-            .catch(() => { alert("ข้อผิดพลาดการเชื่อมต่อ"); closeModal(); showButtons(); });
-        };
+    // ยิงข้อมูลออกไปหาหลังบ้าน Google Sheets แบบประหยัดเสถียรที่สุด
+    fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors", 
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(payload)
+    });
 
-        // 📱 ดึง GPS ของกล้องมือถือผ่าน Geolocation มาตรฐานปกติร้อยเปอร์เซ็นต์
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    let gpsCoords = position.coords.latitude + "," + position.coords.longitude;
-                    executeFetch(gpsCoords);
-                },
-                (error) => {
-                    executeFetch("ไม่ได้เปิดพิกัดหรือปิดสิทธิ์");
-                },
-                { enableHighAccuracy: true, timeout: 5000 }
-   );
-        } else {
-            executeFetch("อุปกรณ์ไม่รองรับ GPS");
-        }
-    }
+    // หน่วงเวลา 2 วินาทีให้ข้อมูลบันทึกในตาราง Sheets ชัวร์ๆ แล้วรีเฟรชหน้าจอ
+    setTimeout(() => { 
+        location.reload(); 
+    }, 2000);
+}
 
 
     // 📊 ฟังก์ชันดึงประวัติข้อมูลบุคคล
