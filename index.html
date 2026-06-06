@@ -485,55 +485,6 @@ window.currentLoggedPin = "";
         });
     }
 
-function sendToSheet(status) {
-        const confirmBtn = document.getElementById('confirm-submit-btn');
-        const cancelBtn = document.getElementById('cancel-submit-btn');
-        if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.style.opacity = "0.6"; confirmBtn.innerHTML = "⌛ กำลังบันทึก..."; }
-        if (cancelBtn) { cancelBtn.disabled = true; cancelBtn.style.opacity = "0.6"; }
-        document.getElementById('btn-group').style.display = document.getElementById('special-group').style.display = 'none';
-        document.getElementById('loader').style.display = 'block';
-
-        const executeFetch = (gpsValue) => {
-            fetch(WEB_APP_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ 
-                    name: window.workerName, 
-                    time: window.capturedTime, 
-                    status: status, 
-                    image: canvas.toDataURL('image/jpeg', 0.4).split(',')[1] || '', 
-                    gps: gpsValue 
-                }) 
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "success" || data.status === "failed") { 
-                    alert(data.message || "บันทึกสำเร็จ! 🎉"); 
-                    location.reload(); 
-                } else { 
-                    alert("ล้มเหลว: " + data.message); 
-                    closeModal(); 
-                    showButtons(); 
-                }
-            })
-            .catch(() => { alert("ข้อผิดพลาดการเชื่อมต่อ"); closeModal(); showButtons(); });
-        };
-
-        // 📱 ดึง GPS ของกล้องมือถือผ่าน Geolocation มาตรฐานปกติร้อยเปอร์เซ็นต์
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    let gpsCoords = position.coords.latitude + "," + position.coords.longitude;
-                    executeFetch(gpsCoords);
-                },
-                (error) => {
-                    executeFetch("ไม่ได้เปิดพิกัดหรือปิดสิทธิ์");
-                },
-                { enableHighAccuracy: true, timeout: 5000 }
-   );
-        } else {
-            executeFetch("อุปกรณ์ไม่รองรับ GPS");
-        }
-    }
 
     function showButtons() { 
         document.getElementById('loader').style.display = 'none'; 
