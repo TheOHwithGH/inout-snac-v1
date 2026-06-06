@@ -40,7 +40,7 @@
 
 <div id="auth-screen" style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f6f9; z-index: 9999; font-family: sans-serif;">
     <div style="background: white; padding: 35px 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 85%; max-width: 350px; text-align: center; box-sizing: border-box;">
-        <div style="font-size: 45px; margin-bottom: 12px;"><img src="SNAC.png" width="100" height="100" onerror="this.style.display='none'"></div>
+        <div style="font-size: 45px; margin-bottom: 12px;"><img src="SNAC.png" width="180" height="180" onerror="this.style.display='none'"></div>
 
         <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin: 0 0 5px 0;">หจก.แสงอนันต์การไฟฟ้า</h2>
         <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin: 0 0 5px 0;">ระบบลงเวลา</h2>
@@ -274,8 +274,7 @@
 	
 
    // 🚨 นำลิงก์ URL เว็บแอปตัวใหม่ล่าสุดที่ได้จากการ Deploy เวอร์ชันใหม่มาวางตรงนี้ครับ
-const WEB_APP_URL = "วางลิงก์เว็บแอปตัวใหม่ล่าสุดของคุณจิไว้ตรงนี้"; 
-
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw0I1ZOvedLDlLIhseAXH8RQs1KHM301m5gixKX7wgOzbQeUXo0sULFh4jMB18GAOq4/exec";
 function sendToSheet(status) {
     const modalArea = document.getElementById('modal-content-area');
     
@@ -367,8 +366,7 @@ function sendToSheet(status) {
 }
 
 
-
-    // 📊 ฟังก์ชันดึงประวัติข้อมูลบุคคล
+ // 📊 ฟังก์ชันดึงประวัติข้อมูลบุคคล
     function openPersonalDashboard() {
         if (!window.selectedWorkerName) {
             return alert("ระบบไม่พบข้อมูลการยืนยันตัวตน กรุณารีเฟรชหน้าจอใหม่");
