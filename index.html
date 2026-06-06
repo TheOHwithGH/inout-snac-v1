@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบันทึกเวลางาน - จิ</title>
+    <title>ระบบบันทึกเวลางาน SNAC</title>
     <style>
         :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --purple: #6f42c1; --info: #17a2b8; }
         body { font-family: 'Sarabun', sans-serif; padding: 20px; background: #f0f2f5; position: relative; }
@@ -17,31 +17,50 @@
         .btn-snap { background: var(--warning); color: #000; }
         .btn-group { display: none; gap: 10px; width: 100%; }
         .btn-in { background: var(--success); color: white; flex: 1; }
-        .btn-afternoon { background-color: #2196F3 !important; color: white !important; display: none; } /* ☀️ เพิ่มสไตล์ปุ่มเข้างานบ่าย */
+		.btn-afternoon { background-color: #2196F3 !important; color: white !important; display: none; }  //background:#f1f1f1;
         .btn-out { background: var(--danger); color: white; flex: 1; }
         .special-group { display: none; flex-direction: column; margin-top: 10px; border-top: 2px dashed #eee; padding-top: 15px; }
         .btn-leave { background: var(--purple); color: white; }
         .btn-absent { background: #6c757d; color: white; }
         .btn-sick { background: var(--info); color: white; }
-        #result { display: none; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid var(--primary); flex-direction: column; }select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 15px; font-size: 16px; }
+        #result { display: none; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid var(--primary); flex-direction: column; }
         #loader { display: none; text-align: center; color: var(--primary); font-weight: bold; margin-top: 10px; }
-        .btn-info-personal { background: #fff; color: #333; border: 2px solid #ccc; margin-top: 5px; }
+        .btn-info-personal { background: #1d1d; color: #333; border: 2px solid #ccc; margin-top: 5px; }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
         .modal-box { background: white; width: 100%; max-width: 420px; border-radius: 16px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .pin-input { width: 80%; padding: 12px; font-size: 24px; text-align: center; letter-spacing: 15px; border: 2px solid #ced4da; border-radius: 10px; margin: 15px auto; display: block; }
         .stat-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
         .stat-card { background: #f8f9fa; border: 1px solid #e3e6f0; border-radius: 8px; padding: 10px; text-align: center; flex: 1; min-width: 45%; box-sizing: border-box; }
         .stat-num { font-size: 18px; font-weight: bold; display: block; }
         .table-wrap { max-height: 180px; overflow-y: auto; font-size: 14px; border: 1px solid #eee; border-radius: 8px; width: 100%; }
         .modal-btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .cry-emoji { font-size: 80px; animation: bounce 1s infinite alternate; text-align: center; margin-bottom: 10px; }
-        .cry-text { font-size: 22px; font-weight: bold; color: var(--danger); text-align: center; margin-bottom: 15px; }
-        .countdown-text { text-align: center; color: #666; font-size: 14px; }@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
     </style>
 </head>
 <body>
+
+<div id="auth-screen" style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f6f9; z-index: 9999; font-family: sans-serif;">
+    <div style="background: white; padding: 35px 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 85%; max-width: 350px; text-align: center; box-sizing: border-box;">
+        <div style="font-size: 45px; margin-bottom: 12px;"><img src="SNAC.png" width="30" height="30">
+</div>
+
+        <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin: 0 0 5px 0;">หจก.แสงอนันต์การไฟฟ้า</h2>
+        <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin: 0 0 5px 0;">ระบบลงเวลา</h2>
+        <p style="font-size: 13px; color: #64748b; margin: 0 0 20px 0;">กรุณากรอกรหัสประจำตัว 4 หลักเพื่อเข้าสู่ระบบ</p>
+        
+        <input type="text" 
+               id="emp-fcode-input" 
+               inputmode="numeric" 
+               pattern="[0-9]*" 
+               maxlength="4" 
+               placeholder="0000" 
+               oninput="validateEmployeeFcode(this)"
+               style="width: 100%; letter-spacing: 15px; text-align: center; font-size: 32px; padding: 10px; border: 2px solid #cbd5e1; border-radius: 12px; outline: none; background: #f8fafc; box-sizing: border-box; font-weight: bold; color: #334155;">
+        
+        <div id="auth-status-msg" style="font-size: 14px; font-weight: bold; margin-top: 15px; min-height: 20px;"></div>
+    </div>
+</div>
+
 <script>
-  if (navigator.userAgent.indexOf('Line') > -1) {
+ if (navigator.userAgent.indexOf('Line') > -1) {
     window.location.href = window.location.href + (window.location.href.indexOf('?') > -1 ? '&' : '?') + 'openExternalBrowser=1';
   }
 </script>
@@ -50,18 +69,21 @@
 
 <div class="container" id="main-interface">
     <h2>หจก.แสงอนันต์การไฟฟ้า<br>บันทึกเวลาทำงาน</h2>
-    <label>1. เลือกชื่อของคุณ:</label>
-    <select id="employee-select"><option value="">-- กำลังโหลดรายชื่อ... --</option></select>
+    
+    <div style="background: #e2e8f0; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 15px; color: #1e293b;">
+        <span id="display-worker-name">👤 กรุณาใส่รหัสล็อกอินด้านบน</span>
+    </div>
 
-    <label>2. ทำรายการ:</label>
-    <button class="btn btn-camera" id="start-camera">📸 เปิดกล้องถ่ายรูป</button>
-    <button class="btn btn-info-personal" id="get-personal-info">🔎 ข้อมูลบุคคล</button>
+    <label>ทำรายการ:</label>
+    <button class="btn btn-snap" id="start-camera">📷 เปิดกล้องถ่ายรูป</button>
+    <button class="btn btn-info-personal" id="get-personal-info" onclick="openPersonalDashboard()">🔎 ข้อมูลบุคคล</button>
     
     <div id="camera-box">
         <video id="video" autoplay playsinline muted></video>
         <button class="btn btn-snap" id="snap">📷 กดเพื่อถ่ายภาพ</button>
     </div>
-	  <canvas id="canvas"></canvas>
+    <canvas id="canvas"></canvas>
+    
     <div id="result">
         <p style="margin:5px 0;"><b>ชื่อ:</b> <span id="res-name"></span></p>
         <p style="margin:5px 0;"><b>เวลา:</b> <span id="res-time"></span></p>
@@ -69,8 +91,8 @@
 
     <div class="btn-group" id="btn-group">
         <button class="btn btn-in" onclick="confirmAndSend('In')">เข้างาน</button>
-		<button class="btn btn-out" onclick="confirmAndSend('Out')">ออกงาน</button>
-		<button class="btn btn-afternoon" id="btn-afternoon" onclick="confirmAndSend('เข้างานบ่าย')">เข้างานบ่าย</button>
+        <button class="btn btn-out" onclick="confirmAndSend('Out')">ออกงาน</button>
+        <button class="btn btn-afternoon" id="btn-afternoon" onclick="confirmAndSend('เข้างานบ่าย')">เข้างานบ่าย</button>
     </div>
 
     <div class="special-group" id="special-group">
@@ -84,300 +106,302 @@
 
 <div class="modal-overlay" id="common-modal">
     <div class="modal-box" id="modal-content-area"></div>
-</div><script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzmL1W9svxCpXYEGGBgd8MEq1mWNEXmA_wwBNbaBKfyfiwuasgI8-TVrQwWoU_I1nVU/exec"; 
-    const video = document.getElementById('video'), canvas = document.getElementById('canvas'), startBtn = document.getElementById('start-camera'), snapBtn = document.getElementById('snap'), cameraBox = document.getElementById('camera-box'), selectEl = document.getElementById('employee-select');
+</div>
+<script>
+  // วางไว้แถวๆ ด้านบนสุดของ <script> ใกล้ๆ กับตัวแปร WEB_APP_URL ก็ได้ครับ
+
+window.currentLoggedPin = ""; 
+
+    // ⚠️ ตรวจสอบ URL ของเว็บแอปหลังบ้านให้ถูกต้องตรงกันนะครับคุณจิ
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwjvTH7BE0TjZ4x2Z-mNSW4zDOoaLFUc11QYhVG4bkz-Gfkd6uW69_3fV7KPfEIzjm-/exec"; 
+    
+    const video = document.getElementById('video'), canvas = document.getElementById('canvas'), startBtn = document.getElementById('start-camera'), snapBtn = document.getElementById('snap'), cameraBox = document.getElementById('camera-box');
     const modal = document.getElementById('common-modal'), modalArea = document.getElementById('modal-content-area');
+    
+    window.selectedWorkerName = "";
+    let imageDataUrl = "";
 
-    window.onload = () => {
-        fetch(WEB_APP_URL + "?action=getEmployeeList").then(res => res.json()).then(data => {
-            selectEl.innerHTML = '<option value="">-- เลือกชื่อพนักงาน --</option>';
-            data.forEach(item => { 
-                let o = document.createElement('option'); o.value = o.text = item.name;
-                o.setAttribute('data-vacation-remain', item.vacationRemain); 
-                selectEl.add(o); 
+    function validateEmployeeFcode(el) {
+        const statusMsg = document.getElementById('auth-status-msg');
+        statusMsg.innerText = ""; 
+        el.value = el.value.replace(/[^0-9]/g, '');
+
+        if (el.value.length === 4) {
+            const codeValue = el.value;
+            el.disabled = true; 
+            statusMsg.style.color = "#3b82f6";
+            statusMsg.innerText = "⌛ กำลังตรวจสอบรหัสพนักงาน...";
+
+            fetch(`${WEB_APP_URL}?action=verifyFcode&passcode=${codeValue}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+
+                  // 🎯 2. เก็บจำรหัสที่ล็อกอินสำเร็จไว้ในระบบ เพื่อไปสั่งเปิดกล้อง PC/มือถือ
+                    window.currentLoggedPin = codeValue; 
+
+                    statusMsg.style.color = "#10b981";
+                    statusMsg.innerText = "✅ รหัสถูกต้อง กำลังเข้าสู่ระบบ...";
+                    window.selectedWorkerName = data.name;
+
+                    setTimeout(() => {
+                        document.getElementById('auth-screen').style.display = 'none';
+                        document.getElementById('display-worker-name').innerText = "👤 ผู้ใช้งาน: " + data.name;
+                    }, 400);
+                } else {
+                    statusMsg.style.color = "#ef4444";
+                    statusMsg.innerText = data.message || "❌ รหัสไม่ถูกต้อง";
+                    el.value = ""; el.disabled = false; el.focus();
+                }
+            })
+            .catch(err => {
+                statusMsg.style.color = "#ef4444";
+                statusMsg.innerText = "❌ เกิดข้อผิดพลาด กรุณาลองใหม่";
+                el.disabled = false; el.value = ""; el.focus();
             });
-        }).catch(err => console.error("โหลดรายชื่อไม่สำเร็จ:", err));
-    };
+        }
+    }
 
-    // ⏱️ ระบบตรวจสอบควบคุมปุ่มบ่ายให้ฉลาดและ Real-time
+    function openPersonalDashboard() {
+        if (!window.selectedWorkerName) {
+            return alert("ระบบไม่พบข้อมูลการยืนยันตัวตน กรุณารีเฟรชหน้าจอใหม่");
+        }
+
+        modalArea.innerHTML = `<div style="text-align:center; padding: 20px;">⏳ กำลังดึงสถิติสะสมของ คุณ ${window.selectedWorkerName}...</div>`;
+        modal.style.display = "flex";
+
+
+        let getSummaryUrl = `${WEB_APP_URL}?action=getEmployeeSummary&name=${encodeURIComponent(window.selectedWorkerName)}`;
+        
+        fetch(getSummaryUrl)
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success" && data.dashboard) {
+                let db = data.dashboard;
+                let html = `
+                    <h3 style="margin-top:0; color:#1a1a1a; text-align:center; font-weight:bold;">📊 สถิติสะสมรายเดือน</h3>
+                    <p style="text-align:center; margin-bottom:5px; color:#555;"><b>คุณ:</b> ${db.name}</p>
+                    
+                    <div class="stat-grid">
+                        <div class="stat-card" style="border-left: 4px solid var(--success);"><span class="stat-num" style="color:var(--success);">${db.sumwork||0}</span>💼 มาทำงาน</div>
+                        <div class="stat-card" style="border-left: 4px solid var(--purple);"><span class="stat-num" style="color:var(--purple);">${db.vacation||0}</span>💡 พักร้อนสะสม</div>
+                        <div class="stat-card" style="border-left: 4px solid var(--danger);"><span class="stat-num" style="color:var(--danger);">${db.absent||0}</span>🚫 ขาดงาน</div>
+                        <div class="stat-card" style="border-left: 4px solid var(--info);"><span class="stat-num" style="color:var(--info);">${db.sick||0}</span>🏥 ลาป่วย</div>
+                    </div>
+                  
+
+
+                    <p style="font-size:14px; text-align:center; background:#fff3cd; padding:8px; border-radius:6px; font-weight:bold; color:#856404; margin: 20px 0;">
+                        🌴 สิทธิ์พักร้อนคงเหลือประจำปี: <span style="font-size:16px;">${db.remainingVacation}</span> วัน
+                    </p>
+                    
+                    <h4 style="margin: 15px 0 5px 0; font-size:14px; color:#333;">📅 บันทึกประวัติย้อนหลังประจำเดือน:</h4>
+                    <div class="table-wrap">
+                        <table style="width:50%; border-collapse:collapse; text-align:center;">
+                            <thead style="background:#f1f5f9; position:sticky; top:0;">
+                                <tr>
+                                    <th style="padding:6px; border-bottom:1px solid #ddd;">วันที่</th>
+                                    <th style="padding:6px; border-bottom:1px solid #ddd;">สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                   // 🛠️ ส่วนประกอบแถวตาราง (Rows) ปรับรื้อระบบดึงข้อมูลให้เข้ากับหลังบ้านและกรองคำขยะออก
+                let rowsHtml = "";
+                if (data.logs && data.logs.length > 0) {
+                    data.logs.forEach(log => {
+                        if (!log.date) return;
+
+                        // 🌴 แปลงข้อมูลวันที่เป็นข้อความ String และลบช่องว่างออก
+                        let dateStr = log.date.toString().trim();
+
+                        // รองรับกรณีถ้าข้อมูลที่ส่งมามีตัว "T" ให้ตัดออกตามโค้ดเดิมของคุณจิ แต่ถ้าเป็นฟอร์แมตสแลชปกติก็ใช้ได้เลยข้อมูลไม่หาย
+                        if (dateStr.includes("T")) {
+                            dateStr = dateStr.split("T")[0];
+                        }
+
+                        // ตั้งค่าเริ่มต้นให้ทุกช่องเป็นขีดแดช (-) ตามสไตล์รูปแรกของคุณจิ
+                        let vacationCell = "-";
+                        let absentCell = "-";
+                        let sickCell = "-";
+                        let workCell = "-";
+                        
+                        // เช็กสถานะเลข 1 เพื่อเปลี่ยนเป็นสัญลักษณ์อีโมจิตามช่อง [ ลา | ขาด | ป่วย | งาน ] 😵 😷 🏥 💚 🔔 💔 🐪 📷 ✅ ☑️ 🍒 👨‍❤️‍👨 🌳 🎯 👑 🔯 ✴️ ⁉️ 🕗 😛 🍀 😀 📨 🐞 🚮 🔒
+                        if (log.vacation == 1) {
+                            vacationCell = "💡";
+                        } else if (log.absent == 1) {
+                            absentCell = "❌";
+                        } else if (log.sick == 1) {
+                            sickCell = "😷";
+                        } else if (log.work == 1) {
+                            workCell = "✔️"; // 
+                           
+
+                        }
+
+                        rowsHtml += `
+                            <tr style="border-bottom: 1px solid #eee; height: 10px;"> 
+                                <td style="padding:2px; color:#333; font-size: 11px; font-weight: bold;">${dateStr}</td>
+                                <td style="padding:2px; font-size: 14px;">${vacationCell}</td>
+                                <td style="padding:2px; font-size: 14px;">${absentCell}</td>
+                                <td style="padding:2px; font-size: 14px;">${sickCell}</td>
+                                <td style="padding:2px; font-size: 14px;">${workCell}</td>
+                            </tr>
+                        `;
+                    });
+                }
+                
+                // หากไม่มีแถวข้อมูลเหลืออยู่เลยจริง ๆ ค่อยแสดงผลข้อความแจ้งเตือน
+                if (rowsHtml === "") {
+                    rowsHtml = `<tr><td colspan="5" style="padding:15px; color:#999; font-size: 11px;">ยังไม่มีประวัติการบันทึกในเดือนนี้</td></tr>`;
+                }
+                
+                // 📊 ประกอบร่างหน้าต่างโมดอล ล็อกความสูงตารางไว้ที่ 7 แถวสวยงามตามสั่ง มีสไลด์บาร์ด้านข้างเรียบร้อย
+                modalArea.innerHTML = `
+                    <h3 style="font-size:18px;font-weight:bold;color:var(--success);text-align:center;margin-bottom:10px;">📊 ข้อมูลบุคคล</h3>
+                    <p style="margin:5px 0;font-size:15px;"><b>👤 ชื่อ:</b> ${data.dashboard.name}</p>
+                    
+                    <div style="background:#fff9db;padding:10px;border-radius:6px;font-size:14px;font-weight:bold;color:#b45309;border-left:4px solid #f59e0b;margin-bottom:10px;text-align:center;">
+                        🌴 พักร้อนคงเหลือ ${data.dashboard.remainingVacation || 0} วัน
+                    </div>
+
+                    <div style="background:#e7f1ff;padding:8px;border-radius:6px;font-size:13px;border-left:4px solid var(--primary);margin-bottom:10px;">
+                        <b>ℹ️ หมายเหตุ: ข้อมูลจะเป็นปัจจุบัน หลัง20.00น</b> ${data.dashboard.note || "-"}
+                    </div>
+                    
+                    <div class="stat-grid">
+                        <div class="stat-card"><span style="font-size:11px;color:#666;">งาน</span><span class="stat-num" style="color:var(--success);">${data.dashboard.sumwork || 0}</span></div>
+                        <div class="stat-card"><span style="font-size:11px;color:#666;">พักร้อน</span><span class="stat-num" style="color:var(--purple);">${data.dashboard.vacation || 0}</span></div>
+                        <div class="stat-card"><span style="font-size:11px;color:#666;">ขาด</span><span class="stat-num" style="color:var(--danger);">${data.dashboard.absent || 0}</span></div>
+                        <div class="stat-card"><span style="font-size:11px;color:#666;">ป่วย</span><span class="stat-num" style="color:var(--info);">${data.dashboard.sick || 0}</span></div>
+                    </div>
+                    
+                    <p style="font-weight:bold;font-size:13px;margin:5px 0;">📅 ประวัติย้อนหลัง:</p>
+                    
+                    <div class="table-wrap" style="max-height: 150px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px;"> 
+                  
+                        <table style="width:100%; text-align:center; border-collapse:collapse;">
+                            <thead style="background:#f1f1f1; position:sticky; top:0; z-index: 10;">
+                                <tr>
+                                    <th style="padding: 10px; font-size: 14px; border-bottom: 1px solid #ddd;">วันที่</th>
+                                    <th style="padding: 8px; font-size: 14px; border-bottom: 1px solid #ddd;">ลา</th>
+                                    <th style="padding: 8px; font-size: 14px; border-bottom: 1px solid #ddd;">ขาด</th>
+                                    <th style="padding: 8px; font-size: 14px; border-bottom: 1px solid #ddd;">ป่วย</th>
+                                    <th style="padding: 8px; font-size: 14px; border-bottom: 1px solid #ddd;">งาน</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="btn-absent" style="width:100%;border:none;padding:12px;border-radius:8px;font-weight:bold;margin-top:15px;background:#333;color:#fff;cursor:pointer;font-size: 15px;" onclick="location.reload()">🔒 ปิดหน้านี้</button>
+                `;
+            } else {
+                modalArea.innerHTML = `<div style="text-align:center; padding:20px; color:var(--danger);">❌ ไม่พบข้อมูลสถิติในระบบ</div>
+                <button class="btn-absent" style="background:#6c757d; color:white; margin-top:10px; border:none; padding:10px; border-radius:8px;" onclick="location.reload()">ปิด</button>`;
+            }
+        })
+        .catch(err => {
+            modalArea.innerHTML = `<div style="text-align:center; padding:20px; color:var(--danger);">❌ เกิดข้อผิดพลาดในการดึงข้อมูล</div>
+            <button class="btn-absent" style="background:#6c757d; color:white; margin-top:10px; border:none; padding:10px; border-radius:8px;" onclick="location.reload()">ปิด</button>`;
+        });
+    }
+
     function checkButtonDisplay() {
         let now = new Date();
         let totalMinutes = (now.getHours() * 60) + now.getMinutes();
-        let switchTime = (11 * 60) + 30; // 💡 ตั้งเวลาเปิดปุ่มบ่ายที่ 11:30 น.
-
+        let switchTime = (11 * 60) + 30; 
         let afternoonBtn = document.getElementById('btn-afternoon'); 
         if (afternoonBtn) {
-            if (totalMinutes >= switchTime) {
-                afternoonBtn.style.setProperty('display', 'block', 'important'); 
-            } else {
-                afternoonBtn.style.setProperty('display', 'none', 'important');  
-            }
+            if (totalMinutes >= switchTime) afternoonBtn.style.setProperty('display', 'block', 'important'); 
+            else afternoonBtn.style.setProperty('display', 'none', 'important');  
         }
     }
     setInterval(checkButtonDisplay, 1000);
-startBtn.onclick = async () => {
-        if (!selectEl.value) return alert("กรุณาเลือกชื่อก่อนครับ");
+
+     // 📸 ปุ่มเปิดกล้อง: ตรวจสอบถ้ารหัสเป็น 1234 ให้สลับไปเปิดกล้อง PC ทันที
+    startBtn.onclick = async () => {
+        if (!window.selectedWorkerName) return alert("ระบบไม่พบชื่อผู้ใช้งาน");
         try {
-            const constraints = {
-                video: { facingMode: { ideal: "user" }, width: { ideal: 320 }, height: { ideal: 240 } },
-                audio: false
+            // ค่าเริ่มต้นของคนทั่วไปใช้กล้องหน้ามือถือ (user)
+            let idealCamera = "user"; 
+
+            // 🎯 เงื่อนไขพิเศษ: ถ้ารหัสล็อกอินเข้ามาคือ 1234 ให้สลับไปใช้กล้องหลักเครื่อง PC (environment)
+            if (window.currentLoggedPin === "1234") {
+                idealCamera = "environment"; 
+            }
+
+            const constraints = { 
+                video: { 
+                    facingMode: { ideal: idealCamera }, 
+                    width: { ideal: 640 }, 
+                    height: { ideal: 480 } 
+                }, 
+                audio: false 
             };
 
             let stream;
-            try {
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
-            } catch (e) {
-                console.warn("กล้องหน้าไม่ได้ ลอง fallback:", e);
-                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            try { 
+                stream = await navigator.mediaDevices.getUserMedia(constraints); 
+            } catch (e) { 
+                // รองรับคอมพิวเตอร์ตั้งโต๊ะบางรุ่นที่ไม่ได้ระบุชื่อกล้องแบบสากล ให้เปิดกล้องพื้นฐานแทน
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); 
             }
-
             video.srcObject = stream;
             await video.play(); 
             cameraBox.style.display = 'block';
             startBtn.style.display = 'none';
-            document.getElementById('get-personal-info').style.display = 'none';
-
-        } catch (err) {
-            alert("Error: " + err.name + "\n\n" + err.message);
+        } catch (err) { 
+            alert("กล้องขัดข้อง: " + err.message); 
         }
     };
 
-    // 📸 ฟังก์ชันเมื่อกดปุ่มถ่ายรูป (ลอจิกทำความสะอาดใหม่ ไม่ดึง GPS ของ PC ตามที่สั่ง)
     snapBtn.onclick = () => {
-        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width = video.videoWidth, canvas.height = video.videoHeight);
-        video.srcObject.getTracks().forEach(t => t.stop()); 
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        imageDataUrl = canvas.toDataURL('image/jpeg');
+        document.getElementById('res-name').innerText = window.selectedWorkerName;
+        document.getElementById('res-time').innerText = new Date().toLocaleTimeString('th-TH');
+        document.getElementById('result').style.display = 'flex';
         cameraBox.style.display = 'none';
-        
-        window.capturedTime = new Date().toLocaleString('th-TH', { hour12: false, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
-        document.getElementById('res-name').innerText = window.workerName = selectEl.value;
-        document.getElementById('res-time').innerText = window.capturedTime;document.getElementById('result').style.display = 'flex';
         document.getElementById('btn-group').style.display = 'flex';
         document.getElementById('special-group').style.display = 'flex';
-        
-        if (typeof checkButtonDisplay === 'function') {
-            checkButtonDisplay(); 
-        }
+        if(video.srcObject) { video.srcObject.getTracks().forEach(track => track.stop()); }
     };
 
-    function openModal(html) {
-	
-        modalArea.innerHTML = html; 
-		modal.style.display = 'flex'; 
-        if (typeof checkButtonDisplay === 'function') {
-            checkButtonDisplay(); 
-        }
-    }
+    function confirmAndSend(type) {
+        if (!window.selectedWorkerName) return alert("ไม่พบข้อมูลพนักงาน");
+        if(!confirm(`ยืนยันการส่งทำรายการใช่ไหม?`)) return;
 
-    function closeModal() { 
-        modal.style.display = 'none'; 
-    }
-
-    // 📩 ฟังก์ชันคัดกรองเงื่อนไข และเตรียมส่งข้อมูลไปหลังบ้าน
-       // 📩 ฟังก์ชันคัดกรองเงื่อนไข และเตรียมส่งข้อมูลไปหลังบ้าน
-      function confirmAndSend(status) {
-        const selectEl = document.getElementById('employee-select');
-
-        // 1️⃣ [เช็คระบบคัดกรองสายอัตโนมัติ] เฉพาะตอนกดปุ่ม "เข้างาน" (In) ช่วงเช้า
-        if (status === 'In') {
-            const selectedOption = selectEl.options[selectEl.selectedIndex];
-            if (selectedOption) {
-                const currentEmployee = window.employeeDataList ? window.employeeDataList.find(e => e.name === selectEl.value) : null;
-                const lateLimitTime = currentEmployee ? currentEmployee.lateLimit : "08:30"; 
-
-                let now = new Date();
-                let currentMinutes = (now.getHours() * 60) + now.getMinutes();
-                
-                let limitParts = lateLimitTime.split(":");
-                let limitMinutes = (parseInt(limitParts[0]) * 60) + parseInt(limitParts[1]);
-
-                // 🎯 ถ้าเวลากดปุ่ม เกินกว่าเวลาสาย -> เปลี่ยนสถานะเป็น 'Late' ทันที
-                if (currentMinutes > limitMinutes) {
-                    status = 'Late'; 
-                }
-            }
-        }
-
-        // 🔒 บล็อกปุ่มออกงานก่อนเวลา 13:00 น.
-        if (status === 'Out') {
-            let now = new Date();
-            if (now.getHours() < 13) {
-                return alert("🛑 ยังไม่ถึงเวลาเลิกงาน! ปุ่มออกงานจะเปิดให้ใช้งานหลังเวลา 13:00 น. เป็นต้นไปครับ");
-            }
-        }
-
-        // 😭 เช็คสิทธิ์วันลาพักร้อนหมด (รวมกรณีลาครึ่งวันด้วย)
-        if (status === 'Vacation' || status === 'VacationHalf') {
-            let remain = Number(selectEl.options[selectEl.selectedIndex].getAttribute('data-vacation-remain'));
-            if (remain <= 0) {
-                let count = 5;
-                openModal(`
-                    <div class="cry-emoji">😭</div>
-                    <div class="cry-text">วันลาพักร้อนหมด</div>
-                    <div class="countdown-text" id="cd-timer">ระบบจะกลับสู่หน้าหลักอัตโนมัติใน 5 วินาที...</div>
-                `);
-                let timer = setInterval(() => { 
-                    count--; 
-                    document.getElementById('cd-timer').innerText = `ระบบจะกลับสู่หน้าหลักอัตโนมัติใน ${count} วินาที...`; 
-                    if (count <= 0) { 
-                        clearInterval(timer); 
-                        location.reload(); 
-                    } 
-                }, 1000);
-                return;
-            }
-        }
-
-        // ข้อความแสดงผลบนหัวข้อแผงแจ้งเตือน
-        const labels = { 
-            'In': 'เข้างานปกติ', 
-            'Late': 'เข้างานสาย ⚠️', 
-            'เข้างานบ่าย': 'เข้างานบ่าย', 
-            'Out': 'ออกงาน', 
-            'Vacation': 'พักร้อนเต็มวัน / ลาต่อบ่าย', 
-            'VacationHalf': 'พักร้อน 1/2 วัน', 
-            'Absent': 'ขาดงาน', 
-            'Sick': 'ป่วย' 
-        };
-        
-        // 2️⃣ สร้างปุ่มกดยืนยันตามเงื่อนไข (ถ้าสาย จะมีปุ่ม "ลาครึ่งวัน" โผล่เพิ่มมาให้เลือก)
-        let btnHtml = '';
-        if (status === 'Late') {
-            // 💡 ถ้าสาย: ให้เลือก "ยืนยันเข้าสาย" หรือ "เปลี่ยนใจลา 1/2 วันแทน" หรือ "ยกเลิกกลับหน้าแรก"
-            btnHtml = `
-                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
-                    <button id="confirm-submit-btn" class="btn-in" style="background:var(--danger); border:none; padding:12px; border-radius:8px; font-weight:bold;" onclick="sendToSheet('Late')">⚠️ ยืนยันเข้างานสาย</button>
-                    <button class="btn-leave" style="background:var(--purple); color:white; border:none; padding:12px; border-radius:8px; font-weight:bold;" onclick="closeModal(); confirmAndSend('VacationHalf');">🌗 เปลี่ยนเป็นลาพักร้อน 1/2 วัน</button>
-                    <button id="cancel-submit-btn" class="btn-absent" style="border:none; padding:12px; border-radius:8px; font-weight:bold;" onclick="location.reload()">❌ ยกเลิก</button>
-                </div>
-            `;
-        } else {
-            // ปุ่มปกติสำหรับสถานะอื่นๆ
-            btnHtml = `
-                <div class="modal-btn-group" style="width: 100%;">
-                    <button id="confirm-submit-btn" class="btn-in" style="border:none; padding:12px; border-radius:8px; font-weight:bold;" onclick="sendToSheet('${status}')">✅ ยืนยัน</button>
-                    <button id="cancel-submit-btn" class="btn-absent" style="border:none; padding:12px; border-radius:8px; font-weight:bold;" onclick="location.reload()">❌ ยกเลิก</button>
-                </div>
-            `;
-        }
-
-        openModal(`<h3 style="font-size:20px;font-weight:bold;text-align:center;">🔔 ยืนยันบันทึก "${labels[status]}"</h3>
-            <div style="background:#f8f9fa;padding:12px;border-radius:8px;text-align:left;border-left:5px solid var(--primary);margin:15px 0;">
-                <p style="margin:5px 0;"><b>ชื่อ:</b> ${window.workerName}</p>
-                <p style="margin:5px 0;"><b>เวลา:</b> ${window.capturedTime}</p>
-                ${status === 'Late' ? '<p style="margin:5px 0;color:var(--danger);font-weight:bold;">🚨 ระบบตรวจพบ: คุณเช็คอินสายกว่ากำหนดครับ</p>' : ''}
-            </div>
-            ${btnHtml}`);
-    }
-
-function sendToSheet(status) {
-        const confirmBtn = document.getElementById('confirm-submit-btn');
-        const cancelBtn = document.getElementById('cancel-submit-btn');
-        if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.style.opacity = "0.6"; confirmBtn.innerHTML = "⌛ กำลังบันทึก..."; }
-        if (cancelBtn) { cancelBtn.disabled = true; cancelBtn.style.opacity = "0.6"; }
-        document.getElementById('btn-group').style.display = document.getElementById('special-group').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
+        document.getElementById('btn-group').style.display = 'none';
+        document.getElementById('special-group').style.display = 'none';
 
-        const executeFetch = (gpsValue) => {
-            fetch(WEB_APP_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ 
-                    name: window.workerName, 
-                    time: window.capturedTime, 
-                    status: status, 
-                    image: canvas.toDataURL('image/jpeg', 0.4).split(',')[1] || '', 
-                    gps: gpsValue 
-                }) 
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "success" || data.status === "failed") { 
-                    alert(data.message || "บันทึกสำเร็จ! 🎉"); 
-                    location.reload(); 
-                } else { 
-                    alert("ล้มเหลว: " + data.message); 
-                    closeModal(); 
-                    showButtons(); 
-                }
-            })
-            .catch(() => { alert("ข้อผิดพลาดการเชื่อมต่อ"); closeModal(); showButtons(); });
-        };
-
-        // 📱 ดึง GPS ของกล้องมือถือผ่าน Geolocation มาตรฐานปกติร้อยเปอร์เซ็นต์
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    let gpsCoords = position.coords.latitude + "," + position.coords.longitude;
-                    executeFetch(gpsCoords);
-                },
-                (error) => {
-                    executeFetch("ไม่ได้เปิดพิกัดหรือปิดสิทธิ์");
-                },
-                { enableHighAccuracy: true, timeout: 5000 }
-   );
-        } else {
-            executeFetch("อุปกรณ์ไม่รองรับ GPS");
-        }
-    }
-
-    function showButtons() { 
-        document.getElementById('loader').style.display = 'none'; 
-        document.getElementById('btn-group').style.display = 'flex';
-        document.getElementById('special-group').style.display = 'flex'; 
-    }
-
-    document.getElementById('get-personal-info').onclick = () => {
-        if(!selectEl.value) return alert("กรุณาเลือกชื่อก่อนครับ");
-        openModal(`<h3 style="font-size:18px;font-weight:bold;text-align:center;">🔐 ยืนยันตัวตน</h3>
-            <p style="font-size:13px;color:#666;text-align:center;">กรอกเลขท้าย 4 ตัวเลขบัตรประชาชนของ<br><b>${selectEl.value}</b></p>
-            <input type="password" pattern="[0-9]*" inputmode="numeric" maxlength="4" class="pin-input" id="single-pin" oninput="handlePinInput(this)">
-            <button class="btn-absent" style="width:100%;border:none;padding:10px;border-radius:8px;font-weight:bold;" onclick="closeModal()">❌ ยกเลิก</button>`);
-        document.getElementById('single-pin').focus();
-    };
-
-    function handlePinInput(el) {
-        if(el.value.length === 4) {
-            const pin = el.value, name = selectEl.value;
-            closeModal();
-            document.getElementById('main-interface').style.display = 'none';
-            document.getElementById('loader').style.display = 'block';
-
-            fetch(`${WEB_APP_URL}?action=getEmployeeSummary&name=${encodeURIComponent(name)}&idLast4=${pin}`)
-            .then(res => res.json()).then(data => {
-                document.getElementById('loader').style.display = 'none';if(data.status === "success") {
-                    let rows = '';
-                    data.logs.forEach(r => rows += `<tr><td>${r.date.split("T")[0]}</td><td>${r.vacation==1?'💡':(r.vacation==0.5||r.vacation==-0.5?'🌗':'-')}</td><td>${r.absent==1?'❌':'-'}</td><td>${r.sick==1?'😭':'-'}</td><td>${r.work==1?'✅':'-'}</td></tr>`);
-                    
-                    let remainingVacation = data.dashboard.remainingVacation !== undefined ? data.dashboard.remainingVacation : "0";
-
-                    openModal(`<h3 style="font-size:18px;font-weight:bold;color:var(--success);text-align:center;margin-bottom:10px;">📊 ข้อมูลบุคคล</h3>
-                        <p style="margin:5px 0;font-size:15px;"><b>👤 ชื่อ:</b> ${data.dashboard.name}</p>
-                        
-                        <div style="background:#fff9db;padding:10px;border-radius:6px;font-size:14px;font-weight:bold;color:#b45309;border-left:4px solid #f59e0b;margin-bottom:10px;text-align:center;">
-                            🌴 พักร้อนคงเหลือ ${remainingVacation} วัน
-                        </div>
-
-                        <div style="background:#e7f1ff;padding:8px;border-radius:6px;font-size:13px;border-left:4px solid var(--primary);margin-bottom:10px;"><b>ℹ️ หมายเหตุ: ข้อมูลจะเป็นปัจจุบัน หลัง20.00น</b> ${data.dashboard.note || "-"}</div>
-                        
-                        <div class="stat-grid">
-                            <div class="stat-card"><span style="font-size:11px;color:#666;">งาน</span><span class="stat-num" style="color:var(--success);">${data.dashboard.sumwork || 0}</span></div>
-                            <div class="stat-card"><span style="font-size:11px;color:#666;">พักร้อน</span><span class="stat-num" style="color:var(--purple);">${data.dashboard.vacation || 0}</span></div>
-                            <div class="stat-card"><span style="font-size:11px;color:#666;">ขาด</span><span class="stat-num" style="color:var(--danger);">${data.dashboard.absent || 0}</span></div>
-                            <div class="stat-card"><span style="font-size:11px;color:#666;">ป่วย</span><span class="stat-num" style="color:var(--info);">${data.dashboard.sick || 0}</span></div>
-                        </div>
-                        <p style="font-weight:bold;font-size:13px;margin:5px 0;">📅 ประวัติย้อนหลัง:</p>
-                        <div class="table-wrap"><table style="width:100%;text-align:center;border-collapse:collapse;"><thead style="background:#f1f1f1;position:sticky;top:0;"><tr><th>วันที่</th><th>ลา</th><th>ขาด</th><th>ป่วย</th><th>งาน</th></tr></thead><tbody>${rows}</tbody></table></div>
-                        <button class="btn-absent" style="width:100%;border:none;padding:12px;border-radius:8px;font-weight:bold;margin-top:15px;background:#333;color:#fff;" onclick="location.reload()">🔒 ปิดหน้านี้</button>`);
-						} else { 
-                    alert('🛑 รหัสไม่ถูกต้อง!'); 
-                    location.reload(); 
-                }
-            }).catch(() => { 
-                alert('ข้อผิดพลาดระบบ'); 
-                location.reload(); 
-            });
-        }
+        let postUrl = `${WEB_APP_URL}?action=saveAttendance&name=${encodeURIComponent(window.selectedWorkerName)}&type=${type}&image=${encodeURIComponent(imageDataUrl)}`;
+        
+        fetch(postUrl)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loader').style.display = 'none';
+            if (data.status === "success") {
+                alert(`✅ บันทึกสำเร็จแล้วครับ!`);
+                location.reload();
+            } else {
+                alert("❌ เกิดข้อผิดพลาด: " + data.message);
+                document.getElementById('btn-group').style.display = 'flex';
+                document.getElementById('special-group').style.display = 'flex';
+            }
+        })
+        .catch(err => {
+            document.getElementById('loader').style.display = 'none';
+            alert("❌ ระบบบันทึกข้อมูลล้มเหลว");
+            document.getElementById('btn-group').style.display = 'flex';
+            document.getElementById('special-group').style.display = 'flex';
+        });
     }
 </script>
 </body>
 </html>
+
+
