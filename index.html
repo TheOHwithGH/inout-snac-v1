@@ -109,7 +109,7 @@
 <script>
     // 🔗 ตั้งค่าเริ่มต้นระบบหน้าบ้าน
     window.currentLoggedPin = ""; 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzUHAUWU_FJ0S-_4t6zwfyOsVdVv5B6Qhqro-2RoxA7G-Zzqb6Ddg5ElZjVpHvp4_fr/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz_bFBBnkFu6mSw5BrcSLmPGqdEKlXjsX_eAv9qMAvll8zkub96De4wyH-qKFRKhN_q/exec"; 
     
     const video = document.getElementById('video'), 
           canvas = document.getElementById('canvas'), 
@@ -267,52 +267,70 @@
     }
 
     function closeModal() { modal.style.display = 'none'; }
+	
+	
+	
+	
+	
 
     // 🚀 5. ฟังก์ชันส่งข้อมูลกลับหลังบ้าน (จับคู่ภาษาอังกฤษให้ตรงล็อกกับชุด let map หลังบ้านเป๊ะๆ)
     function sendToSheet(status) {
-        closeModal();
-        const saveStatusText = document.getElementById('save-status-msg');
-        
-        if (saveStatusText) {
-            saveStatusText.innerText = "✅ บันทึกข้อมูลสำเร็จเรียบร้อย!";
-            saveStatusText.style.color = "#10b981";
-        }
-        
-        let now = new Date();
-        let timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    // ⏰ 1. ดึงเวลาปัจจุบันในเครื่องมาทำค่าเวลา (web.time)
+    let now = new Date();
+    let timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
 
-        let gpsData = userGpsLocation || "ไม่ได้เปิดพิกัด";
-        let finalImg = imageDataUrl || "";
+    // 🎯 2. เปลี่ยนข้อความในกล่อง Pop-up สีขาวเดิม ให้แสดงผลสำเร็จและโชว์ค่าเวลาทันที!
+    const modalArea = document.getElementById('modal-content-area');
+    if (modalArea) {
+        modalArea.innerHTML = `
+            <div style="text-align:center; padding: 20px 10px;">
+                <div style="font-size: 45px; color: #10b981; margin-bottom: 10px;">🎉</div>
+                <h3 style="margin-top:0; color:#10b981; font-size: 20px;">บันทึกข้อมูลสำเร็จ!</h3>
+                <p style="color:#475569; margin:4px 0; font-size: 15px;">ระบบกำลังส่งข้อมูลลงตาราง...</p>
+                <div style="background:#f1f5f9; padding:10px; border-radius:8px; margin-top:15px;">
+                    <p style="margin:0; font-size: 14px; color:#64748b;">ค่าเวลาที่ส่งไปหลังบ้าน</p>
+                    <p style="margin:0; font-weight:bold; color:#1e293b; font-size: 18px;">web.time = "${timeStr}"</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    let gpsData = window.userGpsLocation || "ไม่ได้เปิดพิกัด";
+    let finalImg = imageDataUrl || "";
 
-        // 🎯 ส่งค่าภาษาอังกฤษและไทย ตรงตามคีย์แมปหลังบ้านเป๊ะๆ เพื่อให้กฎเหล็กตรวจสอบซ้ำทำงานได้สมบูรณ์
-        let finalStatus = status; 
-        if (status === 'Vacation') finalStatus = 'Vacation';
-        if (status === 'VacationHalf') finalStatus = 'VacationHalf';
-        if (status === 'Absent') finalStatus = 'Absent';
-        if (status === 'Sick') finalStatus = 'Sick';
-        if (status === 'เข้างานบ่าย') finalStatus = 'เข้างานบ่าย';
-        if (status === 'In') finalStatus = 'In';
-        if (status === 'Late') finalStatus = 'Late';
-        if (status === 'Out') finalStatus = 'Out';
+    // แมปชื่อสถานะส่งให้ตรงกับคีย์หลังบ้าน
+    let finalStatus = status; 
+    if (status === 'Vacation') finalStatus = 'Vacation';
+    if (status === 'VacationHalf') finalStatus = 'VacationHalf';
+    if (status === 'Absent') finalStatus = 'Absent';
+    if (status === 'Sick') finalStatus = 'Sick';
+    if (status === 'เข้างานบ่าย') finalStatus = 'เข้างานบ่าย';
+    if (status === 'In') finalStatus = 'In';
+    if (status === 'Late') finalStatus = 'Late';
+    if (status === 'Out') finalStatus = 'Out';
 
-        let payload = {
-            name: window.selectedWorkerName,
-            status: finalStatus,
-            time: timeStr,
-            gps: gpsData,
-            image: finalImg
-        };
+    let payload = {
+        name: window.selectedWorkerName,
+        status: finalStatus,
+        time: timeStr,   // ข้อมูลก้อนนี้จะวิ่งไปเป็น web.time หลังบ้าน
+        gps: gpsData,
+        image: finalImg
+    };
 
-        fetch(WEB_APP_URL, {
-            method: "POST",
-            mode: "no-cors", 
-            headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify(payload)
-        });
+    // ยิงข้อมูลออกไปหลังบ้าน Google Sheets
+    fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors", 
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(payload)
+    });
 
-        setTimeout(() => { 
-            location.reload(); 
-        }, 5000);
+    // หน่วงเวลา 2.5 วินาที ให้คุณจิและพนักงานได้อ่านค่าเวลาในกล่องนี้ ก่อนที่หน้าจอจะรีเฟรชกลับหน้าแรก
+    setTimeout(() => { 
+        location.reload(); 
+    }, 5500);
+}
+
     }
 
 
