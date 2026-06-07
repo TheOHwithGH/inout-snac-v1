@@ -37,11 +37,9 @@
     </style>
 </head>
 <body>
-
 <div id="auth-screen" style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f6f9; z-index: 9999; font-family: sans-serif;">
     <div style="background: white; padding: 35px 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 85%; max-width: 350px; text-align: center; box-sizing: border-box;">
         <div style="font-size: 45px; margin-bottom: 12px;"><img src="SNAC.png" width="180" height="180" onerror="this.style.display='none'"></div>
-
         <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin: 0 0 5px 0;">หจก.แสงอนันต์การไฟฟ้า</h2>
         <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin: 0 0 5px 0;">ระบบลงเวลา</h2>
         <p style="font-size: 13px; color: #64748b; margin: 0 0 20px 0;">กรุณากรอกรหัสประจำตัว 4 หลักเพื่อเข้าสู่ระบบ</p>
@@ -60,6 +58,7 @@
 </div>
 
 <script>
+ // บังคับเด้งออกจากเบราว์เซอร์ของไลน์เข้าเบราว์เซอร์ปกติ
  if (navigator.userAgent.indexOf('Line') > -1) {
     window.location.href = window.location.href + (window.location.href.indexOf('?') > -1 ? '&' : '?') + 'openExternalBrowser=1';
   }
@@ -75,7 +74,7 @@
 
     <label>ทำรายการ:</label>
     <button class="btn btn-snap" id="start-camera">📷 เปิดกล้องถ่ายรูป</button>
-    <button class="btn btn-info-personal" id="get-personal-info" onclick="openPersonalDashboard()">🔎 ข้อมูลบุคคล</button>
+    <button class="btn btn-info-personal" id="get-personal-info" onclick="alert('ฟังก์ชันกำลังพัฒนาร่วมกับระบบดึงประวัติ')">🔎 ข้อมูลบุคคล</button>
     
     <div id="camera-box">
         <video id="video" autoplay playsinline muted></video>
@@ -93,7 +92,6 @@
         <button class="btn btn-out" onclick="confirmAndSend('Out')">ออกงาน</button>
         <button class="btn btn-afternoon" id="btn-afternoon" onclick="confirmAndSend('เข้างานบ่าย')">เข้างานบ่าย</button>
     </div>
-
     <div class="special-group" id="special-group">
         <p style="text-align:center; font-size: 0.85rem; color: #777; margin-bottom: 10px;">-- กรณีอื่นๆ --</p>
         <button class="btn btn-leave" onclick="confirmAndSend('Vacation')">🌴 พักร้อน 1วัน</button>
@@ -106,10 +104,10 @@
 <div class="modal-overlay" id="common-modal">
     <div class="modal-box" id="modal-content-area"></div>
 </div>
+
 <script>
-    // 🔗 ตั้งค่าเริ่มต้นระบบหน้าบ้าน
     window.currentLoggedPin = ""; 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbywSTet_wsS6f8uEFTssgM2N-6Jn_zt12FKhq7xRm385VXWh8VVnoFhcvQHx6OMi1_k/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz4wHffeaU9KExGsTUr7pAGwHm8xPEcYHHm9UfUv8aHuu4AasRlllMUFUVomhcqaLhM/exec"; 
     
     const video = document.getElementById('video'), 
           canvas = document.getElementById('canvas'), 
@@ -122,58 +120,67 @@
     
     window.selectedWorkerName = "";
     let imageDataUrl = "";
-    let userGpsLocation = ""; // ตัวแปรเก็บพิกัดจริง
+    let userGpsLocation = ""; 
 
-    // 🔐 1. ฟังก์ชันตรวจสอบรหัสเมื่อป้อนหน้าแรก
-    function validateEmployeeFcode(el) {
-        const statusMsg = document.getElementById('auth-status-msg');
-        statusMsg.innerText = ""; 
-        el.value = el.value.replace(/[^0-9]/g, '');
+   function validateEmployeeFcode(el) {
+    const statusMsg = document.getElementById('auth-status-msg');
+    statusMsg.innerText = ""; 
+    el.value = el.value.replace(/[^0-9]/g, '');
 
-        if (el.value.length === 4) {
-            const codeValue = el.value;
-            el.disabled = true; 
-            statusMsg.style.color = "#3b82f6";
-            statusMsg.innerText = "⌛ กำลังตรวจสอบรหัสพนักงาน...";
+    if (el.value.length === 4) {
+        const codeValue = el.value;
+        el.disabled = true; 
+        statusMsg.style.color = "#3b82f6";
+        statusMsg.innerText = "⌛ กำลังตรวจสอบรหัสพนักงาน...";
+        
+        fetch(`${WEB_APP_URL}?action=verifyFcode&passcode=${codeValue}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success" || data.status === "success1234") {
+                window.currentLoggedPin = codeValue; 
+                statusMsg.style.color = "#10b981";
+                statusMsg.innerText = "✅ รหัสถูกต้อง กำลังเข้าสู่ระบบ...";
+                window.selectedWorkerName = data.name;
 
-            fetch(`${WEB_APP_URL}?action=verifyFcode&passcode=${codeValue}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "success") {
-                    window.currentLoggedPin = codeValue; 
-                    statusMsg.style.color = "#10b981";
-                    statusMsg.innerText = "✅ รหัสถูกต้อง กำลังเข้าสู่ระบบ...";
-                    window.selectedWorkerName = data.name;
+                setTimeout(() => {
+                    document.getElementById('auth-screen').style.display = 'none';
+                    document.getElementById('display-worker-name').innerText = "👤 ผู้ใช้งาน: " + data.name;
 
-                    // ขอพิกัด GPS สแตนด์บายไว้ (ทุกคนรวมถึง 1234)
-                    if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(pos => {
-                            userGpsLocation = pos.coords.latitude + "," + pos.coords.longitude;
-                        }, err => { userGpsLocation = "ไม่ได้เปิดพิกัด"; });
+                    // 🛠️ ตรวจสิทธิ์ดักรหัสพิเศษ ADMIN สแกนผ่านทันทีไม่ต้องขอกล้อง
+                    if (data.status === "success1234") {
+                        document.getElementById('btn-group').style.display = 'flex'; 
+                        document.getElementById('special-group').style.display = 'flex'; 
+                        startBtn.style.display = 'none'; 
+                    } else {
+                        // พนักงานปกติซ่อนปุ่ม บังคับเปิดกล้องถ่ายภาพก่อน
+                        document.getElementById('btn-group').style.display = 'none';
+                        document.getElementById('special-group').style.display = 'none';
+                        startBtn.style.display = 'block';
                     }
 
-                    setTimeout(() => {
-                        document.getElementById('auth-screen').style.display = 'none';
-                        document.getElementById('display-worker-name').innerText = "👤 ผู้ใช้งาน: " + data.name;
-                    }, 400);
-                } else {
-                    statusMsg.style.color = "#ef4444";
-                    statusMsg.innerText = data.message || "❌ รหัสไม่ถูกต้อง";
-                    el.value = ""; el.disabled = false; el.focus();
-                }
-            })
-            .catch(err => {
-                statusMsg.style.color = "#ef4444";
-                statusMsg.innerText = "❌ เกิดข้อผิดพลาด กรุณาลองใหม่";
-                el.disabled = false; el.value = ""; el.focus();
-            });
-         }
-    }
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(pos => {
+                            window.userGpsLocation = pos.coords.latitude + "," + pos.coords.longitude;
+                        }, err => { window.userGpsLocation = "ไม่ได้เปิดพิกัด"; });
+                    }
+                }, 400);
 
-    // 📸 2. ปุ่มเปิดกล้อง (ทุกคนทำเงื่อนไขเหมือนกันหมด บังคับเปิดกล้องส่องหน้า)
+            } else {
+                statusMsg.style.color = "#ef4444";
+                statusMsg.innerText = data.message || "❌ รหัสไม่ถูกต้อง";
+                el.value = ""; el.disabled = false; el.focus();
+            }
+        })
+        .catch(err => {
+            statusMsg.style.color = "#ef4444";
+            statusMsg.innerText = "❌ เกิดข้อผิดพลาด กรุณาลองใหม่";
+            el.disabled = false; el.value = ""; el.focus();
+        });
+     }
+}
+    // 📸 การทำงานปุ่มเปิดกล้องถ่ายรูป
     startBtn.onclick = async () => {
         if (!window.selectedWorkerName) return alert("ระบบไม่พบชื่อผู้ใช้งาน");
-
         try {
             let idealCamera = "user"; 
             const constraints = { 
@@ -195,12 +202,12 @@
         }
     };
 
-    // 📸 3. ปุ่มกดถ่ายรูป (Snap) 
+    // 📸 ปุ่มกด Snap ล็อกพิกัด และภาพถ่าย
     snapBtn.onclick = () => {
         canvas.width = video.videoWidth; 
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0);
-        imageDataUrl = canvas.toDataURL('image/jpeg');
+        imageDataUrl = canvas.toDataURL('image/jpeg'); 
         
         document.getElementById('res-name').innerText = window.selectedWorkerName;
         document.getElementById('res-time').innerText = new Date().toLocaleTimeString('th-TH');
@@ -213,7 +220,7 @@
         if(video.srcObject) { video.srcObject.getTracks().forEach(track => track.stop()); }
     };
 
-    // 🎯 4. ระบบคัดกรองสายและจัดการแสดงผลป้ายยืนยัน (Modal)
+    // 🎯 ระบบคำนวณและกางหน้าต่างยืนยัน (Modal) ป้องกันพนักงานกดผิด
     function confirmAndSend(status) {
         if (!window.selectedWorkerName) return alert("ไม่พบข้อมูลพนักงาน");
 
@@ -245,7 +252,6 @@
                 <button class="btn" style="background:#64748b; color:white; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:0;" onclick="closeModal()">❌ ยกเลิก</button>
             </div>
         `;
-
         if (status === 'Late') {
             btnHtml = `
                 <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
@@ -268,91 +274,73 @@
 
     function closeModal() { modal.style.display = 'none'; }	
 
- function sendToSheet(status) {
-    const modalArea = document.getElementById('modal-content-area');
-    
-    if (modalArea) {
-        modalArea.innerHTML = `
-            <div style="text-align:center; padding: 20px 10px;">
-                <h3 style="margin-top:0; color:#3b82f6; font-size: 20px;">กำลังตรวจสอบเงื่อนไข...</h3>
-                <p style="color:#475569; margin:4px 0; font-size: 15px;">ระบบกำลังเช็คกฎเหล็กการบันทึกเวลา</p>
-            </div>
-        `;
-    }
-    
-    let now = new Date();
-    let timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-    
-    let gpsData = window.userGpsLocation || "ไม่ได้เปิดพิกัด";
-    let finalImg = imageDataUrl || "";
-
-    let finalStatus = status;
-    if (status === 'Vacation' || status === 'ลาเต็มวัน') finalStatus = 'Vacation';
-    if (status === 'VacationHalf' || status === 'ลาครึ่งวัน') finalStatus = 'VacationHalf';
-    if (status === 'Absent' || status === 'ขาดงาน') finalStatus = 'Absent';
-    if (status === 'Sick' || status === 'ป่วย') finalStatus = 'Sick';
-    if (status === 'In' || status === 'เข้างาน') finalStatus = 'In';
-    if (status === 'Late' || status === 'สาย') finalStatus = 'Late';
-    if (status === 'Out' || status === 'ออกงาน') finalStatus = 'Out';
-
-    let payload = {
-        name: window.selectedWorkerName,
-        status: finalStatus,
-        time: timeStr,   
-        gps: gpsData,
-        image: finalImg
-    };
-
-    // 🚀 ยิงข้อมูลแบบเด็ดขาด (ใช้ text() แกะตรงๆ เพื่อไม่ให้เจอบั๊ก JSON พังกระโดดข้ามล็อก)
-    fetch(WEB_APP_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify(payload)
-    })
-    .then(response => response.text()) // 📄 รับค่ากลับมาเป็น Text ดิบป้องกันระบบแปลง JSON พัง
-    .then(textData => {
-        console.log("Responseจากหลังบ้านคือ:", textData);
-        let data = JSON.parse(textData); // นำมาแปลงเป็น Object ข้างใน
-
-        if (data.status === "success") {
-            // 🎉 ผ่านฉลุยตัวจริง: หลังบ้านพิมพ์ลงชีตสำเร็จ
-            if (modalArea) {
-                modalArea.innerHTML = `
-                    <div style="text-align:center; padding: 20px 10px;">
-                        <div style="font-size: 45px; color: #10b981; margin-bottom: 10px;">🎉</div>
-                        <h3 style="margin-top:0; color:#10b981; font-size: 20px;">บันทึกข้อมูลสำเร็จ!</h3>
-                        <div style="background:#f1f5f9; padding:10px; border-radius:8px; margin-top:15px;">
-                            <p style="margin:0; font-size: 14px; color:#64748b;">ค่าเวลาปัจจุบัน</p>
-                            <p style="margin:0; font-weight:bold; color:#1e293b; font-size: 18px;">web.time = "${timeStr}"</p>
-                        </div>
-                    </div>
-                `;
-            }
-            setTimeout(() => { location.reload(); }, 5500);
-
-        } else {
-            // 🛑 ผิดกฎเหล็กตัวจริง: ดึงข้อความแจ้งเตือนสีแดงจากหลังบ้านมาดักตบทันที!
-            if (modalArea) {
-                modalArea.innerHTML = `
-                    <div style="text-align:center; padding: 20px 10px;">
-                        <div style="font-size: 45px; color: #ef4444; margin-bottom: 10px;">🛑</div>
-                        <h3 style="margin-top:0; color:#ef4444; font-size: 18px;">บันทึกไม่สำเร็จ!</h3>
-                        <p style="color:#1e293b; font-weight:bold; margin:10px 0; font-size: 15px;">${data.message}</p>
-                        <p style="color:#64748b; font-size: 13px;">(ระบบปฏิเสธการลงเวลาเนื่องจากผิดเงื่อนไข)</p>
-                    </div>
-                `;
-            }
-            // หน่วงเวลา 4 วินาทีให้เห็นหน้าต่างแจ้งเตือนสีแดงชัดๆ ว่าผิดเพราะอะไร แล้วค่อยรีเฟรชกลับหน้าแรก
-            setTimeout(() => { location.reload(); }, 4000);
+    // 🚀 ฟังก์ชันเด็ดขาด ส่งข้อมูลพุ่งตรงไปยังหลังบ้าน Google Sheets เช็กกฎเหล็ก
+    function sendToSheet(status) {
+        const modalArea = document.getElementById('modal-content-area');
+        if (modalArea) {
+            modalArea.innerHTML = `
+                <div style="text-align:center; padding: 20px 10px;">
+                    <h3 style="margin-top:0; color:#3b82f6; font-size: 20px;">กำลังตรวจสอบเงื่อนไข...</h3>
+                    <p style="color:#475569; margin:4px 0; font-size: 15px;">ระบบกำลังเช็คกฎการบันทึกเวลา</p>
+                </div>
+            `;
         }
-    })
-    .catch(err => {
-        // ⚠️ สำหรับบล็อกนี้: ถ้าพังจากเน็ตหลุด/หรือสัญญาณข้ามค่ายมีปัญหา จะ "ไม่ยอมขึ้นป้ายเขียวสำเร็จเด็ดขาด" เพื่อความปลอดภัย
-        console.error("CORS/Network Error:", err);
-        alert("❌ การเชื่อมต่อขัดข้อง หรือตรวจพบความผิดพลาดของเงื่อนไขระบบ กรุณาสแกนหรือลองใหม่อีกครั้ง");
-        location.reload();
-    });
-}
+        
+        let now = new Date();
+        let timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        let gpsData = window.userGpsLocation || "ไม่ได้เปิดพิกัด";
+        let finalImg = imageDataUrl || "";
+
+        let payload = {
+            name: window.selectedWorkerName,
+            status: status,
+            time: timeStr,   
+            gps: gpsData,
+            image: finalImg
+        };
+
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.text())
+        .then(textData => {
+            let data = JSON.parse(textData);
+            if (data.status === "success") {
+                if (modalArea) {
+                    modalArea.innerHTML = `
+                        <div style="text-align:center; padding: 20px 10px;">
+                            <div style="font-size: 45px; color: #10b981; margin-bottom: 10px;">🎉</div>
+                            <h3 style="margin-top:0; color:#10b981; font-size: 20px;">บันทึกข้อมูลสำเร็จ!</h3>
+                            <div style="background:#f1f5f9; padding:10px; border-radius:8px; margin-top:15px;">
+                                <p style="margin:0; font-size: 14px; color:#64748b;">ค่าเวลาปัจจุบัน</p>
+                                <p style="margin:0; font-weight:bold; color:#1e293b; font-size: 18px;">web.time = "${timeStr}"</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                setTimeout(() => { location.reload(); }, 4000);
+            } else {
+                if (modalArea) {
+                    modalArea.innerHTML = `
+                        <div style="text-align:center; padding: 20px 10px;">
+                            <div style="font-size: 45px; color: #ef4444; margin-bottom: 10px;">❌</div>
+                            <h3 style="margin-top:0; color:#ef4444; font-size: 18px;">บันทึกไม่สำเร็จ!</h3>
+                            <p style="color:#1e293b; font-weight:bold; margin:10px 0; font-size: 15px;">${data.message}</p>
+                            <p style="color:#64748b; font-size: 13px;">(ระบบปฏิเสธการลงเวลาเนื่องจากผิดเงื่อนไข)</p>
+                        </div>
+                    `;
+                }
+                setTimeout(() => { location.reload(); }, 4000);
+            }
+        })
+        .catch(err => {
+            console.error("Error:", err);
+            alert("❌ การเชื่อมต่อขัดข้อง กรุณาลองใหมี่อีกครั้ง");
+            location.reload();
+        });
+    }
 
 
  // 📊 ฟังก์ชันดึงประวัติข้อมูลบุคคล
@@ -463,7 +451,7 @@
             else afternoonBtn.style.setProperty('display', 'none', 'important');  
         }
     }
-    setInterval(checkButtonDisplay, 1000);
+    setInterval(checkButtonDisplay, 1000); //นับเวลาให้ปุ่มทำงาน ทุก1วิ
 </script>
 </body>
 </html>
