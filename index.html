@@ -74,7 +74,8 @@
 
     <label>ทำรายการ:</label>
     <button class="btn btn-snap" id="start-camera">📷 เปิดกล้องถ่ายรูป</button>
-    <button class="btn btn-info-personal" id="get-personal-info" onclick="alert('ฟังก์ชันกำลังพัฒนาร่วมกับระบบดึงประวัติ')">🔎 ข้อมูลบุคคล</button>
+    <button class="btn btn-info-personal" id="get-personal-info" onclick="openPersonalDashboard()">🔎 ข้อมูลบุคคล</button>
+
     
     <div id="camera-box">
         <video id="video" autoplay playsinline muted></video>
@@ -107,7 +108,7 @@
 
 <script>
     window.currentLoggedPin = ""; 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz4wHffeaU9KExGsTUr7pAGwHm8xPEcYHHm9UfUv8aHuu4AasRlllMUFUVomhcqaLhM/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby5WUnWu4tedz-RyjncbaIfWm0EOQinyBuT2OCVirumOwfHIu1vG9Y6UKVnBhyyDuIB/exec"; 
     
     const video = document.getElementById('video'), 
           canvas = document.getElementById('canvas'), 
@@ -343,102 +344,116 @@
     }
 
 
- // 📊 ฟังก์ชันดึงประวัติข้อมูลบุคคล
-    function openPersonalDashboard() {
-        if (!window.selectedWorkerName) {
-            return alert("ระบบไม่พบข้อมูลการยืนยันตัวตน กรุณารีเฟรชหน้าจอใหม่");
-        }
-
-        modalArea.innerHTML = `<div style="text-align:center; padding: 20px;">⏳ กำลังดึงสถิติสะสมของ คุณ ${window.selectedWorkerName}...</div>`;
-        modal.style.display = "flex";
-
-        let getSummaryUrl = `${WEB_APP_URL}?action=getEmployeeSummary&name=${encodeURIComponent(window.selectedWorkerName)}`;
-        
-        fetch(getSummaryUrl)
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success" && data.dashboard) {
-                let db = data.dashboard;
-                let rowsHtml = "";
-                
-                if (data.logs && data.logs.length > 0) {
-                    data.logs.forEach(log => {
-                        if (!log.date) return;
-                        let dateStr = log.date.toString().trim();
-                        if (dateStr.includes("T")) {
-                            dateStr = dateStr.split("T")[0];
-                        }
-
-                        let vacationCell = log.vacation == 1 ? "💡" : "-";
-                        let absentCell = log.absent == 1 ? "❌" : "-";
-                        let sickCell = log.sick == 1 ? "😷" : "-";
-                        let workCell = log.work == 1 ? "✔️" : "-";
-
-                        rowsHtml += `
-                            <tr style="border-bottom: 1px solid #eee;"> 
-                                <td style="padding:6px; color:#333; font-size: 12px; font-weight: bold;">${dateStr}</td>
-                                <td style="padding:6px; font-size: 14px;">${vacationCell}</td>
-                                <td style="padding:6px; font-size: 14px;">${absentCell}</td>
-                                <td style="padding:6px; font-size: 14px;">${sickCell}</td>
-                                <td style="padding:6px; font-size: 14px;">${workCell}</td>
-                            </tr>
-                        `;
-                    });
-                }
-                
-                if (rowsHtml === "") {
-                    rowsHtml = `<tr><td colspan="5" style="padding:15px; color:#999; font-size: 12px;">ยังไม่มีประวัติการบันทึกในเดือนนี้</td></tr>`;
-                }
-
-                modalArea.innerHTML = `
-                    <h3 style="font-size:18px;font-weight:bold;color:var(--success);text-align:center;margin-bottom:10px;">📊 ข้อมูลบุคคล</h3>
-                    <p style="margin:5px 0;font-size:15px;"><b>👤 ชื่อ:</b> ${db.name}</p>
-                    
-                    <div style="background:#fff9db;padding:10px;border-radius:6px;font-size:14px;font-weight:bold;color:#b45309;border-left:4px solid #f59e0b;margin-bottom:10px;text-align:center;">
-                        🌴 พักร้อนคงเหลือ ${db.remainingVacation || 0} วัน
-                    </div>
-
-                    <div style="background:#e7f1ff;padding:8px;border-radius:6px;font-size:13px;border-left:4px solid var(--primary);margin-bottom:10px;">
-                        <b>ℹ️ หมายเหตุ: ข้อมูลจะเป็นปัจจุบัน หลัง20.00น</b> ${db.note || "-"}
-                    </div>
-                    
-                    <div class="stat-grid">
-                        <div class="stat-card"><span style="font-size:11px;color:#666;display:block;">งาน</span><span class="stat-num" style="color:var(--success);">${db.sumwork || 0}</span></div>
-                        <div class="stat-card"><span style="font-size:11px;color:#666;display:block;">พักร้อน</span><span class="stat-num" style="color:var(--purple);">${db.vacation || 0}</span></div>
-                        <div class="stat-card"><span style="font-size:11px;color:#666;display:block;">ขาด</span><span class="stat-num" style="color:var(--danger);">${db.absent || 0}</span></div>
-                        <div class="stat-card"><span style="font-size:11px;color:#666;display:block;">ป่วย</span><span class="stat-num" style="color:var(--info);">${db.sick || 0}</span></div>
-                    </div>
-                    
-                    <p style="font-weight:bold;font-size:13px;margin:5px 0;">📅 ประวัติย้อนหลัง:</p>
-                    
-                    <div class="table-wrap" style="max-height: 150px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px;"> 
-                        <table style="width:100%; text-align:center; border-collapse:collapse;">
-                            <thead style="background:#f1f1f1; position:sticky; top:0; z-index: 10;">
-                                <tr>
-                                    <th style="padding: 10px; font-size: 13px; border-bottom: 1px solid #ddd;">วันที่</th>
-                                    <th style="padding: 8px; font-size: 13px; border-bottom: 1px solid #ddd;">ลา</th>
-                                    <th style="padding: 8px; font-size: 13px; border-bottom: 1px solid #ddd;">ขาด</th>
-                                    <th style="padding: 8px; font-size: 13px; border-bottom: 1px solid #ddd;">ป่วย</th>
-                                    <th style="padding: 8px; font-size: 13px; border-bottom: 1px solid #ddd;">งาน</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${rowsHtml}
-                            </tbody>
-                        </table>
-                    </div>
-                    <button class="btn" style="width:100%;border:none;padding:12px;border-radius:8px;font-weight:bold;margin-top:15px;background:#333;color:#fff;cursor:pointer;font-size: 15px;" onclick="closeModal()">🔒 ปิดหน้านี้</button>
-                `;
-            } else {
-                modalArea.innerHTML = `<div style="text-align:center; padding:20px; color:var(--danger);">❌ ไม่พบข้อมูลสถิติในระบบ</div>
-                <button class="btn" style="background:#6c757d; color:white; margin-top:10px; padding:10px; border-radius:8px;" onclick="closeModal()">ปิด</button>`;
-            }
-        })
-        .catch(err => {
-            modalArea.innerHTML = `<div style="text-align:center; padding:20px; color:var(--danger);">❌ เกิดข้อผิดพลาดในการดึงข้อมูล</div>
-            <button class="btn" style="background:#6c757d; color:white; margin-top:10px; padding:10px; border-radius:8px;" onclick="closeModal()">ปิด</button>`;
-        });
+ // 📊 ฟังก์ชันดึงประวัติข้อมูลบุคคล (เวอร์ชันแก้ไขสมบูรณ์)
+function openPersonalDashboard() {
+    if (!window.selectedWorkerName) {
+        return alert("ระบบไม่พบข้อมูลการยืนยันตัวตน กรุณารีเฟรชหน้าจอใหม่");
     }
+
+    // 💡 ค้นหาและเตรียมพื้นที่ Modal
+    let modalElement = document.getElementById("modal");
+    let modalAreaElement = document.getElementById("modalArea");
+    
+    // เคสป้องกันหากเขียนชื่อตัวแปรไม่ตรงกับ ID ใน HTML
+    if (!modalElement || !modalAreaElement) {
+        modalElement = modal; // fallback ใช้ตัวแปร Global
+        modalAreaElement = modalArea;
+    }
+
+    modalAreaElement.innerHTML = `<div style="text-align:center; padding: 20px;">⏳ กำลังดึงสถิติสะสมของ คุณ ${window.selectedWorkerName}...</div>`;
+    modalElement.style.display = "flex";
+
+    let getSummaryUrl = `${WEB_APP_URL}?action=getEmployeeSummary&name=${encodeURIComponent(window.selectedWorkerName)}`;
+    
+    fetch(getSummaryUrl)
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "success" && data.dashboard) {
+            let db = data.dashboard;
+            let rowsHtml = "";
+            
+            if (data.logs && data.logs.length > 0) {
+                data.logs.forEach(log => {
+                    if (!log.date) return;
+                    let dateStr = log.date.toString().trim();
+                    if (dateStr.includes("T")) {
+                        dateStr = dateStr.split("T")[0];
+                    }
+
+                    // 💡 แก้ไข: ดักจับทั้ง ลาเต็มวัน (1) และลาครึ่งวัน (0.5 หรือ -0.5)
+                    let vVal = Number(log.vacation) || 0;
+                    let vacationCell = (vVal === 1 || vVal === 0.5 || vVal === -0.5) ? "💡" : "-";
+                    
+                    let absentCell = Number(log.absent) >= 1 ? "❌" : "-";
+                    let sickCell = Number(log.sick) >= 1 ? "😷" : "-";
+                    
+                    let wVal = Number(log.work) || 0;
+                    let workCell = (wVal === 1 || wVal === 0.5) ? "✔️" : "-";
+
+                    rowsHtml += `
+                        <tr style="border-bottom: 1px solid #eee;"> 
+                            <td style="padding:6px; color:#333; font-size: 12px; font-weight: bold;">${dateStr}</td>
+                            <td style="padding:6px; font-size: 14px;">${vacationCell}</td>
+                            <td style="padding:6px; font-size: 14px;">${absentCell}</td>
+                            <td style="padding:6px; font-size: 14px;">${sickCell}</td>
+                            <td style="padding:6px; font-size: 14px;">${workCell}</td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            if (rowsHtml === "") {
+                rowsHtml = `<tr><td colspan="5" style="padding:15px; color:#999; font-size: 12px;">ยังไม่มีประวัติการบันทึกในเดือนนี้</td></tr>`;
+            }
+
+            modalAreaElement.innerHTML = `
+                <h3 style="font-size:18px;font-weight:bold;color:var(--success);text-align:center;margin-bottom:10px;">📊 ข้อมูลบุคคล</h3>
+                <p style="margin:5px 0;font-size:15px;"><b>👤 ชื่อ:</b> ${db.name}</p>
+                
+                <div style="background:#fff9db;padding:10px;border-radius:6px;font-size:14px;font-weight:bold;color:#b45309;border-left:4px solid #f59e0b;margin-bottom:10px;text-align:center;">
+                    🌴 พักร้อนคงเหลือ ${db.remainingVacation || 0} วัน
+                </div>
+
+                <div style="background:#e7f1ff;padding:8px;border-radius:6px;font-size:13px;border-left:4px solid var(--primary);margin-bottom:10px;">
+                    <b>ℹ️ หมายเหตุ: ข้อมูลจะเป็นปัจจุบัน หลัง20.00น</b>
+                </div>
+                
+                <div class="stat-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <div class="stat-card" style="background:#f8f9fa; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;">งาน</span><span class="stat-num" style="font-size:20px; font-weight:bold; color:#28a745;">${db.sumwork || 0}</span></div>
+                    <div class="stat-card" style="background:#f8f9fa; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;">ป่วย</span><span class="stat-num" style="font-size:20px; font-weight:bold; color:#17a2b8;">${db.sick || 0}</span></div>
+                </div>
+                
+                <p style="font-weight:bold;font-size:13px;margin:5px 0;">📅 ประวัติย้อนหลัง:</p>
+                
+                <div class="table-wrap" style="max-height: 150px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px;"> 
+                    <table style="width:100%; text-align:center; border-collapse:collapse;">
+                        <thead style="background:#f1f1f1; position:sticky; top:0; z-index: 10;">
+                            <tr>
+                                <th style="padding: 10px; font-size: 13px; border-bottom: 1px solid #ddd;">วันที่</th>
+                                <th style="padding: 8px; font-size: 13px; border-bottom: 1px solid #ddd;">ลา</th>
+                                <th style="padding: 8px; font-size: 13px; border-bottom: 1px solid #ddd;">ขาด</th>
+                                <th style="padding: 8px; font-size: 13px; border-bottom: 1px solid #ddd;">ป่วย</th>
+                                <th style="padding: 8px; font-size: 13px; border-bottom: 1px solid #ddd;">งาน</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn" style="width:100%;border:none;padding:12px;border-radius:8px;font-weight:bold;margin-top:15px;background:#333;color:#fff;cursor:pointer;font-size: 15px;" onclick="closeModal()">🔒 ปิดหน้านี้</button>
+            `;
+        } else {
+            modalAreaElement.innerHTML = `<div style="text-align:center; padding:20px; color:red;">❌ ไม่พบข้อมูลสถิติในระบบ หรือไฟล์ตารางยังไม่ได้ประมวลผล</div>
+            <button class="btn" style="background:#6c757d; color:white; margin-top:10px; padding:10px; border-radius:8px; width:100%; border:none; cursor:pointer;" onclick="closeModal()">ปิดหน้าต่าง</button>`;
+        }
+    })
+    .catch(err => {
+        console.error("Dashboard Error:", err);
+        modalAreaElement.innerHTML = `<div style="text-align:center; padding:20px; color:red;">❌ เกิดข้อผิดพลาดทางเทคนิคในการดึงข้อมูล</div>
+        <button class="btn" style="background:#6c757d; color:white; margin-top:10px; padding:10px; border-radius:8px; width:100%; border:none; cursor:pointer;" onclick="closeModal()">ปิดหน้าต่าง</button>`;
+    });
+}
 
     // ฟังก์ชันเปิด-ปิดปุ่มเข้างานบ่ายตามช่วงเวลา
     function checkButtonDisplay() {
