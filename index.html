@@ -54,6 +54,8 @@
                style="width: 100%; letter-spacing: 15px; text-align: center; font-size: 32px; padding: 10px; border: 2px solid #cbd5e1; border-radius: 12px; outline: none; background: #f8fafc; box-sizing: border-box; font-weight: bold; color: #334155;">
         
         <div id="auth-status-msg" style="font-size: 14px; font-weight: bold; margin-top: 15px; min-height: 20px;"></div>
+        <div id="live-clock" style="text-align: center; font-size: 1.2rem; font-weight: bold; color: #333; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e0e0e0;"> </div>
+
     </div>
 </div>
 
@@ -65,9 +67,10 @@
 </script>
 
 <a href="#" class="btn-back" onclick="location.reload();">⬅ ย้อนกลับ</a>
+
 <div class="container" id="main-interface">
     <h2>หจก.แสงอนันต์การไฟฟ้า<br>บันทึกเวลาทำงาน</h2>
-    
+
     <div style="background: #e2e8f0; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 15px; color: #1e293b;">
         <span id="display-worker-name">👤 กรุณาใส่รหัสล็อกอินด้านบน</span>
     </div>
@@ -97,7 +100,7 @@
         <p style="text-align:center; font-size: 0.85rem; color: #777; margin-bottom: 10px;">-- กรณีอื่นๆ --</p>
         <button class="btn btn-leave" onclick="confirmAndSend('Vacation')">🌴 พักร้อน 1วัน</button>
         <button class="btn btn-absent" onclick="confirmAndSend('Absent')">🚫 ขาดงาน 1วัน</button>
-        <button class="btn btn-sick" onclick="confirmAndSend('Sick')">🤒 ป่วย</button>
+        <button class="btn btn-sick" onclick="confirmAndSend('Sick')">🚀 ป่วย</button>
     </div>
     <div id="loader">⏳ ระบบกำลังบันทึกข้อมูล...</div>
 </div>
@@ -107,9 +110,27 @@
 </div>
 
 <script>
+    //  ---------------------------------------------------------------
+    // สั่งให้นาฬิกาทำงานทันทีเมื่อเปิดหน้าเว็บ โดยอัปเดตทุก ๆ 1 วินาที (1000ms)
+  window.addEventListener("DOMContentLoaded", () => {
+    setInterval(() => {
+        let now = new Date();
+        let dateThai = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+        
+        let hours = now.getHours().toString().padStart(2, '0');
+        let minutes = now.getMinutes().toString().padStart(2, '0');
+        let seconds = now.getSeconds().toString().padStart(2, '0');
+        
+        document.getElementById("live-clock").innerHTML = "📅 " + dateThai + " | ⏰ " + hours + ":" + minutes + ":" + seconds + " น.";
+    }, 1000);
+  });
     window.currentLoggedPin = ""; 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby5WUnWu4tedz-RyjncbaIfWm0EOQinyBuT2OCVirumOwfHIu1vG9Y6UKVnBhyyDuIB/exec"; 
+     
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxi-VQTGFXaTmUr6B0AAkKeYYxny7bltttgJpmkTVXv5ha03yNByPAbCFcStRCYUp2d/exec"; 
     
+    
+
+
     const video = document.getElementById('video'), 
           canvas = document.getElementById('canvas'), 
           startBtn = document.getElementById('start-camera'), 
@@ -382,10 +403,10 @@ function openPersonalDashboard() {
 
                     // 💡 แก้ไข: ดักจับทั้ง ลาเต็มวัน (1) และลาครึ่งวัน (0.5 หรือ -0.5)
                     let vVal = Number(log.vacation) || 0;
-                    let vacationCell = (vVal === 1 || vVal === 0.5 || vVal === -0.5) ? "💡" : "-";
+                    let vacationCell = (vVal === 1 || vVal === 0.5 || vVal === -0.5) ? "📌" : "-";
                     
-                    let absentCell = Number(log.absent) >= 1 ? "❌" : "-";
-                    let sickCell = Number(log.sick) >= 1 ? "😷" : "-";
+                    let absentCell = Number(log.absent) >= 1 ? "🅾" : "-";
+                    let sickCell = Number(log.sick) >= 1 ? "👾" : "-";
                     
                     let wVal = Number(log.work) || 0;
                     let workCell = (wVal === 1 || wVal === 0.5) ? "✔️" : "-";
@@ -393,10 +414,10 @@ function openPersonalDashboard() {
                     rowsHtml += `
                         <tr style="border-bottom: 1px solid #eee;"> 
                             <td style="padding:6px; color:#333; font-size: 12px; font-weight: bold;">${dateStr}</td>
-                            <td style="padding:6px; font-size: 14px;">${vacationCell}</td>
-                            <td style="padding:6px; font-size: 14px;">${absentCell}</td>
-                            <td style="padding:6px; font-size: 14px;">${sickCell}</td>
-                            <td style="padding:6px; font-size: 14px;">${workCell}</td>
+                            <td style="padding:6px; font-size: 12px;">${vacationCell}</td>
+                            <td style="padding:6px; font-size: 12px;">${absentCell}</td>
+                            <td style="padding:6px; font-size: 12px;">${sickCell}</td>
+                            <td style="padding:6px; font-size: 12px;">${workCell}</td>
                         </tr>
                     `;
                 });
@@ -419,21 +440,28 @@ function openPersonalDashboard() {
                 </div>
                 
                 <div class="stat-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-                    <div class="stat-card" style="background:#f8f9fa; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;">งาน</span><span class="stat-num" style="font-size:20px; font-weight:bold; color:#28a745;">${db.sumwork || 0}</span></div>
-                    <div class="stat-card" style="background:#f8f9fa; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;">ป่วย</span><span class="stat-num" style="font-size:20px; font-weight:bold; color:#17a2b8;">${db.sick || 0}</span></div>
+                
+                  <div class="stat-card" style="background:#f8f9fa; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;">งาน</span><span class="stat-num"style="font-size:18px; font-weight:bold; color:#28a745;">${db.sumwork || 0}</span></div>
+                   
+                  <div class="stat-card" style="background:#f8f9fa; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;"> พักร้อน</span><span class="stat-num"style="font-size:18px; font-weight:bold;color:#17a2b8;">${db.vacation || 0}</span></div>
+                
+                  <div class="stat-card" style="background:#f8f9fa; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;">ขาดงาน</span><span class="stat-num" style="font-size:18px; font-weight:bold; color:#17a2b8;">${db.absent || 0}</span></div>
+                
+                  <div class="stat-card" style="background:#f8f9fa; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;">ป่วย</span><span class="stat-num" style="font-size:18px; font-weight:bold; color:#17a2b8;">${db.sick || 0}</span></div>
+
                 </div>
                 
-                <p style="font-weight:bold;font-size:13px;margin:5px 0;">📅 ประวัติย้อนหลัง:</p>
+                <p style="font-weight:bold;font-size:13px;margin:5px 0;">📅 ประวัติย้อนหลัง-ประจำเดือน:</p>
                 
-                <div class="table-wrap" style="max-height: 150px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px;"> 
+                <div class="table-wrap" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px;"> 
                     <table style="width:100%; text-align:center; border-collapse:collapse;">
                         <thead style="background:#f1f1f1; position:sticky; top:0; z-index: 10;">
                             <tr>
-                                <th style="padding: 10px; font-size: 13px; border-bottom: 1px solid #ddd;">วันที่</th>
-                                <th style="padding: 8px; font-size: 13px; border-bottom: 1px solid #ddd;">ลา</th>
-                                <th style="padding: 8px; font-size: 13px; border-bottom: 1px solid #ddd;">ขาด</th>
-                                <th style="padding: 8px; font-size: 13px; border-bottom: 1px solid #ddd;">ป่วย</th>
-                                <th style="padding: 8px; font-size: 13px; border-bottom: 1px solid #ddd;">งาน</th>
+                                <th style="padding: 8px; font-size: 12px; border-bottom: 1px solid #ddd;">วันที่</th>
+                                <th style="padding: 8px; font-size: 12px; border-bottom: 1px solid #ddd;">ลา</th>
+                                <th style="padding: 8px; font-size: 12px; border-bottom: 1px solid #ddd;">ขาด</th>
+                                <th style="padding: 8px; font-size: 12px; border-bottom: 1px solid #ddd;">ป่วย</th>
+                                <th style="padding: 8px; font-size: 12px; border-bottom: 1px solid #ddd;">งาน</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -441,7 +469,7 @@ function openPersonalDashboard() {
                         </tbody>
                     </table>
                 </div>
-                <button class="btn" style="width:100%;border:none;padding:12px;border-radius:8px;font-weight:bold;margin-top:15px;background:#333;color:#fff;cursor:pointer;font-size: 15px;" onclick="closeModal()">🔒 ปิดหน้านี้</button>
+                <button class="btn" style="width:100%;border:none;padding:12px;border-radius:8px;font-weight:bold;margin-top:12px;background:#333;color:#fff;cursor:pointer;font-size: 15px;" onclick="closeModal()">🔒 ปิดหน้านี้</button>
             `;
         } else {
             modalAreaElement.innerHTML = `<div style="text-align:center; padding:20px; color:red;">❌ ไม่พบข้อมูลสถิติในระบบ หรือไฟล์ตารางยังไม่ได้ประมวลผล</div>
