@@ -55,8 +55,11 @@
         
         <div id="auth-status-msg" style="font-size: 14px; font-weight: bold; margin-top: 15px; min-height: 20px;"></div>
         <div id="live-clock" style="text-align: center; font-size: 1.2rem; font-weight: bold; color: #333; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e0e0e0;"> </div>
-
     </div>
+    <div style="text-align: center; margin: 10px auto; max-width: 350px; padding: 8px 12px; background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; color: #b78103; font-weight: bold; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+    ⚠️ กำหนดเข้างานวันนี้: ก่อนเวลา <span id="lateLimitTime" style="font-size: 18px; color: #e65100; font-weight: 900; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">08:30</span> น.
+    </div>
+
 </div>
 
 <script>
@@ -124,13 +127,10 @@
         document.getElementById("live-clock").innerHTML = "📅 " + dateThai + " | ⏰ " + hours + ":" + minutes + ":" + seconds + " น.";
     }, 1000);
   });
-    window.currentLoggedPin = ""; 
+      window.currentLoggedPin = ""; 
      
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxi-VQTGFXaTmUr6B0AAkKeYYxny7bltttgJpmkTVXv5ha03yNByPAbCFcStRCYUp2d/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxLirxCP1sk-dWJWYOyxrQj6vBCy-rcxIZfUPXg9V2xc8s6EpO4IhjJgLQpOmHEcyHc/exec"; 
     
-    
-
-
     const video = document.getElementById('video'), 
           canvas = document.getElementById('canvas'), 
           startBtn = document.getElementById('start-camera'), 
@@ -143,6 +143,8 @@
     window.selectedWorkerName = "";
     let imageDataUrl = "";
     let userGpsLocation = ""; 
+    // 🎯 สร้างตัวแปรส่วนกลางรอรับเวลาสายจาก Sheets 
+    window.lateLimitTimeFromSheets = "08:30"; 
 
    function validateEmployeeFcode(el) {
     const statusMsg = document.getElementById('auth-status-msg');
@@ -155,6 +157,7 @@
         statusMsg.style.color = "#3b82f6";
         statusMsg.innerText = "⌛ กำลังตรวจสอบรหัสพนักงาน...";
         
+        // 🚀 จังหวะตรวจสอบรหัสพนักงาน
         fetch(`${WEB_APP_URL}?action=verifyFcode&passcode=${codeValue}`)
         .then(res => res.json())
         .then(data => {
@@ -163,6 +166,16 @@
                 statusMsg.style.color = "#10b981";
                 statusMsg.innerText = "✅ รหัสถูกต้อง กำลังเข้าสู่ระบบ...";
                 window.selectedWorkerName = data.name;
+
+                // 🎯 [แก้ไขจุดสำคัญ] แกะค่าเวลาสายที่ติดมาจากหลังบ้าน (ดึงจาก M1) เอามาจำลงบราวเซอร์
+                // และถ้ามีกล่องข้อความ "lateLimitTime" หรือ "m1Value" บนหน้าจอ ให้เอาตัวเลขไปแปะโชว์ทันที
+                let timeFromM1 = data.lateLimit || "08:30";
+                window.lateLimitTimeFromSheets = timeFromM1;
+                
+                let showBox = document.getElementById("lateLimitTime") || document.getElementById("m1Value");
+                if (showBox) {
+                    showBox.innerText = timeFromM1;
+                }
 
                 setTimeout(() => {
                     document.getElementById('auth-screen').style.display = 'none';
@@ -174,7 +187,6 @@
                         document.getElementById('special-group').style.display = 'flex'; 
                         startBtn.style.display = 'none'; 
                     } else {
-                        // พนักงานปกติซ่อนปุ่ม บังคับเปิดกล้องถ่ายภาพก่อน
                         document.getElementById('btn-group').style.display = 'none';
                         document.getElementById('special-group').style.display = 'none';
                         startBtn.style.display = 'block';
@@ -186,7 +198,6 @@
                         }, err => { window.userGpsLocation = "ไม่ได้เปิดพิกัด"; });
                     }
                 }, 400);
-
             } else {
                 statusMsg.style.color = "#ef4444";
                 statusMsg.innerText = data.message || "❌ รหัสไม่ถูกต้อง";
@@ -200,6 +211,7 @@
         });
      }
 }
+
     // 📸 การทำงานปุ่มเปิดกล้องถ่ายรูป
     startBtn.onclick = async () => {
         if (!window.selectedWorkerName) return alert("ระบบไม่พบชื่อผู้ใช้งาน");
@@ -243,15 +255,30 @@
     };
 
     // 🎯 ระบบคำนวณและกางหน้าต่างยืนยัน (Modal) ป้องกันพนักงานกดผิด
+    // (เรียกใช้ค่าเวลาแปรผันตาม M1 จากหน้าบ้านตรง ๆ ไม่สับสน)
     function confirmAndSend(status) {
         if (!window.selectedWorkerName) return alert("ไม่พบข้อมูลพนักงาน");
 
         if (status === 'In') {
             let now = new Date();
             let currentMinutes = (now.getHours() * 60) + now.getMinutes();
-            let limitMinutes = (8 * 60) + 0; 
+            
+            let hh = 8;
+            let mm = 30; // ค่าเริ่มต้นแบคอัพคือ 08:30 น.
 
-            if (currentMinutes > limitMinutes) { status = 'Late'; }
+            // 🛠️ ดึงค่าเวลาสายที่บราวเซอร์จำไว้จาก M1 (เช่น "08:30" หรือเวลารูปแบบอื่น)
+            let m1Time = window.lateLimitTimeFromSheets;
+            if (m1Time && m1Time.indexOf(":") !== -1) {
+                let parts = m1Time.split(":");
+                hh = parseInt(parts[0], 10);
+                mm = parseInt(parts[1], 10);
+            }
+
+            let limitMinutes = (hh * 60) + mm; 
+
+            if (currentMinutes > limitMinutes) { 
+                status = 'Late'; 
+            }
         }
 
         if (status === 'Out') {
@@ -266,7 +293,6 @@
             'Out': 'ออกงาน', 'Vacation': 'พักร้อน 1วัน', 'VacationHalf': 'พักร้อน 1/2 วัน', 
             'Absent': 'ขาดงาน 1วัน', 'Sick': 'ป่วย' 
         };
-
         let currentTimeText = new Date().toLocaleTimeString('th-TH');
         let btnHtml = `
             <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
@@ -279,9 +305,9 @@
                 <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
                     <button class="btn" style="background:#ef4444; color:white; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:0;" onclick="sendToSheet('Late')">⚠️ ยืนยันเข้างานสาย</button>
                     <button class="btn" style="background:#8b5cf6; color:white; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:0;" onclick="closeModal(); confirmAndSend('VacationHalf');">🌗 เปลี่ยนเป็นลาพักร้อน 1/2 วัน</button>
-                    <button class="btn" style="background:#64748b; color:white; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:0;" onclick="location.reload()">❌ ยกเลิก</button>
+                    <button class="btn" style="background:#64748b; color:white; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:0;" onclick="closeModal()">❌ ยกเลิก</button>
                 </div>
-            `;
+            `; // 💡 ปรับปุ่มยกเลิกของสายเป็น closeModal() หน้าจอจะได้ไม่กระตุกครับ
         }
 
         modalArea.innerHTML = `
@@ -307,9 +333,10 @@
                 </div>
             `;
         }
-        
         let now = new Date();
         let timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        
+        // 🎯 [แก้ไขจุดสำคัญ] ไม่ว่าจะสถานะไหน (รวมถึง ลาพักร้อน ขาดงาน ป่วย) ก็จะดึงค่า GPS ส่งไปด้วยเสมอ
         let gpsData = window.userGpsLocation || "ไม่ได้เปิดพิกัด";
         let finalImg = imageDataUrl || "";
 
@@ -317,7 +344,7 @@
             name: window.selectedWorkerName,
             status: status,
             time: timeStr,   
-            gps: gpsData,
+            gps: gpsData, // ส่งพิกัด GPS
             image: finalImg
         };
 
@@ -342,8 +369,8 @@
                         </div>
                     `;
                 }
-                setTimeout(() => { location.reload(); }, 4000);
-            } else {
+                setTimeout(() => { location.reload(); }, 3000);
+          } else {
                 if (modalArea) {
                     modalArea.innerHTML = `
                         <div style="text-align:center; padding: 20px 10px;">
@@ -354,7 +381,7 @@
                         </div>
                     `;
                 }
-                setTimeout(() => { location.reload(); }, 4000);
+                setTimeout(() => { location.reload(); }, 3000);
             }
         })
         .catch(err => {
