@@ -152,7 +152,7 @@
   });
       window.currentLoggedPin = ""; 
      
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyjrfCV1K3-e2ADtGdBrfxEOOpA-C8u6LHmDKY-tBKtJw8qrX2oq87bNX8uuhcE0QXe/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzum_Kx9dABByiMaeGq0Dxu5_ix7zdFzkE28UfgbZpR2fDu1C10zDlO7nlnyx89_NsG/exec"; 
     
     const video = document.getElementById('video'), 
           canvas = document.getElementById('canvas'), 
@@ -169,7 +169,7 @@
     // 🎯 สร้างตัวแปรส่วนกลางรอรับเวลาสายจาก Sheets 
     window.lateLimitTimeFromSheets = "08:30"; 
 
-  function validateEmployeeFcode(el) {
+ function validateEmployeeFcode(el) {
     const statusMsg = document.getElementById('auth-status-msg');
     statusMsg.innerText = ""; 
     el.value = el.value.replace(/[^0-9]/g, '');
@@ -190,22 +190,16 @@
                 statusMsg.innerText = "✅ รหัสถูกต้อง กำลังเข้าสู่ระบบ...";
                 window.selectedWorkerName = data.name;
 
-                // แกะค่าเวลาสายที่ติดมาจากหลังบ้าน (M1)
+                // แกะเวลาสาย M1 แปะโชว์ที่ระบบ
                 let timeFromM1 = data.lateLimit || "08:30";
                 window.lateLimitTimeFromSheets = timeFromM1;
-                
                 let showBox = document.getElementById("lateLimitTime") || document.getElementById("m1Value");
-                if (showBox) {
-                    showBox.innerText = timeFromM1;
-                }
+                if (showBox) showBox.innerText = timeFromM1;
 
-                // =============================================================
-                // 🎯 [จังหวะสลับหน้าจอ]: เข้าสู่หน้าจอเมนูพนักงาน (ปุ่มโผล่ครบตามรูปพี่ยัง)
-                // =============================================================
+                // 🎯 [จังหวะสลับหน้าจอตามรูป]: เข้าหน้าเมนูพนักงาน ปุ่มกดแสตนบายรอหลังฉากทันที
                 document.getElementById('auth-screen').style.display = 'none';
                 document.getElementById('display-worker-name').innerText = "👤 ผู้ใช้งาน: " + data.name;
 
-                // เปิดกลุ่มปุ่มกดหลักตามประเภทสิทธิ์ทันที (เพื่อให้ปุ่มไปแสตนบายด้านหลัง)
                 if (data.status === "success1234") {
                     document.getElementById('btn-group').style.display = 'flex'; 
                     document.getElementById('special-group').style.display = 'flex'; 
@@ -216,53 +210,51 @@
                     if (typeof startBtn !== 'undefined') startBtn.style.display = 'block';
                 }
 
-                let delayTime = 400; // เวลาหน่วงฉากปกติ (มิลลิวินาที)
+                let delayTime = 400; // เวลาหน่วงกรณีมาลงเวลาครั้งแรกของวัน
 
-                // 🔍 ตรวจสอบเงื่อนไข: ถ้าวันนี้เคยลงเวลาเข้างานไปแล้ว (คอลัมน์ D มีข้อมูล)
+                // 🔍 ตรวจเงื่อนไขสั้น ๆ: ถ้าวันนี้เคยลงเวลาเข้างานไปแล้ว (คอลัมน์ D มีค่าส่งมาจากหลังบ้าน)
                 if (data.alreadyInTime && data.alreadyInTime !== "") {
                     
-                    // สร้างหน้าต่างลอยโปร่งแสง (Overlay) ครอบทับหน้าจอไว้ชั่วคราว
-                    // ปุ่มด้านหลังจะยังมองเห็นได้ลาง ๆ แต่จะโดนหน้าต่างนี้บล็อกไม่ให้กดชั่วคราว 7 วินาที
+                    let cleanIn = data.alreadyInTime;
+                    let cleanOut = data.alreadyOutTime || "--:--"; // ถ้ายังไม่กดออกงาน ให้ขึ้นขีดแทน
+                    
+                    // เสกหน้าต่างลอยโปร่งแสง (Overlay) โดยที่ปุ่มจริงตามรูปยังคงเห็นได้ลาง ๆ ด้านหลัง
                     let overlayHTML = `
-                        <div id="transparent-popup-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.3); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px);">
-                            <div style="background-color: rgba(255, 255, 255, 0.95); color: #1e40af; padding: 25px 30px; border-radius: 12px; text-align: center; border: 2px solid #3b82f6; max-width: 85%; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2); animation: popScale 0.3s ease-out;">
-                                <div style="font-size: 24px; margin-bottom: 10px;">📢</div>
-                                <div style="font-size: 18px; font-weight: bold; line-height: 1.6;">
-                                    วันนี้ คุณลงเวลาเข้างาน<br>
-                                    เวลา <span style="color: #ef4444; font-size: 22px; font-weight: 800;">${data.alreadyInTime} น.</span><br>
-                                    เรียบร้อยแล้วครับ
+                        <div id="transparent-popup-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.4); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px);">
+                            <div style="background-color: rgba(255, 255, 255, 0.98); color: #1e40af; padding: 25px; border-radius: 16px; text-align: center; border: 2px solid #3b82f6; width: 85%; max-width: 340px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); animation: popScale 0.3s ease-out;">
+                                <div style="font-size: 26px; margin-bottom: 5px;">📣</div>
+                                <div style="font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #1e3a8a;">บันทึกเวลาของวันนี้</div>
+                                
+                                <div style="display: flex; justify-content: space-between; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 15px;">
+                                    <div style="flex: 1; border-right: 1px solid #e2e8f0; padding-right: 5px;">
+                                        <div style="font-size: 13px; color: #64748b; font-weight: bold;">💵 เข้างาน</div>
+                                        <div style="color: #10b981; font-size: 22px; font-weight: 800; margin-top: 5px;">${cleanIn}</div>
+                                    </div>
+                                    <div style="flex: 1; padding-left: 5px;">
+                                        <div style="font-size: 13px; color: #64748b; font-weight: bold;">⛔ ออกงาน</div>
+                                        <div style="color: ${cleanOut === '--:--' ? '#94a3b8' : '#ef4444'}; font-size: 22px; font-weight: 800; margin-top: 5px;">${cleanOut}</div>
+                                    </div>
                                 </div>
-                                <div style="font-size: 12px; color: #6b7280; margin-top: 15px; letter-spacing: 0.5px;">(ทำลายตัวเองอัตโนมัติใน 7 วินาที)</div>
+                                <div style="font-size: 12px; color: #6b7280; letter-spacing: 0.5px;">(สุข ทุกข์ เวียนวนกันไป)</div>
                             </div>
                         </div>
-                        <style>
-                            @keyframes popScale {
-                                0% { transform: scale(0.8); opacity: 0; }
-                                100% { transform: scale(1); opacity: 1; }
-                            }
-                        </style>
+                        <style>@keyframes popScale { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }</style>
                     `;
                     
-                    // พ่นหน้าต่างลอยโปร่งแสงลงครอบหน้าจอหลัก
                     document.body.insertAdjacentHTML('beforeend', overlayHTML);
-                    
-                    delayTime = 7000; // ⏳ บังคับหน่วงเวลาให้ระงับหน้าจอไว้ 7 วินาที
+                    delayTime = 6000; // ⏳ เปลี่ยนเวลาล็อกหน้าจอไว้ 3 วินาที
                 }
 
-                // 3. พอครบกำหนดเวลา (400 มิลลิวินาที หรือ 3 วินาที ล็อกจอจะหลุดออกเอง)
+                // 3. ปลดล็อกหน้าต่างเมื่อครบเวลา
                 setTimeout(() => {
-                    
-                    // สั่งทำลายหน้าต่างลอยโปร่งแสงทิ้งไป พนักงานจะกลับมากดปุ่มถ่ายรูปหลังจอได้ทันที
                     const transparentOverlay = document.getElementById('transparent-popup-overlay');
-                    if (transparentOverlay) transparentOverlay.remove();
+                    if (transparentOverlay) transparentOverlay.remove(); // สลายหน้าต่างลอย เพื่อให้กดปุ่มเหลืองถ่ายรูปหลังจอได้
 
-                    // ดึงพิกัด GPS ส่งท้ายระบบตามขั้นตอนปกติ
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(pos => {
                             window.userGpsLocation = pos.coords.latitude + "," + pos.coords.longitude;
                         }, err => { window.userGpsLocation = "ไม่ได้เปิดพิกัด"; });
                     }
-                    
                 }, delayTime);
 
             } else {
