@@ -90,15 +90,15 @@
    /* หน้าต่างมอนิเตอร์ Real-time แบบลอย (สถานะปกติ) */
 #realtime-monitor-box {
   position: fixed;
-  bottom: 20px;
-  center: 20px;
+  bottom: 150px;
+  center: 0px;
   width: 320px;
   height: 150px;
   background-color: #1a1a1a;
   color: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.6);
-  border-left: 6px solid #00ffcc;
+  //box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+  // border-left: 6px solid #00ffcc;
   padding: 14px;
   z-index: 9999; /* อยู่บนสุดเสมอ */
   font-family: Arial, sans-serif;
@@ -118,7 +118,7 @@
   border-radius: 0 !important;
   border-left: none !important;
   border-top: 6px solid #00ffcc !important;
-  padding: 30px !important;
+  padding: 40px !important;
 }
 
 #realtime-monitor-box .rt-header {
@@ -161,6 +161,37 @@
   font-size: 18px;
 }
 
+
+/* ❌ ซ่อนปุ่มย้อนกลับไว้ก่อนในโหมดกล่องเล็กปกติ */
+#realtime-monitor-box .rt-close-btn {
+  display: none; 
+  position: absolute;
+  top: 25px;
+  left: 25px;
+  background-color: #ffffff; /* ⚪ เปลี่ยนเป็นสีขาว */
+  color: #000000;            /* ⚫ เปลี่ยนตัวอักษรเป็นสีดำ */
+  border: 1px solid #e2e8f0; /* เพิ่มเส้นขอบสีเทาอ่อนให้ดูนวลตา */
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); /* ปรับเงาให้ซอฟต์ลงเข้ากับปุ่มสีขาว */
+  z-index: 10001;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+/* เอฟเฟกต์ตอนเอาเมาส์ชี้หรือเอานิ้วกด (จะเปลี่ยนเป็นสีเทาอ่อนลงนิดนึง) */
+#realtime-monitor-box .rt-close-btn:hover {
+  background-color: #f1f5f9; 
+}
+
+/* 🎯 โชว์ปุ่มย้อนกลับเฉพาะตอนที่ขยายใหญ่เต็มจอ (Fullscreen) */
+#realtime-monitor-box.fullscreen .rt-close-btn {
+  display: block; 
+}
+
 #realtime-monitor-box .rt-name { color: #f5f5f5; font-weight: 500; }
 #realtime-monitor-box .rt-time { color: #ffcc00; font-weight: bold; }
 #realtime-monitor-box .rt-no-data { text-align: center; color: #888; font-size: 12px; padding: 20px 0; }
@@ -168,8 +199,8 @@
 /* สไตล์สำหรับกล่องข้อความแจ้งเตือนใหม่ */
 #custom-alert-box {
   position: fixed;
-  top:30vh;             /* จุดเริ่มต้นความสูง (ปรับได้) */
-  left: 30px;            /* จุดเริ่มต้นฝั่งซ้าย (ปรับได้) */
+  top:0vh;             /* จุดเริ่มต้นความสูง (ปรับได้) */
+  center: 0px;            /* จุดเริ่มต้นฝั่งซ้าย (ปรับได้) */
   width: 200px;          /* ความกว้างของกล่องข้อความ */
   background: linear-gradient(135deg, #1e3a8a 0%, #172554 100%); /* โทนน้ำเงินหรู */
   color: #ffffff;
@@ -204,19 +235,20 @@
 </head>
 <body>
 
-<div id="realtime-monitor-box" ondblclick="toggleFullscreen()">  
-  <div class="rt-header">⏱️ วันนี้ใครมาทำงานบ้างนะ  <br><small style="font-size:12px; color:#ffcc00;">แตะ 2 ครั้งเพื่อ ขยาย/ย่อ</small></div>
+<div id="realtime-monitor-box" ondblclick="toggleFullscreen()">
+  <button class="rt-close-btn" onclick="event.stopPropagation(); location.reload();">⬅ ย้อนกลับ</button>  
+  <div class="rt-header">⏱️ วันนี้ใครมาทำงานบ้างนะ  <br><small style="font-size:12px; color:#ffcc00;">แตะ 2 ครั้งเพื่อขยาย</small></div>
   <div class="rt-container" id="rt-list-container">
     <div class="rt-no-data">กำลังโหลดข้อมูลพนักงาน...</div>
   </div>
 </div>
 
   <div id="custom-alert-box" onclick="hideAlertBox(this)">  
-  <div class="alert-title">📢 ประกาศถึงชาวโลก</div>
+  <div class="alert-title">📢 ประกาศถึงชาวโลก..</div>
   <div class="alert-body">
     <small style="color: #ffffff; font-size: 14px;">วันนี้งดประชุม</small><br>
     <small style="color: #ffffff; font-size: 14px;">เข้างานก่อน 08:30 น. นะครับ </small><br>
-    <small style="color: #ffcc00; font-size: 12px;">[แตะหนูหน่อย]</small>
+    <small style="color: #ffcc00; font-size: 12px;">[แตะ เพื่อปิด]</small>
   </div>
 </div>
 
@@ -371,7 +403,7 @@ if (alertBox) {
 
         window.currentLoggedPin = ""; 
      
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzx1jO4ww8WZi0nTaDJIRvioGNK-RN5Y67ItI-hEQ_X_WiNiaYWPzzT4Q9KG0wWhx1l/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx_hkHRFx20ZTGQYfqEQ5yN4byeLjeyQIYTQZmlf4EX_3QhLNo3T1-sKTU06KWzICCr/exec"; 
     
     const video = document.getElementById('video'), 
           canvas = document.getElementById('canvas'), 
@@ -426,8 +458,8 @@ if (alertBox) {
     // 🎯 ฟังก์ชันสลับขนาดเมื่อโดน แตะ 2 ครั้ง (Double Click)
     function toggleFullscreen() {
       let monitorBox = document.getElementById('realtime-monitor-box');
-      if (monitorBox) monitorBox.classList.toggle('fullscreen');
-    }
+     // if (monitorBox) monitorBox.classList.toggle('fullscreen');
+     if (monitorBox) monitorBox.classList.add('fullscreen');} // เปลี่ยนจาก .toggle เป็น .add เพื่อสั่งให้ใส่คลาสขยายเต็มจออย่างเดียว
 
 
  function validateEmployeeFcode(el) {
