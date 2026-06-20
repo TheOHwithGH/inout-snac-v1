@@ -34,6 +34,8 @@
         .stat-num { font-size: 18px; font-weight: bold; display: block; }
         .table-wrap { max-height: 180px; overflow-y: auto; font-size: 14px; border: 1px solid #eee; border-radius: 8px; width: 100%; }
         .modal-btn-group { display: flex; gap: 10px; margin-top: 15px; }
+
+        
     </style>
 </head>
 <body>
@@ -43,6 +45,7 @@
         <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin: 0 0 5px 0;">หจก.แสงอนันต์การไฟฟ้า</h2>
         <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin: 0 0 5px 0;">ระบบลงเวลา</h2>
         <p style="font-size: 13px; color: #64748b; margin: 0 0 20px 0;">กรุณากรอกรหัสประจำตัว 4 หลักเพื่อเข้าสู่ระบบ</p>
+
         
         <input type="text" 
                id="emp-fcode-input" 
@@ -56,9 +59,7 @@
         <div id="auth-status-msg" style="font-size: 14px; font-weight: bold; margin-top: 15px; min-height: 20px;"></div>
         <div id="live-clock" style="text-align: center; font-size: 1.2rem; font-weight: bold; color: #333; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e0e0e0;"> </div>
     </div>
-    <div style="text-align: center; margin: 10px auto; max-width: 350px; padding: 8px 12px; background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; color: #b78103; font-weight: bold; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-    ⚠️ กำหนดเข้างานวันนี้: ก่อนเวลา <span id="lateLimitTime" style="font-size: 18px; color: #e65100; font-weight: 900; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">08:30</span> น.
-    </div>
+ 
 
 <!-- <div style="text-align: left; margin: 10px auto; max-width: 450px; padding: 8px 12px; background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; color: #fff8e1; font-size: 11px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
   <span style="color: red; font-size: 18px; font-weight: bold;">⚠️&nbsp;&nbsp;  ข้อกำหนดและเงื่อนไข  &nbsp;&nbsp; ⚠️</span><br>
@@ -85,6 +86,140 @@
 
 </div>
 
+ <style>
+   /* หน้าต่างมอนิเตอร์ Real-time แบบลอย (สถานะปกติ) */
+#realtime-monitor-box {
+  position: fixed;
+  bottom: 150px;
+  left: 20px;
+  width: 320px;
+  height: 150px;
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+  border-left: 6px solid #00ffcc;
+  padding: 14px;
+  z-index: 9999; /* อยู่บนสุดเสมอ */
+  font-family: Arial, sans-serif;
+  cursor: pointer; /* เปลี่ยนเมาส์เป็นรูปมือให้รู้ว่าคลิกได้ */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* เอฟเฟกต์เด้งดึ๋งตอนขยาย */
+}
+
+/* คลาสพิเศษที่จะถูกใส่เพิ่มเมื่อโดน "แตะ 2 ครั้ง" เพื่อขยายเต็มจอ */
+#realtime-monitor-box.fullscreen {
+  top: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-top: 6px solid #00ffcc !important;
+  padding: 30px !important;
+}
+
+#realtime-monitor-box .rt-header {
+  font-size: 14px;
+  font-weight: bold;
+  color: #00ffcc;
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #333;
+  margin-bottom: 10px;
+  user-select: none; /* ห้ามคลุมดำตัวหนังสือตอนดับเบิ้ลคลิก */
+}
+
+/* ส่วนแสดงผลรายชื่อที่สกรอลล์ได้ */
+#realtime-monitor-box .rt-container {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* สไตล์กล่องรายชื่อพนักงานตอนปกติ */
+#realtime-monitor-box .rt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  background-color: #262626;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+/* ปรับขนาดตัวหนังสือและกล่องให้ใหญ่ขึ้นอัตโนมัติเมื่อขยายเต็มจอ (เพื่อให้ CEO ดูก็ง่าย) */
+#realtime-monitor-box.fullscreen .rt-header {
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+#realtime-monitor-box.fullscreen .rt-row {
+  padding: 16px 24px;
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+#realtime-monitor-box .rt-name { color: #f5f5f5; font-weight: 500; }
+#realtime-monitor-box .rt-time { color: #ffcc00; font-weight: bold; }
+#realtime-monitor-box .rt-no-data { text-align: center; color: #888; font-size: 12px; padding: 20px 0; }
+
+/* สไตล์สำหรับกล่องข้อความแจ้งเตือนใหม่ */
+#custom-alert-box {
+  position: fixed;
+  top:30vh;             /* จุดเริ่มต้นความสูง (ปรับได้) */
+  left: 30px;            /* จุดเริ่มต้นฝั่งซ้าย (ปรับได้) */
+  width: 200px;          /* ความกว้างของกล่องข้อความ */
+  background: linear-gradient(135deg, #1e3a8a 0%, #172554 100%); /* โทนน้ำเงินหรู */
+  color: #ffffff;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  border-left: 4px solid #38bdf8; /* เส้นขอบฟ้าสะท้อนแสง */
+  z-index: 10000;        /* ให้อยู่เลเยอร์บนสุดเหนือทุกสิ่ง */
+  font-family: Arial, sans-serif;
+  cursor: move;
+  box-sizing: border-box;
+  user-select: none;
+  touch-action: none;    /* ห้ามหน้าเว็บหลักขยับตอนลาก */
+  transition: transform 0.2s ease, opacity 0.2s ease; /* เอฟเฟกต์ตอนจางหาย */
+}
+
+#custom-alert-box .alert-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #38bdf8;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #1e40af;
+  padding-bottom: 4px;
+}
+
+#custom-alert-box .alert-body {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+  </style>
+</head>
+<body>
+
+<div id="realtime-monitor-box" ondblclick="toggleFullscreen()">  
+  <div class="rt-header">⏱️ วันนี้ใครมาทำงานบ้างนะ  <br><small style="font-size:12px; color:#ffcc00;">แตะ 2 ครั้งเพื่อ ขยาย/ย่อ</small></div>
+  <div class="rt-container" id="rt-list-container">
+    <div class="rt-no-data">กำลังโหลดข้อมูลพนักงาน...</div>
+  </div>
+</div>
+
+  <div id="custom-alert-box" onclick="hideAlertBox(this)">  
+  <div class="alert-title">📢 ประกาศถึงชาวโลก</div>
+  <div class="alert-body">
+    <small style="color: #ffffff; font-size: 14px;">วันนี้งดประชุม</small><br>
+    <small style="color: #ffffff; font-size: 14px;">เข้างานก่อน 08:30 น. นะครับ </small><br>
+    <small style="color: #ffcc00; font-size: 12px;">[แตะหนูหน่อย]</small>
+  </div>
+</div>
+
 <script>
  // บังคับเด้งออกจากเบราว์เซอร์ของไลน์เข้าเบราว์เซอร์ปกติ
  if (navigator.userAgent.indexOf('Line') > -1) {
@@ -94,7 +229,7 @@
 
 <a href="#" class="btn-back" onclick="location.reload();">⬅ ย้อนกลับ</a>
 
-<div class="container" id="main-interface">
+    <div class="container" id="main-interface">
     <h2>หจก.แสงอนันต์การไฟฟ้า<br>บันทึกเวลาทำงาน</h2>
 
     <div style="background: #e2e8f0; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 15px; color: #1e293b;">
@@ -150,9 +285,93 @@
         document.getElementById("live-clock").innerHTML = "📅 " + dateThai + " | ⏰ " + hours + ":" + minutes + ":" + seconds + " น.";
     }, 1000);
   });
-      window.currentLoggedPin = ""; 
+
+// =========================================================================
+// 🎯 ระบบควบคุมกล่องข้อความใหม่ (ลากได้ + แตะเพื่อปิด)
+// =========================================================================
+const alertBox = document.getElementById("custom-alert-box");
+
+if (alertBox) {
+  let isDragging = false;
+  let hasMoved = false; // ตัวแปรเช็คว่า "ลากอยู่" หรือ "แค่แตะปล่อย"
+  let startX, startY, initialX, initialY;
+
+  // 1. เริ่มกด/จิ้ม
+  function alertDragStart(e) {
+    isDragging = true;
+    hasMoved = false; // รีเซ็ตค่าเริ่มต้น
+    
+    let clientX = e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
+    let clientY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
+
+    startX = clientX;
+    startY = clientY;
+    initialX = alertBox.offsetLeft;
+    initialY = alertBox.offsetTop;
+  }
+
+  // 2. กำลังลากขยับนิ้ว
+  function alertDragMove(e) {
+    if (!isDragging) return;
+    
+    let clientX = e.type === "touchmove" ? e.touches[0].clientX : e.clientX;
+    let clientY = e.type === "touchmove" ? e.touches[0].clientY : e.clientY;
+
+    let movementX = clientX - startX;
+    let movementY = clientY - startY;
+
+    // ถ้ามีการขยับนิ้วเกิน 3 พิกเซล ให้ถือว่าเป็นการ "ตั้งใจลากขยับตำแหน่ง" ไม่ใช่การแตะปิดกล่อง
+    if (Math.abs(movementX) > 3 || Math.abs(movementY) > 3) {
+      hasMoved = true;
+    }
+
+    let newX = initialX + movementX;
+    let newY = initialY + movementY;
+
+    // ล็อกขอบจอไม่ให้หลุดหาย
+    const maxLeft = window.innerWidth - alertBox.offsetWidth;
+    const maxTop = window.innerHeight - alertBox.offsetHeight;
+    if (newX < 0) newX = 0;
+    if (newX > maxLeft) newX = maxLeft;
+    if (newY < 0) newY = 0;
+    if (newY > maxTop) newY = maxTop;
+
+    alertBox.style.left = newX + "px";
+    alertBox.style.top = newY + "px";
+  }
+
+  // 3. ปล่อยนิ้ว
+  function alertDragEnd() {
+    isDragging = false;
+  }
+
+  // ผูกเหตุการณ์ (คอมพิวเตอร์)
+  alertBox.addEventListener("mousedown", alertDragStart);
+  window.addEventListener("mousemove", alertDragMove);
+  window.addEventListener("mouseup", alertDragEnd);
+
+  // ผูกเหตุการณ์ (มือถือ)
+  alertBox.addEventListener("touchstart", alertDragStart, { passive: true });
+  window.addEventListener("touchmove", alertDragMove, { passive: false });
+  window.addEventListener("touchend", alertDragEnd);
+  
+  // 4. ❌ ฟังก์ชันสั่ง "แตะแล้วหายไป"
+  window.hideAlertBox = function(el) {
+    // ถ้าพนักงานเจตนา "ลากกล่องย้ายที่" ไม่ต้องให้มันหายไป
+    if (hasMoved) return; 
+    
+    // ถ้าพนักงานแค่ "แตะจิ้มเฉยๆ" ให้กล่องค่อยๆ เฟดจางหายไปทันที
+    el.style.opacity = "0";
+    el.style.transform = "scale(0.8)";
+    setTimeout(() => {
+      el.style.display = "none"; // สลายทิ้งจากหน้าจอหลังเล่นเอฟเฟกต์เสร็จ
+    }, 200);
+  };
+}
+
+        window.currentLoggedPin = ""; 
      
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx9DPyk5I3Ez_ditnsMFHuSiELyQZtfzWFOjaMhV6J381qKOnUt09VgRnjr3_Rd5g0/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzx1jO4ww8WZi0nTaDJIRvioGNK-RN5Y67ItI-hEQ_X_WiNiaYWPzzT4Q9KG0wWhx1l/exec"; 
     
     const video = document.getElementById('video'), 
           canvas = document.getElementById('canvas'), 
@@ -168,6 +387,48 @@
     let userGpsLocation = ""; 
     // 🎯 สร้างตัวแปรส่วนกลางรอรับเวลาสายจาก Sheets 
     window.lateLimitTimeFromSheets = "08:30"; 
+
+    // ⏱️ [ระบบหน้าต่างลอย Monitor ออโต้]
+    function loadRealtimeMonitor() {
+      fetch(WEB_APP_URL + "?action=getRealtimeAttendance")
+        .then(response => response.json())
+        .then(response => {
+          let container = document.getElementById('rt-list-container');
+          if (!container) return;
+          if (response.status === "success") {
+            let list = response.data;
+            if (list.length === 0) {
+              container.innerHTML = '<div class="rt-no-data">ยังไม่มีพนักงานเข้างานช่วงนี้</div>';
+              return;
+            }
+            let html = '';
+            list.forEach(function(emp) {
+              html += '<div class="rt-row">' +
+                        '<span class="rt-name">👤 ' + emp.name + '</span>' +
+                        '<span class="rt-time">' + emp.time + ' น.</span>' +
+                      '</div>';
+            });
+            container.innerHTML = html;
+          } else {
+            container.innerHTML = '<div class="rt-no-data" style="color:red;">Error: ' + response.message + '</div>';
+          }
+        })
+        .catch(err => {
+          let container = document.getElementById('rt-list-container');
+          if (container) container.innerHTML = '<div class="rt-no-data">เชื่อมต่อตารางเวลาไม่ได้</div>';
+        });
+    }
+
+    // สั่งให้ทำงานทันที และตั้งรอบอัปเดตทุก 5 วินาที
+    loadRealtimeMonitor();
+    let realtimeTimer = setInterval(loadRealtimeMonitor, 5000);
+
+    // 🎯 ฟังก์ชันสลับขนาดเมื่อโดน แตะ 2 ครั้ง (Double Click)
+    function toggleFullscreen() {
+      let monitorBox = document.getElementById('realtime-monitor-box');
+      if (monitorBox) monitorBox.classList.toggle('fullscreen');
+    }
+
 
  function validateEmployeeFcode(el) {
     const statusMsg = document.getElementById('auth-status-msg');
@@ -190,6 +451,13 @@
                 statusMsg.innerText = "✅ รหัสถูกต้อง กำลังเข้าสู่ระบบ...";
                 window.selectedWorkerName = data.name;
 
+                // 🎯 1. สั่งซ่อนหน้าต่างลอยทันทีเมื่อ Login สำเร็จพนักงานจะได้เห็นเมนูเต็มๆ
+                let monitorBox = document.getElementById('realtime-monitor-box');
+                if (monitorBox) {
+                  monitorBox.style.display = 'none';
+                  clearInterval(realtimeTimer); // หยุดลูปดึงข้อมูลชั่วคราวเพื่อประหยัดสเปกเครื่อง
+                }
+
                 // แกะเวลาสาย M1 แปะโชว์ที่ระบบ
                 let timeFromM1 = data.lateLimit || "08:30";
                 window.lateLimitTimeFromSheets = timeFromM1;
@@ -209,7 +477,6 @@
                     document.getElementById('special-group').style.display = 'none';
                     if (typeof startBtn !== 'undefined') startBtn.style.display = 'block';
                 }
-
                 let delayTime = 400; // เวลาหน่วงกรณีมาลงเวลาครั้งแรกของวัน
 
                 // 🔍 ตรวจเงื่อนไขสั้น ๆ: ถ้าวันนี้เคยลงเวลาเข้างานไปแล้ว (คอลัมน์ D มีค่าส่งมาจากหลังบ้าน)
@@ -244,7 +511,6 @@
                     document.body.insertAdjacentHTML('beforeend', overlayHTML);
                     delayTime = 6000; // ⏳ เปลี่ยนเวลาล็อกหน้าจอไว้ 3 วินาที
                 }
-
                 // 3. ปลดล็อกหน้าต่างเมื่อครบเวลา
                 setTimeout(() => {
                     const transparentOverlay = document.getElementById('transparent-popup-overlay');
@@ -270,7 +536,6 @@
         });
      }
 }
-
 
     // 📸 การทำงานปุ่มเปิดกล้องถ่ายรูป
     startBtn.onclick = async () => {
@@ -313,6 +578,7 @@
         
         if(video.srcObject) { video.srcObject.getTracks().forEach(track => track.stop()); }
     };
+
 
     // 🎯 ระบบคำนวณและกางหน้าต่างยืนยัน (Modal) ป้องกันพนักงานกดผิด
     // (เรียกใช้ค่าเวลาแปรผันตาม M1 จากหน้าบ้านตรง ๆ ไม่สับสน)
