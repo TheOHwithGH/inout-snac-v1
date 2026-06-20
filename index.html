@@ -260,9 +260,6 @@
 </script>
 
 <a href="#" class="btn-back" onclick="location.reload();">⬅ ย้อนกลับ</a>
-<a href="#" class="btn-back" onclick="window.history.back();">⬅ ย้อนกลับ</a>
-
-
 
     <div class="container" id="main-interface">
     <h2>หจก.แสงอนันต์การไฟฟ้า<br>บันทึกเวลาทำงาน</h2>
@@ -423,36 +420,39 @@ if (alertBox) {
     // 🎯 สร้างตัวแปรส่วนกลางรอรับเวลาสายจาก Sheets 
     window.lateLimitTimeFromSheets = "08:30"; 
 
-    // ⏱️ [ระบบหน้าต่างลอย Monitor ออโต้]
-    function loadRealtimeMonitor() {
-      fetch(WEB_APP_URL + "?action=getRealtimeAttendance")
-        .then(response => response.json())
-        .then(response => {
-          let container = document.getElementById('rt-list-container');
-          if (!container) return;
-          if (response.status === "success") {
-            let list = response.data;
-            if (list.length === 0) {
-              container.innerHTML = '<div class="rt-no-data">ยังไม่มีพนักงานเข้างานช่วงนี้</div>';
-              return;
-            }
-            let html = '';
-            list.forEach(function(emp) {
-              html += '<div class="rt-row">' +
-                        '<span class="rt-name">👤 ' + emp.name + '</span>' +
-                        '<span class="rt-time">' + emp.time + ' น.</span>' +
-                      '</div>';
-            });
-            container.innerHTML = html;
-          } else {
-            container.innerHTML = '<div class="rt-no-data" style="color:red;">Error: ' + response.message + '</div>';
-          }
-        })
-        .catch(err => {
-          let container = document.getElementById('rt-list-container');
-          if (container) container.innerHTML = '<div class="rt-no-data">เชื่อมต่อตารางเวลาไม่ได้</div>';
+   // ⏱️ [เวอร์ชันแก้ทางตัวหนังสือเขยื้อน / undefined] มอนิเตอร์เรียลไทม์
+function loadRealtimeMonitor() {
+  fetch(WEB_APP_URL + "?action=getRealtimeAttendance")
+    .then(response => response.json())
+    .then(response => {
+      let container = document.getElementById('rt-list-container');
+      if (!container) return;
+      if (response.status === "success") {
+        let list = response.data;
+        if (!list || list.length === 0) {
+          container.innerHTML = '<div class="rt-no-data">ยังไม่มีข้อมูลพนักงานในขณะนี้</div>';
+          return;
+        }
+        let html = '';
+        
+        // 🎯 ดึง emp.statusText ออกมาตรงๆ โดยไม่ต้องไปบวกคำว่า "น." ซ้ำซ้อนที่หน้าบ้านอีกครับ
+        list.forEach(function(emp) {
+          html += '<div class="rt-row">' +
+                    '<span class="rt-name">👤 ' + emp.name + '</span>' +
+                    '<span class="rt-time">' + emp.statusText + '</span>' +
+                  '</div>';
         });
-    }
+        container.innerHTML = html;
+      } else {
+        container.innerHTML = '<div class="rt-no-data" style="color:red;">Error: ' + response.message + '</div>';
+      }
+    })
+    .catch(err => {
+      let container = document.getElementById('rt-list-container');
+      if (container) container.innerHTML = '<div class="rt-no-data">เชื่อมต่อตารางเวลาไม่ได้</div>';
+    });
+}
+
 
     // สั่งให้ทำงานทันที และตั้งรอบอัปเดตทุก 5 วินาที
     loadRealtimeMonitor();
@@ -544,7 +544,7 @@ if (alertBox) {
                     `;
                     
                     document.body.insertAdjacentHTML('beforeend', overlayHTML);
-                    delayTime = 6000; // ⏳ เปลี่ยนเวลาล็อกหน้าจอไว้ 3 วินาที
+                    delayTime = 5000; // ⏳ เปลี่ยนเวลาล็อกหน้าจอไว้ 3 วินาที
                 }
                 // 3. ปลดล็อกหน้าต่างเมื่อครบเวลา
                 setTimeout(() => {
