@@ -246,7 +246,7 @@
   <div id="custom-alert-box" onclick="hideAlertBox(this)">  
   <div class="alert-title">📢 ประกาศถึงชาวโลก..</div>
   <div class="alert-body">
-    <small style="color: #ffffff; font-size: 14px;">วันหยุดแห่เทียน 29-30 กค.</small><br>
+    <small style="color: #ffffff; font-size: 14px;">วันนี้งดประชุม</small><br>
     <small style="color: #ffffff; font-size: 14px;">เข้างานก่อน 08:30 น. นะครับ </small><br>
     <small style="color: #ffcc00; font-size: 12px;">[แตะ เพื่อปิด]</small>
   </div>
@@ -403,7 +403,7 @@ if (alertBox) {
 
         window.currentLoggedPin = ""; 
      
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw18za5plEvgG89ljj58JHrTFFZjWGuOL9x29-tmwvKKAxFWr-q3AfrDKdefF5oaKuQ/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwNrmhBvG65CTfdMI5dMw-XUYPDVoYoXRSOpxTQB5KIGPg-Z5YMmkMvZN0uZcUpfz0c/exec"; 
     
     const video = document.getElementById('video'), 
           canvas = document.getElementById('canvas'), 
@@ -820,7 +820,7 @@ function openPersonalDashboard() {
                 <p style="margin:5px 0;font-size:15px;"><b>👤 ชื่อ:</b> ${db.name}</p>
                 
                 <div style="background:#fff9db;padding:10px;border-radius:6px;font-size:14px;font-weight:bold;color:#b45309;border-left:4px solid #f59e0b;margin-bottom:10px;text-align:center;">
-                    🌴 พักร้อนคงเหลือ ${db.remainingVacation || 0} วัน
+                    🌴 พักร้อนคงเหลือ ${db.remainingVacation} วัน
                 </div>
 
                 <div style="background:#e7f1ff;padding:8px;border-radius:6px;font-size:13px;border-left:4px solid var(--primary);margin-bottom:10px;">
@@ -829,7 +829,7 @@ function openPersonalDashboard() {
                 
                 <div class="stat-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                 
-                  <div class="stat-card" style="background:#f8f9fa; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;">งาน</span><span class="stat-num"style="font-size:18px; font-weight:bold; color:#28a745;">${db.sumwork || 0}</span></div>
+                  <div class="stat-card" style="background:#f8f9fa; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;">งานสะสม</span><span class="stat-num"style="font-size:18px; font-weight:bold; color:#28a745;">${db.sumwork|| 0}</span></div>
                    
                   <div class="stat-card" style="background:#f8f9fa; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;"> พักร้อน</span><span class="stat-num"style="font-size:18px; font-weight:bold;color:#17a2b8;">${db.vacation || 0}</span></div>
                 
