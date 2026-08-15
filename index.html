@@ -5,48 +5,158 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบบันทึกเวลางาน SNAC</title>
     <style>
-        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --purple: #6f42c1; --info: #17a2b8; }
-        body { font-family: 'Sarabun', sans-serif; padding: 20px; background: #f0f2f5; position: relative; }
-        .btn-back { position: absolute; top: 15px; left: 15px; padding: 5px 10px; background: #fff; border: 1px solid #ccc; border-radius: 20px; text-decoration: none; color: #333; font-size: 11px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-        .container { max-width: 450px; margin: 45px auto auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; margin-bottom: 20px; color: #1a1a1a; font-size: 22px; font-weight: bold; }
+        :root { 
+            --primary: #0d6efd; 
+            --success: #198754; 
+            --danger: #dc3545; 
+            --warning: #ffc107; 
+            --purple: #8d49f7; 
+            --info: #0dcaf0; 
+            --bg-dark: #121212;
+            --card-dark: #1e1e1e;
+            --border-dark: #333333;
+            --text-main: #e0e0e0;
+        }
+
+        /* 📌 ปรับแต่งพื้นหลังและธีมหลักเป็น Dark Mode */
+        body { 
+            font-family: 'Sarabun', sans-serif; 
+            padding: 20px; 
+            background: var(--bg-dark) !important; 
+            color: var(--text-main) !important;
+            position: relative; 
+            margin: 0;
+        }
+
+        .btn-back { 
+            position: absolute; 
+            top: 15px; 
+            left: 15px; 
+            padding: 5px 12px; 
+            background: #2a2a2a; 
+            border: 1px solid var(--border-dark); 
+            border-radius: 20px; 
+            text-decoration: none; 
+            color: #fff; 
+            font-size: 11px; 
+            font-weight: bold; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5); 
+        }
+
+        /* 📌 Container หลัก Dark Theme */
+        .container { 
+            max-width: 450px; 
+            margin: 45px auto auto; 
+            background: var(--card-dark); 
+            padding: 25px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border-dark);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6); 
+        }
+
+        h2 { 
+            text-align: center; 
+            margin-bottom: 20px; 
+            color: #ffffff; 
+            font-size: 22px; 
+            font-weight: bold; 
+        }
+
         #camera-box { display: none; margin-bottom: 15px; text-align: center; }
-        video { width: 100%; border-radius: 8px; background: #000; }
+        video { width: 100%; border-radius: 8px; background: #000; border: 1px solid var(--border-dark); }
         canvas { display: none; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; margin-bottom: 10px; transition: 0.2s; }
+        
+        .btn { 
+            width: 100%; 
+            padding: 15px; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 16px; 
+            margin-bottom: 10px; 
+            transition: 0.2s; 
+        }
+
         .btn-camera { background: var(--primary); color: white; }
         .btn-snap { background: var(--warning); color: #000; }
         .btn-group { display: none; gap: 10px; width: 100%; }
         .btn-in { background: var(--success); color: white; flex: 1; }
-        .btn-afternoon { background-color: #2196F3 !important; color: white !important; display: none; }
+        .btn-afternoon { background-color: #0b5ed7 !important; color: white !important; display: none; }
         .btn-out { background: var(--danger); color: white; flex: 1; }
-        .special-group { display: none; flex-direction: column; margin-top: 10px; border-top: 2px dashed #eee; padding-top: 15px; }
+        .special-group { display: none; flex-direction: column; margin-top: 10px; border-top: 2px dashed var(--border-dark); padding-top: 15px; }
         .btn-leave { background: var(--purple); color: white; }
-        .btn-absent { background: #6c757d; color: white; }
-        .btn-sick { background: var(--info); color: white; }
-        #result { display: none; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid var(--primary); flex-direction: column; }
-        #loader { display: none; text-align: center; color: var(--primary); font-weight: bold; margin-top: 10px; }
-        .btn-info-personal { background: #e2e8f0; color: #333; border: 2px solid #ccc; margin-top: 5px; }
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-        .modal-box { background: white; width: 100%; max-width: 420px; border-radius: 16px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .stat-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
-        .stat-card { background: #f8f9fa; border: 1px solid #e3e6f0; border-radius: 8px; padding: 10px; text-align: center; flex: 1; min-width: 45%; box-sizing: border-box; }
-        .stat-num { font-size: 18px; font-weight: bold; display: block; }
-        .table-wrap { max-height: 180px; overflow-y: auto; font-size: 14px; border: 1px solid #eee; border-radius: 8px; width: 100%; }
-        .modal-btn-group { display: flex; gap: 10px; margin-top: 15px; }
-
+        .btn-absent { background: #495057; color: white; }
+        .btn-sick { background: var(--info); color: #000; }
         
+        #result { 
+            display: none; 
+            background: #2a2a2a; 
+            color: #fff;
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 15px; 
+            border-left: 5px solid var(--primary); 
+            flex-direction: column; 
+        }
+        
+        #loader { display: none; text-align: center; color: var(--primary); font-weight: bold; margin-top: 10px; }
+        .btn-info-personal { background: #2a2a2a; color: #fff; border: 1px solid var(--border-dark); margin-top: 5px; }
+
+        /* 📌 Modal เข้ม */
+        .modal-overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.8); 
+            z-index: 999; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 20px; 
+            box-sizing: border-box; 
+        }
+
+        .modal-box { 
+            background: var(--card-dark); 
+            color: var(--text-main);
+            width: 100%; 
+            max-width: 420px; 
+            border-radius: 16px; 
+            padding: 25px; 
+            border: 1px solid var(--border-dark);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
+        }
+
+        .stat-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
+        .stat-card { 
+            background: #262626; 
+            border: 1px solid var(--border-dark); 
+            border-radius: 8px; 
+            padding: 10px; 
+            text-align: center; 
+            flex: 1; 
+            min-width: 45%; 
+            box-sizing: border-box; 
+        }
+        
+        .stat-num { font-size: 18px; font-weight: bold; display: block; color: #00ffcc; }
+        .table-wrap { max-height: 180px; overflow-y: auto; font-size: 14px; border: 1px solid var(--border-dark); border-radius: 8px; width: 100%; background: #1a1a1a; }
+        .modal-btn-group { display: flex; gap: 10px; margin-top: 15px; }
     </style>
 </head>
 <body>
-<div id="auth-screen" style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f6f9; z-index: 9999; font-family: sans-serif;">
-    <div style="background: white; padding: 35px 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 85%; max-width: 350px; text-align: center; box-sizing: border-box;">
-        <div style="font-size: 45px; margin-bottom: 12px;"><img src="SNAC.png" width="180" height="180" onerror="this.style.display='none'"></div>
-        <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin: 0 0 5px 0;">หจก.แสงอนันต์การไฟฟ้า</h2>
-        <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin: 0 0 5px 0;">ระบบลงเวลา</h2>
-        <p style="font-size: 13px; color: #64748b; margin: 0 0 20px 0;">กรุณากรอกรหัสประจำตัว 4 หลักเพื่อเข้าสู่ระบบ</p>
 
-        
+<!-- 📌 หน้าล็อกอินใส่รหัสแบบ Dark Theme -->
+<div id="auth-screen" style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0a; z-index: 9999; font-family: sans-serif;">
+    <div style="background: #1e1e1e; border: 1px solid #333; padding: 35px 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); width: 85%; max-width: 350px; text-align: center; box-sizing: border-box;">
+        <div style="font-size: 45px; margin-bottom: 12px;"><img src="SNAC.png" width="180" height="180" onerror="this.style.display='none'"></div>
+        <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; margin: 0 0 5px 0;">หจก.แสงอนันต์การไฟฟ้า</h2>
+        <h2 style="font-size: 20px; font-weight: bold; color: #00ffcc; margin: 0 0 5px 0;">ระบบลงเวลา</h2>
+        <p style="font-size: 13px; color: #aaa; margin: 0 0 20px 0;">กรุณากรอกรหัสประจำตัว 4 หลักเพื่อเข้าสู่ระบบ</p>
+
         <input type="text" 
                id="emp-fcode-input" 
                inputmode="numeric" 
@@ -54,203 +164,187 @@
                maxlength="4" 
                placeholder="0000" 
                oninput="validateEmployeeFcode(this)"
-               style="width: 100%; letter-spacing: 15px; text-align: center; font-size: 32px; padding: 10px; border: 2px solid #cbd5e1; border-radius: 12px; outline: none; background: #f8fafc; box-sizing: border-box; font-weight: bold; color: #334155;">
+               style="width: 100%; letter-spacing: 15px; text-align: center; font-size: 32px; padding: 10px; border: 2px solid #444; border-radius: 12px; outline: none; background: #121212; box-sizing: border-box; font-weight: bold; color: #00ffcc;">
         
-        <div id="auth-status-msg" style="font-size: 14px; font-weight: bold; margin-top: 15px; min-height: 20px;"></div>
-        <div id="live-clock" style="text-align: center; font-size: 1.2rem; font-weight: bold; color: #333; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e0e0e0;"> </div>
+        <div id="auth-status-msg" style="font-size: 14px; font-weight: bold; margin-top: 15px; min-height: 20px; color: #ff4d4d;"></div>
+        <div id="live-clock" style="text-align: center; font-size: 1.2rem; font-weight: bold; color: #ffcc00; background: #262626; padding: 10px; border-radius: 8px; margin-top: 15px; border: 1px solid #333;"></div>
     </div>
- 
-
-<!-- <div style="text-align: left; margin: 10px auto; max-width: 450px; padding: 8px 12px; background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; color: #fff8e1; font-size: 11px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-  <span style="color: red; font-size: 18px; font-weight: bold;">⚠️&nbsp;&nbsp;  ข้อกำหนดและเงื่อนไข  &nbsp;&nbsp; ⚠️</span><br>
-  <span style="color: black; font-size: 14px; font-weight: bold;">หลักเกณฑ์ขึ้นค่าจ้าง พิจารณาจาก</span><br>
-     1. วินัยการทำงาน<br>
-     2. ผลงาน<br>
-     3. คะแนนพิศวาส....<br>
-      <br>
-     วินัยการทำงาน คืออะไร<br>
-     1. จำนวนวันมาทำงาน สาย ขาด<br>
-      (แนะนำ ลาพักร้อน ดีกว่าลงเวลาสาย)<br>
-     2. ขยัน ซื่อสัตย์ ตั้งใจทำงาน<br>
-     3. ความปลอดภัย ความสะอาด<br> 
-     4. ความเคารพกันและกัน<br>
-     5. บำรุงรักษาเครื่องมือ<br> 
-     <br>
-     ผลงาน คืออะไร<br>   
-     1. ทำงานได้ตามหลักวิชา+สวยงาม<br>
-     2. ส่งงานสำเร็จ(ไม่ต้องแก้ไขซ้ำ)<br>
-     3. ความเรียบร้อย(การเก็บงาน)<br>
-     <br>
-     
-    </div> -->
-
 </div>
 
- <style>
-   /* หน้าต่างมอนิเตอร์ Real-time แบบลอย (สถานะปกติ) */
+<style>
+/* 1. จัดวางหน้าต่างหลัก */
 #realtime-monitor-box {
   position: fixed;
   bottom: 0px;
-  center: 0px;
-  width: 320px;
-  height: 150px;
+  right: 0px;
+  width: 380px;
+  height: 250px;
   background-color: #1a1a1a;
   color: #ffffff;
   border-radius: 12px;
-  //box-shadow: 0 8px 25px rgba(0,0,0,0.6);
-  // border-left: 6px solid #00ffcc;
-  padding: 14px;
-  z-index: 9999; /* อยู่บนสุดเสมอ */
+  padding: 15px;
+  z-index: 9999;
   font-family: Arial, sans-serif;
-  cursor: pointer; /* เปลี่ยนเมาส์เป็นรูปมือให้รู้ว่าคลิกได้ */
+  cursor: pointer;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* เอฟเฟกต์เด้งดึ๋งตอนขยาย */
+  border: 1px solid #333;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* คลาสพิเศษที่จะถูกใส่เพิ่มเมื่อโดน "แตะ 2 ครั้ง" เพื่อขยายเต็มจอ */
 #realtime-monitor-box.fullscreen {
   top: 0 !important;
   right: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
   border-radius: 0 !important;
-  border-left: none !important;
-  border-top: 6px solid #00ffcc !important;
   padding: 40px !important;
 }
 
-#realtime-monitor-box .rt-header {
+/* 2. การจัดการคอลัมน์ (ขยับช่องเวลามาทางซ้าย) */
+.col-name  { flex: 0 0 18%; text-align: left; overflow: hidden; white-space: nowrap; }
+.col-time  { flex: 0 0 38%; text-align: center; }
+.col-late  { flex: 0 0 22%; text-align: center; }
+.col-total { flex: 0 0 22%; text-align: center; }
+
+/* 3. ส่วนหัวตาราง */
+.rt-header { font-size: 14px; font-weight: bold; color: #00ffcc; text-align: center; margin-bottom: 10px; user-select: none; }
+.rt-table-header { display: flex; align-items: center; padding: 8px 12px; background-color: #2a2a2a; border-radius: 6px; font-size: 13px; font-weight: bold; color: #00ffcc; margin-bottom: 6px; }
+
+/* 4. ส่วนเนื้อหาที่เลื่อนได้ */
+.rt-container { flex: 1; overflow-y: auto; }
+.rt-row { display: flex; align-items: center; padding: 8px 12px; margin-bottom: 6px; background-color: #262626; border-radius: 6px; font-size: 14px; }
+
+/* 5. สีตัวอักษร */
+.rt-name  { color: #f5f5f5; font-weight: 500; }
+.rt-time  { color: #ffcc00; font-weight: bold; }
+.rt-late  { color: #ff4d4d; font-weight: bold; }
+.rt-total { color: #ffffff; font-weight: bold; }
+
+/* 6. ปุ่มปิด */
+.rt-close-btn { display: none; position: absolute; top: 15px; left: 15px; background: #ffffff; color: #333; border-radius: 20px; padding: 5px 12px; font-weight: bold; cursor: pointer; border: none; }
+#realtime-monitor-box.fullscreen .rt-close-btn { display: block; }
+</style>
+
+<!-- ส่วนแสดงผลมอนิเตอร์ -->
+<div id="realtime-monitor-box" ondblclick="toggleFullscreen()">
+  <button class="rt-close-btn" onclick="event.stopPropagation(); location.reload();">⬅ ย้อนกลับ</button>  
+  
+  <div class="rt-header">
+    ⏱️ วันนี้ใครมาทำงานบ้าง  <br>
+    <small style="font-size:12px; color:#ffcc00;">แตะ 2 ครั้งเพื่อขยาย</small>
+  </div>
+
+  <!-- หัวตาราง -->
+  <div class="rt-table-header">
+    <div class="col-name">ชื่อ</div>
+    <div class="col-time">เวลา</div>
+    <div class="col-late">สาย(วันนี้)</div>
+    <div class="col-total">สะสม(เดือนนี้)</div>
+  </div>
+
+  <!-- กล่องข้อมูล -->
+  <div class="rt-container" id="rt-list-container"></div>
+</div>
+
+<style>
+/* 📌 กล่องป้ายประกาศลอยแบบ Dark Mode */
+.floating-banner {
+  position: fixed;
+  top: 20px;               
+  right: 20px;             
+  background: rgba(30, 30, 30, 0.95); 
+  border: 1px solid #333333;          
+  border-left: 4px solid #00ffcc;     
+  border-radius: 15px;
+  padding: 30px 36px;
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+  z-index: 10000; /* 👈 📌 แก้ตรงนี้จาก 9998 เป็น 10000 เพื่อให้ลอยทับหน้าล็อกอินด้วย */
+  text-align: center;
+  user-select: none;
+  animation: floatBounce 8s ease-in-out infinite alternate;
+}
+
+
+.floating-banner .banner-line1 {
   font-size: 14px;
   font-weight: bold;
   color: #00ffcc;
-  text-align: center;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #333;
-  margin-bottom: 10px;
-  user-select: none; /* ห้ามคลุมดำตัวหนังสือตอนดับเบิ้ลคลิก */
+  margin-bottom: 2px;
 }
 
-/* ส่วนแสดงผลรายชื่อที่สกรอลล์ได้ */
-#realtime-monitor-box .rt-container {
-  flex: 1;
-  overflow-y: auto;
-}
-
-/* สไตล์กล่องรายชื่อพนักงานตอนปกติ */
-#realtime-monitor-box .rt-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  margin-bottom: 6px;
-  background-color: #262626;
-  border-radius: 6px;
-  font-size: 13px;
-}
-
-/* ปรับขนาดตัวหนังสือและกล่องให้ใหญ่ขึ้นอัตโนมัติเมื่อขยายเต็มจอ (เพื่อให้ CEO ดูก็ง่าย) */
-#realtime-monitor-box.fullscreen .rt-header {
-  font-size: 22px;
-  margin-bottom: 20px;
-}
-#realtime-monitor-box.fullscreen .rt-row {
-  padding: 16px 24px;
-  margin-bottom: 12px;
-  font-size: 18px;
-}
-
-
-/* ❌ สไตล์ปุ่มย้อนกลับสีขาวตัวดำขนาดเล็ก มินิมอล (เวอร์ชันแก้ไขบังคับเปลี่ยน) */
-#realtime-monitor-box .rt-close-btn {
-  display: none; 
-  position: absolute !important; /* บังคับตำแหน่ง */
-  top: 15px !important;         /* ขยับขึ้นให้พอดีขอบ */
-  left: 15px !important;        /* ขยับซ้าย */
-  background: #ffffff !important; /* พื้นหลังขาวล้วน */
-  color: #333333 !important;      /* ตัวอักษรเทาเข้ม/ดำ */
-  border: 1px solid #ccc !important; /* เส้นขอบเทาบาง */
-  border-radius: 20px !important;    /* ปรับให้ขอบมนโค้ง */
-  padding: 5px 12px !important;   /* ⚡ บังคับขนาดพื้นที่ข้างในให้เล็กลง */
-  font-size: 11px !important;     /* ⚡ บังคับขนาดตัวหนังสือให้เล็กลง */
-  font-weight: bold !important;   /* ตัวหนาให้อ่านง่าย */
-  box-shadow: 0 2px 5px rgba(0,0,0,0.15) !important;
-  z-index: 10002 !important;     /* ดันให้อยู่เหนือกหัวข้อสีฟ้า */
-  cursor: pointer;
-  text-decoration: none;
-  line-height: normal !important; /* เคลียร์ระยะบรรทัดที่อาจเพี้ยน */
-}
-
-/* เอฟเฟกต์ตอนเอานิ้วกด/เมาส์ชี้ */
-#realtime-monitor-box .rt-close-btn:hover {
-  background-color: #f1f5f9 !important;
-}
-
-/* 🎯 โชว์ปุ่มเฉพาะตอนที่ขยายใหญ่เต็มจอ (Fullscreen) */
-#realtime-monitor-box.fullscreen .rt-close-btn {
-  display: block !important; 
-}
-
-#realtime-monitor-box .rt-name { color: #f5f5f5; font-weight: 500; }
-#realtime-monitor-box .rt-time { color: #ffcc00; font-weight: bold; }
-#realtime-monitor-box .rt-no-data { text-align: center; color: #888; font-size: 12px; padding: 20px 0; }
-
-/* สไตล์สำหรับกล่องข้อความแจ้งเตือนใหม่ */
-#custom-alert-box {
-  position: fixed;
-  top:0vh;             /* จุดเริ่มต้นความสูง (ปรับได้) */
-  right: 0px;            /* จุดเริ่มต้นฝั่งซ้าย (ปรับได้) */
-  width: 200px;          /* ความกว้างของกล่องข้อความ */
-  background: linear-gradient(135deg, #1e3a8a 0%, #172554 100%); /* โทนน้ำเงินหรู */
-  color: #ffffff;
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  border-left: 4px solid #38bdf8; /* เส้นขอบฟ้าสะท้อนแสง */
-  z-index: 10000;        /* ให้อยู่เลเยอร์บนสุดเหนือทุกสิ่ง */
-  font-family: Arial, sans-serif;
-  cursor: move;
-  box-sizing: border-box;
-  user-select: none;
-  touch-action: none;    /* ห้ามหน้าเว็บหลักขยับตอนลาก */
-  transition: transform 0.2s ease, opacity 0.2s ease; /* เอฟเฟกต์ตอนจางหาย */
-}
-
-#custom-alert-box .alert-title {
-  font-size: 13px;
-  font-weight: bold;
-  color: #38bdf8;
-  margin-bottom: 6px;
-  border-bottom: 1px solid #1e40af;
-  padding-bottom: 4px;
-}
-
-#custom-alert-box .alert-body {
+.floating-banner .banner-line2 {
   font-size: 12px;
-  line-height: 1.4;
+  color: #ffcc00;
 }
 
-  </style>
-</head>
-<body>
+@keyframes floatBounce {
+  0% { transform: translateY(0px) translateX(0px); }
+  50% { transform: translateY(-22px) translateX(-22px); }
+  100% { transform: translateY(10px) translateX(20px); }
+}
+</style>
 
-<div id="realtime-monitor-box" ondblclick="toggleFullscreen()">
-  <button class="rt-close-btn" onclick="event.stopPropagation(); location.reload();">⬅ ย้อนกลับ</button>  
-  <div class="rt-header">⏱️ วันนี้ใครมาทำงานบ้างนะ  <br><small style="font-size:12px; color:#ffcc00;">แตะ 2 ครั้งเพื่อขยาย</small></div>
-  <div class="rt-container" id="rt-list-container">
-    <div class="rt-no-data">กำลังโหลดข้อมูลพนักงาน...</div>
-  </div>
+<!-- 📢 ป้ายประกาศ -->
+<div class="floating-banner">
+  <div class="banner-line1">📢 ประกาศสำคัญ</div>
+  <div class="banner-line2">เข้างานก่อน 08:30 น. กันด้วยนะครับ ⏱️</div>
+  <div class="banner-line3">สาย สูงสุด 50บาทต่อวัน  ⏱️</div>
 </div>
 
-  <div id="custom-alert-box" onclick="hideAlertBox(this)">  
-  <div class="alert-title">📢 ประกาศถึงชาวโลก..</div>
-  <div class="alert-body">
-    <small style="color: #ffffff; font-size: 14px;">วันนี้งดประชุม</small><br>
-    <small style="color: #ffffff; font-size: 14px;">เข้างานก่อน 08:30 น. นะครับ </small><br>
-    <small style="color: #ffcc00; font-size: 12px;">[แตะ เพื่อปิด]</small>
-  </div>
-</div>
+<script>
+// ฟังก์ชันดึงข้อมูล
+function loadRealtimeMonitor() {
+  google.script.run.withSuccessHandler(renderMonitorList).getTodayAttendanceData();
+}
+
+// 📌 ฟังก์ชันวาดข้อมูล (แก้ไขใหม่: ดึงค่าตรงๆ ไม่ต้องประมวลผลซ้ำ)
+function renderMonitorList(data) {
+  let container = document.getElementById("rt-list-container");
+  
+  if (!data) return;
+
+  if (data.length === 0) {
+    container.innerHTML = `<div style="text-align:center; padding:20px; color:#888;">ยังไม่มีข้อมูล</div>`;
+    return;
+  }
+
+  let htmlBuilder = "";
+
+  data.forEach(item => {
+    // 📌 ดึงค่าที่ส่งมาจาก Code.gs มาแสดงผลตรงๆ ได้เลย ไม่โดนล้างค่าแน่นอน
+    htmlBuilder += `
+      <div class="rt-row">
+        <div class="col-name rt-name">👤 ${item.name}</div>
+        <div class="col-time rt-time">${item.timeIn || '-'}</div>
+        <div class="col-late rt-late">${item.lateToday}</div>
+        <div class="col-total rt-total">${item.lateTotal}</div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = htmlBuilder;
+}
+
+
+
+
+// ฟังก์ชันขยายจอ
+function toggleFullscreen() {
+  let box = document.getElementById('realtime-monitor-box');
+  if (box) box.classList.add('fullscreen');
+}
+
+// รันครั้งแรก และตั้งเวลาอัปเดตทุก 5 วินาที
+loadRealtimeMonitor();
+setInterval(loadRealtimeMonitor, 5000);
+</script>
+
+</body>
+</html>
 
 <script>
  // บังคับเด้งออกจากเบราว์เซอร์ของไลน์เข้าเบราว์เซอร์ปกติ
@@ -403,7 +497,7 @@ if (alertBox) {
 
         window.currentLoggedPin = ""; 
      
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzkN1kTWD-nuks5NaLMMqiT8aDjt0ay3samMcv00ZDDWDe5Z0_GNgUqVezazDYekJMp/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzbKqs5Z436dRLtCBvAM1U6kAnOT_5zXsUHOl9kVNtKHbvmZLKOEDGe_iGOdHiFgGy5Kg/exec"; 
     
     const video = document.getElementById('video'), 
           canvas = document.getElementById('canvas'), 
@@ -421,48 +515,78 @@ if (alertBox) {
     window.lateLimitTimeFromSheets = "08:30"; 
 
    // ⏱️ [เวอร์ชันแก้ทางตัวหนังสือเขยื้อน / undefined] มอนิเตอร์เรียลไทม์
+// 1. ฟังก์ชันดึงข้อมูลจากหลังบ้าน (ส่วนที่เคยขาดไป)
 function loadRealtimeMonitor() {
-  fetch(WEB_APP_URL + "?action=getRealtimeAttendance")
-    .then(response => response.json())
-    .then(response => {
-      let container = document.getElementById('rt-list-container');
-      if (!container) return;
-      if (response.status === "success") {
-        let list = response.data;
-        if (!list || list.length === 0) {
-          container.innerHTML = '<div class="rt-no-data">ยังไม่มีข้อมูลพนักงานในขณะนี้</div>';
-          return;
-        }
-        let html = '';
-        
-        // 🎯 ดึง emp.statusText ออกมาตรงๆ โดยไม่ต้องไปบวกคำว่า "น." ซ้ำซ้อนที่หน้าบ้านอีกครับ
-        list.forEach(function(emp) {
-          html += '<div class="rt-row">' +
-                    '<span class="rt-name">👤 ' + emp.name + '</span>' +
-                    '<span class="rt-time">' + emp.statusText + '</span>' +
-                  '</div>';
-        });
-        container.innerHTML = html;
-      } else {
-        container.innerHTML = '<div class="rt-no-data" style="color:red;">Error: ' + response.message + '</div>';
-      }
+  google.script.run
+    .withSuccessHandler(function(data) {
+      renderMonitorList(data);
     })
-    .catch(err => {
-      let container = document.getElementById('rt-list-container');
-      if (container) container.innerHTML = '<div class="rt-no-data">เชื่อมต่อตารางเวลาไม่ได้</div>';
-    });
+    .withFailureHandler(function(err) {
+      console.error("เกิดข้อผิดพลาดในการดึงข้อมูล Realtime: ", err);
+    })
+    .getTodayAttendanceData();
+}
+
+// 2. ฟังก์ชันวาดข้อมูลลงตาราง
+// 🎨 ฟังก์ชันวาดข้อมูลลงตาราง (แก้ไขให้แสดงยอดสะสมครบถ้วน + ตัดทศนิยม + ตัดวันที่)
+function renderMonitorList(data) {
+  let container = document.getElementById("rt-list-container");
+  if (!container) return;
+  
+  container.innerHTML = ""; // ล้างข้อมูลเดิมก่อน
+
+  if (!data || data.length === 0) {
+    container.innerHTML = `<div class="rt-no-data">ยังไม่มีข้อมูลการเข้างานวันนี้</div>`;
+    return;
+  }
+
+  data.forEach(item => {
+    // 📌 1. จัดการตัดวันที่ออก ให้เหลือเฉพาะเวลา (เช่น "08:41 น.")
+    let cleanTime = "-";
+    if (item.timeIn) {
+      let timeMatch = item.timeIn.toString().match(/\d{1,2}:\d{2}/);
+      cleanTime = timeMatch ? timeMatch[0] + " น." : item.timeIn;
+    }
+
+    // 📌 2. จัดการปัดเศษทศนิยม ยอดสายวันนี้
+    let cleanLateToday = "-";
+    if (item.lateToday !== undefined && item.lateToday !== null && item.lateToday !== '') {
+      let num = parseFloat(item.lateToday);
+      cleanLateToday = !isNaN(num) ? Math.round(num) : item.lateToday;
+    }
+
+    // 📌 3. จัดการปัดเศษทศนิยม ยอดสะสม (เช็กครอบคลุมมากขึ้น)
+    let cleanLateTotal = "-";
+    if (item.lateTotal !== undefined && item.lateTotal !== null && item.lateTotal !== '') {
+      let numTotal = parseFloat(item.lateTotal);
+      cleanLateTotal = !isNaN(numTotal) ? Math.round(numTotal) : item.lateTotal;
+    } else {
+      cleanLateTotal = 0; // ถ้าไม่มีข้อมูลสะสม ให้แสดงเป็น 0
+    }
+
+    // 📌 วาดแถวข้อมูลลง HTML
+    let rowHTML = `
+      <div class="rt-row">
+        <div class="col-name rt-name">👤 ${item.name}</div>
+        <div class="col-time rt-time">${cleanTime}</div>
+        <div class="col-late rt-late">${cleanLateToday}</div>
+        <div class="col-total rt-total">${cleanLateTotal}</div>
+      </div>
+    `;
+    container.innerHTML += rowHTML;
+  });
 }
 
 
-    // สั่งให้ทำงานทันที และตั้งรอบอัปเดตทุก 5 วินาที
-    loadRealtimeMonitor();
-    let realtimeTimer = setInterval(loadRealtimeMonitor, 5000);
+// 3. สั่งให้ทำงานทันที และตั้งรอบอัปเดตทุก 5 วินาที
+loadRealtimeMonitor();
+let realtimeTimer = setInterval(loadRealtimeMonitor, 5000);
 
-    // 🎯 ฟังก์ชันสลับขนาดเมื่อโดน แตะ 2 ครั้ง (Double Click)
-    function toggleFullscreen() {
-      let monitorBox = document.getElementById('realtime-monitor-box');
-     // if (monitorBox) monitorBox.classList.toggle('fullscreen');
-     if (monitorBox) monitorBox.classList.add('fullscreen');} // เปลี่ยนจาก .toggle เป็น .add เพื่อสั่งให้ใส่คลาสขยายเต็มจออย่างเดียว
+// 4. 🎯 ฟังก์ชันสลับขนาดเมื่อโดน แตะ 2 ครั้ง (Double Click)
+function toggleFullscreen() {
+  let monitorBox = document.getElementById('realtime-monitor-box');
+  if (monitorBox) monitorBox.classList.add('fullscreen');
+}
 
 
  function validateEmployeeFcode(el) {
@@ -672,7 +796,7 @@ function loadRealtimeMonitor() {
         }
 
         modalArea.innerHTML = `
-            <h3 style="margin-top:0; color:#1e293b; text-align:center;">ยืนยันข้อมูลลงเวลา</h3>
+            <h3 style="margin-top:0; color:#00ffcc; text-align:center;">ยืนยันข้อมูลลงเวลา</h3>
             <p style="margin:6px 0;"><b>👤 พนักงาน:</b> ${window.selectedWorkerName}</p>
             <p style="margin:6px 0;"><b>📌 Status:</b> <span style="color:#3b82f6; font-weight:bold;">${labels[status]}</span></p>
             <p style="margin:6px 0; margin-bottom:20px;"><b>⏰ เวลาปัจจุบัน:</b> ${currentTimeText}</p>
@@ -801,7 +925,7 @@ function openPersonalDashboard() {
 
                     rowsHtml += `
                         <tr style="border-bottom: 1px solid #eee;"> 
-                            <td style="padding:6px; color:#333; font-size: 12px; font-weight: bold;">${dateStr}</td>
+                            <td style="padding:6px; color:#ffff; font-size: 12px; ">${dateStr}</td>
                             <td style="padding:6px; font-size: 12px;">${vacationCell}</td>
                             <td style="padding:6px; font-size: 12px;">${absentCell}</td>
                             <td style="padding:6px; font-size: 12px;">${sickCell}</td>
@@ -816,34 +940,34 @@ function openPersonalDashboard() {
             }
 
             modalAreaElement.innerHTML = `
-                <h3 style="font-size:18px;font-weight:bold;color:var(--success);text-align:center;margin-bottom:10px;">📊 ข้อมูลบุคคล</h3>
+                <h3 style="font-size:18px;font-weight:bold;color:#00ffcc;text-align:center;margin-bottom:10px;">📊 ข้อมูลบุคคล</h3>
                 <p style="margin:5px 0;font-size:15px;"><b>👤 ชื่อ:</b> ${db.name}</p>
                 
                 <div style="background:#fff9db;padding:10px;border-radius:6px;font-size:14px;font-weight:bold;color:#b45309;border-left:4px solid #f59e0b;margin-bottom:10px;text-align:center;">
                     🌴 พักร้อนคงเหลือ ${db.remainingVacation} วัน
                 </div>
 
-                <div style="background:#e7f1ff;padding:8px;border-radius:6px;font-size:13px;border-left:4px solid var(--primary);margin-bottom:10px;">
-                    <b>ℹ️ หมายเหตุ: ข้อมูลจะเป็นปัจจุบัน หลัง20.00น</b>
+                <div style="background:#1a1a1a;padding:8px;border-radius:6px;font-size:13px;border-left:4px solid var(--primary);margin-bottom:10px;">
+                    <b>ℹ️ หมายเหตุ: ข้อมูลจะเป็นปัจจุบัน หลัง22.00น</b>
                 </div>
                 
                 <div class="stat-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                 
-                  <div class="stat-card" style="background:#f8f9fa; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;">งานสะสม</span><span class="stat-num"style="font-size:18px; font-weight:bold; color:#28a745;">${db.sumwork|| 0}</span></div>
+                  <div class="stat-card" style="background:#ffffff; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;">งานสะสม</span><span class="stat-num"style="font-size:18px; font-weight:bold; color:#28a745;">${db.sumwork|| 0}</span></div>
                    
-                  <div class="stat-card" style="background:#f8f9fa; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;"> พักร้อน</span><span class="stat-num"style="font-size:18px; font-weight:bold;color:#17a2b8;">${db.vacation || 0}</span></div>
+                  <div class="stat-card" style="background:#ffffff; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;"> พักร้อน</span><span class="stat-num"style="font-size:18px; font-weight:bold;color:#17a2b8;">${db.vacation || 0}</span></div>
                 
-                  <div class="stat-card" style="background:#f8f9fa; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;">ขาดงาน</span><span class="stat-num" style="font-size:18px; font-weight:bold; color:#17a2b8;">${db.absent || 0}</span></div>
+                  <div class="stat-card" style="background:#ffffff; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;">ขาดงาน</span><span class="stat-num" style="font-size:18px; font-weight:bold; color:#17a2b8;">${db.absent || 0}</span></div>
                 
-                  <div class="stat-card" style="background:#f8f9fa; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;">ป่วย</span><span class="stat-num" style="font-size:18px; font-weight:bold; color:#17a2b8;">${db.sick || 0}</span></div>
+                  <div class="stat-card" style="background:#ffffff; padding:10px; border-radius:6px; text-align:center; border:1px solid #eee;"><span style="font-size:11px;color:#666;display:block;">ป่วย</span><span class="stat-num" style="font-size:18px; font-weight:bold; color:#17a2b8;">${db.sick || 0}</span></div>
 
                 </div>
                 
                 <p style="font-weight:bold;font-size:13px;margin:5px 0;">📅 ประวัติย้อนหลัง-ประจำเดือน:</p>
                 
-                <div class="table-wrap" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px;"> 
+                <div class="table-wrap" style="max-height: 200px; overflow-y: auto; border: 1px solid #444444; border-radius: 8px;"> 
                     <table style="width:100%; text-align:center; border-collapse:collapse;">
-                        <thead style="background:#f1f1f1; position:sticky; top:0; z-index: 10;">
+                        <thead style="background:#2c2c2c; position:sticky; top:0; z-index: 10;">
                             <tr>
                                 <th style="padding: 8px; font-size: 12px; border-bottom: 1px solid #ddd;">วันที่</th>
                                 <th style="padding: 8px; font-size: 12px; border-bottom: 1px solid #ddd;">ลา</th>
