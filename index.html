@@ -296,26 +296,30 @@
     }
   }
 
-  // 📌 ปรับปรุงฟังก์ชันดึงข้อมูลมอนิเตอร์ (ถ้าร็อกอินแล้วจะไม่ทำงานซ้ำ)
   function loadRealtimeMonitor() {
-    if (window.isLoggedIn) return; // 👈 ถ้าร็อกอินแล้ว ให้หยุดดึงข้อมูลทันที
-
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run
         .withSuccessHandler(renderMonitorList)
-        .withFailureHandler(function(err) { console.error(err); })
+        .withFailureHandler(function(err) {
+            console.error("Monitor Error:", err);
+            document.getElementById("rt-list-container").innerHTML = 
+              `<div style="text-align:center; padding:15px; color:#ff4d4d; font-size:12px;">ดึงข้อมูลไม่สำเร็จ</div>`;
+        })
         .getTodayAttendanceData();
     }
   }
 
   function renderMonitorList(data) {
-    if (window.isLoggedIn) return; // 👈 ถ้าร็อกอินแล้ว ไม่ต้องวาดตารางใหม่
-
     let container = document.getElementById("rt-list-container");
     if (!container) return;
     
-    if (!data || data.length === 0) {
-      container.innerHTML = `<div style="text-align:center; padding:20px; color:#888;">ยังไม่มีข้อมูลการลงเวลาวันนี้</div>`;
+    // ถ้าข้อมูลเป็น string ให้แปลงเป็น JSON
+    if (typeof data === 'string') {
+      try { data = JSON.parse(data); } catch(e) { data = []; }
+    }
+
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      container.innerHTML = `<div style="text-align:center; padding:20px; color:#888; font-size:12px;">ยังไม่มีข้อมูลลงเวลาวันนี้</div>`;
       return;
     }
 
@@ -323,16 +327,15 @@
     data.forEach(item => {
       htmlBuilder += `
         <div class="rt-row">
-          <div class="col-name rt-name">👤 ${item.name || '-'}</div>
-          <div class="col-time rt-time">${item.timeIn || '-'}</div>
-          <div class="col-late rt-late">${item.lateToday || '0'}</div>
-          <div class="col-total rt-total">${item.lateTotal || '0'}</div>
+          <div class="col-name rt-name">👤 ${item.name || item.empName || '-'}</div>
+          <div class="col-time rt-time">${item.timeIn || item.time || '-'}</div>
+          <div class="col-late rt-late">${item.lateToday !== undefined ? item.lateToday : '-'}</div>
+          <div class="col-total rt-total">${item.lateTotal !== undefined ? item.lateTotal : '-'}</div>
         </div>
       `;
     });
     container.innerHTML = htmlBuilder;
   }
-
 
   function toggleFullscreen() {
     let box = document.getElementById('realtime-monitor-box');
