@@ -98,31 +98,6 @@
         .table-wrap table th, .table-wrap th { background-color: #2c2c2c !important; color: #00ffcc !important; font-weight: bold !important; }
         .table-wrap table td, .table-wrap td { color: #ffffff !important; border-bottom: 1px solid #333333 !important; }
 
-        #realtime-monitor-box {
-            position: fixed; bottom: 0px; right: 150px; width: 380px; height: 190px; background-color: #1a1a1a; 
-            color: #ffffff; border-radius: 12px; padding: 15px; z-index: 10001; font-family: Arial, sans-serif; 
-            cursor: pointer; box-sizing: border-box; display: flex !important; flex-direction: column; border: 1px solid #333; 
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        #realtime-monitor-box.fullscreen { top: 0 !important; right: 0 !important; width: 100vw !important; height: 100vh !important; border-radius: 0 !important; padding: 40px !important; }
-
-        .col-name  { flex: 0 0 20%; text-align: left; overflow: hidden; white-space: nowrap; }
-        .col-time  { flex: 0 0 30%; text-align: center; }
-        .col-late  { flex: 0 0 25%; text-align: center; }
-        .col-total { flex: 0 0 25%; text-align: center; }
-
-        .rt-header { font-size: 14px; font-weight: bold; color: #00ffcc; text-align: center; margin-bottom: 10px; user-select: none; }
-        .rt-table-header { display: flex; align-items: center; padding: 8px 12px; background-color: #2a2a2a; border-radius: 6px; font-size: 13px; font-weight: bold; color: #00ffcc; margin-bottom: 6px; }
-        .rt-container { flex: 1; overflow-y: auto; }
-        .rt-row { display: flex; align-items: center; padding: 8px 12px; margin-bottom: 6px; background-color: #262626; border-radius: 6px; font-size: 14px; }
-        .rt-name  { color: #f5f5f5; font-weight: 500; }
-        .rt-time  { color: #ffcc00; font-weight: bold; }
-        .rt-late  { color: #ff4d4d; font-weight: bold; }
-        .rt-total { color: #ffffff; font-weight: bold; }
-        .rt-close-btn { display: none; position: absolute; top: 15px; left: 15px; background: #ffffff; color: #333; border-radius: 20px; padding: 5px 12px; font-weight: bold; cursor: pointer; border: none; }
-        #realtime-monitor-box.fullscreen .rt-close-btn { display: block; }
-
         .floating-banner {
             position: fixed; top: 20px; right: 20px; background: rgba(30, 30, 30, 0.95); border: 1px solid #333333; 
             border-left: 4px solid #00ffcc; border-radius: 15px; padding: 15px 20px; color: #ffffff; font-family: Arial, sans-serif; 
@@ -138,12 +113,6 @@
             50% { transform: translateY(-30px) translateX(-40px); }
             100% { transform: translateY(20px) translateX(30px); }
         }
-        /* เมื่อหน้าล็อกอินถูกซ่อน (display: none) ให้ซ่อนมอนิเตอร์และป้ายประกาศทันที */
-#auth-screen[style*="display: none"] ~ #realtime-monitor-box,
-#auth-screen[style*="display: none"] ~ .floating-banner {
-    display: none !important;
-}
-
     </style>
 </head>
 <body>
@@ -155,7 +124,7 @@
         <h2 style="font-size: 20px; font-weight: bold; color: #00ffcc; margin: 0 0 5px 0;">ระบบลงเวลา</h2>
         <p style="font-size: 13px; color: #aaa; margin: 0 0 20px 0;">กรุณากรอกรหัสประจำตัว 4 หลักเพื่อเข้าสู่ระบบ</p>
 
-        <input type="text" id="emp-fcode-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="0000" oninput="validateEmployeeFcode(this)"
+        <input type="text" id="emp-fcode-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="0000" oninput="validateEmployeeFcode(this)" autofocus
                style="width: 100%; letter-spacing: 15px; text-align: center; font-size: 32px; padding: 10px; border: 2px solid #444; border-radius: 12px; outline: none; background: #121212; box-sizing: border-box; font-weight: bold; color: #00ffcc;">
         
         <div id="auth-status-msg" style="font-size: 14px; font-weight: bold; margin-top: 15px; min-height: 20px; color: #ff4d4d;"></div>
@@ -167,21 +136,6 @@
   <div class="banner-line1">📢 ประกาศสำคัญ</div>
   <div class="banner-line2">เข้างานก่อน 08:30 น. กันด้วยนะครับ ⏱️</div>
   <div class="banner-line3">สาย สูงสุด 50บาทต่อวัน ⏱️</div>
-</div>
-
-<div id="realtime-monitor-box" ondblclick="toggleFullscreen()">
-  <button class="rt-close-btn" onclick="event.stopPropagation(); location.reload();">⬅ ย้อนกลับ</button>  
-  <div class="rt-header">
-    ⏱️ วันนี้ใครมาทำงานบ้าง <br>
-    <small style="font-size:12px; color:#ffcc00;">แตะ 2 ครั้งเพื่อขยาย</small>
-  </div>
-  <div class="rt-table-header">
-    <div class="col-name">ชื่อ</div>
-    <div class="col-time">เวลา</div>
-    <div class="col-late">สาย(วันนี้)</div>
-    <div class="col-total">สะสม(เดือนนี้)</div>
-  </div>
-  <div class="rt-container" id="rt-list-container"></div>
 </div>
 
 <a href="#" class="btn-back" onclick="location.reload();">⬅ ย้อนกลับ</a>
@@ -220,11 +174,13 @@
 <div class="modal-overlay" id="common-modal">
     <div class="modal-box" id="modal-content-area"></div>
 </div>
-<script>
 
-        window.currentLoggedPin = ""; 
-     
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyT33_XuSwN53AC5jfm1d5Yr9hGAhOLN9SgdzQf4y-66nEs2m0YiVEJFhC2uJOkZL61Dg/exec"; 
+
+  <script>
+  window.currentLoggedPin = "";
+
+ const WEB_APP_URL =  "https://script.google.com/macros/s/AKfycbxDgEVicOC9HgSmlXMqzQb8FULVPxv59qm59do_4IjzeFaECjgMTT6_zoNZo1hQ2dba6g/exec";
+ 
 
   // 1. นาฬิกาแบบเรียลไทม์
   window.addEventListener("DOMContentLoaded", () => {
@@ -265,29 +221,12 @@
     }
   }
 
-    // 📌 ตัวแปรเก็บสถานะการล็อกอิน
-  window.isLoggedIn = false;
-
   function onAuthSuccess(response) {
     const statusMsg = document.getElementById("auth-status-msg");
     if (response && response.success) {
       window.currentLoggedPin = response.pin;
-      window.isLoggedIn = true; // 👈 1. เปลี่ยนสถานะเป็นล็อกอินแล้ว
-
       document.getElementById("display-worker-name").innerText = "👤 " + response.name;
       document.getElementById("auth-screen").style.display = "none";
-
-      // 👈 2. บังคับซ่อนหน้าต่างมอนิเตอร์และป้ายประกาศแบบเด็ดขาด
-      const monitorBox = document.getElementById("realtime-monitor-box");
-      if (monitorBox) {
-        monitorBox.style.setProperty("display", "none", "important");
-      }
-
-      const bannerBox = document.querySelector(".floating-banner");
-      if (bannerBox) {
-        bannerBox.style.setProperty("display", "none", "important");
-      }
-
       statusMsg.innerText = "";
     } else {
       statusMsg.style.color = "#ff4d4d";
@@ -296,61 +235,18 @@
     }
   }
 
-  function loadRealtimeMonitor() {
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
-      google.script.run
-        .withSuccessHandler(renderMonitorList)
-        .withFailureHandler(function(err) {
-            console.error("Monitor Error:", err);
-            document.getElementById("rt-list-container").innerHTML = 
-              `<div style="text-align:center; padding:15px; color:#ff4d4d; font-size:12px;">ดึงข้อมูลไม่สำเร็จ</div>`;
-        })
-        .getTodayAttendanceData();
-    }
+
+
+
+
+
+
+  function onAuthFailure(error) {
+    const statusMsg = document.getElementById("auth-status-msg");
+    statusMsg.style.color = "#ff4d4d";
+    statusMsg.innerText = "⚠️ ไม่สามารถเชื่อมต่อระบบได้";
   }
 
-  function renderMonitorList(data) {
-    let container = document.getElementById("rt-list-container");
-    if (!container) return;
-    
-    // ถ้าข้อมูลเป็น string ให้แปลงเป็น JSON
-    if (typeof data === 'string') {
-      try { data = JSON.parse(data); } catch(e) { data = []; }
-    }
-
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      container.innerHTML = `<div style="text-align:center; padding:20px; color:#888; font-size:12px;">ยังไม่มีข้อมูลลงเวลาวันนี้</div>`;
-      return;
-    }
-
-    let htmlBuilder = "";
-    data.forEach(item => {
-      htmlBuilder += `
-        <div class="rt-row">
-          <div class="col-name rt-name">👤 ${item.name || item.empName || '-'}</div>
-          <div class="col-time rt-time">${item.timeIn || item.time || '-'}</div>
-          <div class="col-late rt-late">${item.lateToday !== undefined ? item.lateToday : '-'}</div>
-          <div class="col-total rt-total">${item.lateTotal !== undefined ? item.lateTotal : '-'}</div>
-        </div>
-      `;
-    });
-    container.innerHTML = htmlBuilder;
-  }
-
-  function toggleFullscreen() {
-    let box = document.getElementById('realtime-monitor-box');
-    if (box) box.classList.toggle('fullscreen');
-  }
-
-  // รันมอนิเตอร์ทันที และอัปเดตทุก 5 วินาที
-  loadRealtimeMonitor();
-  setInterval(loadRealtimeMonitor, 5000);
-
-
-
-
-
-    
     const video = document.getElementById('video'), 
           canvas = document.getElementById('canvas'), 
           startBtn = document.getElementById('start-camera'), 
