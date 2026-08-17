@@ -444,46 +444,76 @@ function toggleFullscreen() {
      }
 }
 
-    // 📸 การทำงานปุ่มเปิดกล้องถ่ายรูป
+       // 📸 การทำงานปุ่มเปิดกล้องถ่ายรูป (รองรับมือถือ iOS & Android)
     startBtn.onclick = async () => {
-        if (!window.selectedWorkerName) return alert("ระบบไม่พบชื่อผู้ใช้งาน");
+        // เปลี่ยนมาเช็กตัวแปรล็อกอินจริง หรือรับค่าจากกล่องแสดงชื่อ
+        if (!window.currentLoggedPin) return alert("กรุณาเข้าสู่ระบบด้วยรหัส 4 หลักก่อนครับ");
+        
         try {
-            let idealCamera = "user"; 
             const constraints = { 
-                video: { facingMode: { ideal: idealCamera }, width: { ideal: 640 }, height: { ideal: 480 } }, 
+                video: { 
+                    facingMode: { ideal: "user" }, // ใช้กล้องหน้า
+                    width: { ideal: 640 }, 
+                    height: { ideal: 480 } 
+                }, 
                 audio: false 
             };
+            
             let stream;
             try { 
                 stream = await navigator.mediaDevices.getUserMedia(constraints); 
             } catch (e) { 
+                // Fallback กรณีมือถือไม่รองรับ constraints แบบระบุละเอียด
                 stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); 
             }
+            
             video.srcObject = stream;
-            await video.play(); 
-            cameraBox.style.display = 'block';
-            startBtn.style.display = 'none';
+            video.setAttribute("playsinline", true); // 👈 บังคับให้เล่นวิดีโอบนจอหลักของ iOS ไม่เด้ง Fullscreen
+            
+            // รอให้ Video โหลด Stream เสร็จก่อนเล่น ป้องกัน Error บนมือถือ
+            video.onloadedmetadata = async () => {
+                try {
+                    await video.play(); 
+                    cameraBox.style.display = 'block';
+                    startBtn.style.display = 'none';
+                } catch (playErr) {
+                    alert("ไม่สามารถเล่นไฟล์วิดีโอกล้องได้: " + playErr.message);
+                }
+            };
+
         } catch (err) { 
-            alert("กล้องขัดข้อง: " + err.message); 
+            alert("ไม่สามารถเปิดกล้องได้: " + err.message + "\n(กรุณาเปิดสิทธิ์ใช้กล้องในเบราว์เซอร์)"); 
         }
     };
 
     // 📸 ปุ่มกด Snap ล็อกพิกัด และภาพถ่าย
     snapBtn.onclick = () => {
+        // ตรวจสอบขนาดของวิดีโอ ป้องกันกรณีกล้องยังไม่พร้อมแต่กดถ่ายก่อน
+        if (video.videoWidth === 0 || video.videoHeight === 0) {
+            alert("ภาพกล้องยังไม่พร้อม กรุณารอสักครู่แล้วกดถ่ายใหม่");
+            return;
+        }
+
         canvas.width = video.videoWidth; 
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0);
         imageDataUrl = canvas.toDataURL('image/jpeg'); 
         
-        document.getElementById('res-name').innerText = window.selectedWorkerName;
+        // ดึงชื่อพนักงานจากหน้าจอหลัก
+        const workerNameText = document.getElementById('display-worker-name').innerText.replace('👤 ', '');
+        document.getElementById('res-name').innerText = workerNameText;
         document.getElementById('res-time').innerText = new Date().toLocaleTimeString('th-TH');
+        
         document.getElementById('result').style.display = 'flex';
         cameraBox.style.display = 'none';
         
         document.getElementById('btn-group').style.display = 'flex';
         document.getElementById('special-group').style.display = 'flex';
         
-        if(video.srcObject) { video.srcObject.getTracks().forEach(track => track.stop()); }
+        // ปิดสตรีมกล้องทันทีเพื่อคืนหน่วยความจำและปิดไฟกล้อง
+        if (video.srcObject) { 
+            video.srcObject.getTracks().forEach(track => track.stop()); 
+        }
     };
 
 
