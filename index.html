@@ -182,8 +182,23 @@
  const WEB_APP_URL =  "https://script.google.com/macros/s/AKfycbyxyotNuHdQSZOJ9HJSkxp79NXPp82A270vmgA-wCKYxSOfmxvOG0OBVScdDN5UbYdD/exec";
  
 
-  // 1. นาฬิกาแบบเรียลไทม์
+  <script>
+  // 1. ตัวแปรส่วนกลาง (Global Variables)
+  window.currentLoggedPin = "";
+  window.selectedWorkerName = "";
+  window.lateLimitTimeFromSheets = "08:30"; 
+  let imageDataUrl = "";
+  let userGpsLocation = ""; 
+  let realtimeTimer = null;
+
+  // 2. เด้งออกจากแอป LINE ไปเบราว์เซอร์ปกติ
+  if (navigator.userAgent.indexOf('Line') > -1) {
+    window.location.href = window.location.href + (window.location.href.indexOf('?') > -1 ? '&' : '?') + 'openExternalBrowser=1';
+  }
+
+  // 3. ทำงานเมื่อโครงสร้าง HTML โหลดเสร็จสมบูรณ์
   window.addEventListener("DOMContentLoaded", () => {
+    // ⏰ นาฬิกาแบบเรียลไทม์
     setInterval(() => {
         let now = new Date();
         let dateThai = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -196,203 +211,73 @@
             clockEl.innerHTML = "📅 " + dateThai + " | ⏰ " + hours + ":" + minutes + ":" + seconds + " น.";
         }
     }, 1000);
+
+    // 📸 ผูก Event ปุ่มควบคุมกล้องถ่ายรูป
+    initCameraControls();
   });
 
-  // 2. เด้งออกจากแอป LINE ไปเบราว์เซอร์ปกติ
-  if (navigator.userAgent.indexOf('Line') > -1) {
-    window.location.href = window.location.href + (window.location.href.indexOf('?') > -1 ? '&' : '?') + 'openExternalBrowser=1';
-  }
-
-  // 3. ระบบล็อกอินด้วยรหัส 4 หลัก
-  function validateEmployeeFcode(input) {
-    const pin = input.value;
-    const statusMsg = document.getElementById("auth-status-msg");
-    
-    if (pin.length === 4) {
-      statusMsg.style.color = "#ffcc00";
-      statusMsg.innerText = "⏳ กำลังตรวจสอบรหัส...";
-      
-      google.script.run
-        .withSuccessHandler(onAuthSuccess)
-        .withFailureHandler(onAuthFailure)
-        .checkLoginPin(pin);
-    } else {
-      statusMsg.innerText = "";
-    }
-  }
-
-  function onAuthSuccess(response) {
-    const statusMsg = document.getElementById("auth-status-msg");
-    if (response && response.success) {
-      window.currentLoggedPin = response.pin;
-      document.getElementById("display-worker-name").innerText = "👤 " + response.name;
-      document.getElementById("auth-screen").style.display = "none";
-      statusMsg.innerText = "";
-    } else {
-      statusMsg.style.color = "#ff4d4d";
-      statusMsg.innerText = "❌ รหัสไม่ถูกต้อง กรุณาลองใหม่";
-      document.getElementById("emp-fcode-input").value = "";
-    }
-  }
-
-
-
-
-
-
-
-  function onAuthFailure(error) {
-    const statusMsg = document.getElementById("auth-status-msg");
-    statusMsg.style.color = "#ff4d4d";
-    statusMsg.innerText = "⚠️ ไม่สามารถเชื่อมต่อระบบได้";
-  }
-
-    const video = document.getElementById('video'), 
-          canvas = document.getElementById('canvas'), 
-          startBtn = document.getElementById('start-camera'), 
-          snapBtn = document.getElementById('snap'), 
-          cameraBox = document.getElementById('camera-box');
-          
-    const modal = document.getElementById('common-modal'), 
-          modalArea = document.getElementById('modal-content-area');
-    
-    window.selectedWorkerName = "";
-    let imageDataUrl = "";
-    let userGpsLocation = ""; 
-    // 🎯 สร้างตัวแปรส่วนกลางรอรับเวลาสายจาก Sheets 
-    window.lateLimitTimeFromSheets = "08:30"; 
-
-   // ⏱️ [เวอร์ชันแก้ทางตัวหนังสือเขยื้อน / undefined] มอนิเตอร์เรียลไทม์
-// 1. ฟังก์ชันดึงข้อมูลจากหลังบ้าน (ส่วนที่เคยขาดไป)
-function loadRealtimeMonitor() {
-  google.script.run
-    .withSuccessHandler(function(data) {
-      renderMonitorList(data);
-    })
-    .withFailureHandler(function(err) {
-      console.error("เกิดข้อผิดพลาดในการดึงข้อมูล Realtime: ", err);
-    })
-    .getTodayAttendanceData();
-}
-
-// 2. ฟังก์ชันวาดข้อมูลลงตาราง
-// 🎨 ฟังก์ชันวาดข้อมูลลงตาราง (แก้ไขให้แสดงยอดสะสมครบถ้วน + ตัดทศนิยม + ตัดวันที่)
-function renderMonitorList(data) {
-  let container = document.getElementById("rt-list-container");
-  if (!container) return;
-  
-  container.innerHTML = ""; // ล้างข้อมูลเดิมก่อน
-
-  if (!data || data.length === 0) {
-    container.innerHTML = `<div class="rt-no-data">ยังไม่มีข้อมูลการเข้างานวันนี้</div>`;
-    return;
-  }
-
-  data.forEach(item => {
-    // 📌 1. จัดการตัดวันที่ออก ให้เหลือเฉพาะเวลา (เช่น "08:41 น.")
-    let cleanTime = "-";
-    if (item.timeIn) {
-      let timeMatch = item.timeIn.toString().match(/\d{1,2}:\d{2}/);
-      cleanTime = timeMatch ? timeMatch[0] + " น." : item.timeIn;
-    }
-
-    // 📌 2. จัดการปัดเศษทศนิยม ยอดสายวันนี้
-    let cleanLateToday = "-";
-    if (item.lateToday !== undefined && item.lateToday !== null && item.lateToday !== '') {
-      let num = parseFloat(item.lateToday);
-      cleanLateToday = !isNaN(num) ? Math.round(num) : item.lateToday;
-    }
-
-    // 📌 3. จัดการปัดเศษทศนิยม ยอดสะสม (เช็กครอบคลุมมากขึ้น)
-    let cleanLateTotal = "-";
-    if (item.lateTotal !== undefined && item.lateTotal !== null && item.lateTotal !== '') {
-      let numTotal = parseFloat(item.lateTotal);
-      cleanLateTotal = !isNaN(numTotal) ? Math.round(numTotal) : item.lateTotal;
-    } else {
-      cleanLateTotal = 0; // ถ้าไม่มีข้อมูลสะสม ให้แสดงเป็น 0
-    }
-
-    // 📌 วาดแถวข้อมูลลง HTML
-    let rowHTML = `
-      <div class="rt-row">
-        <div class="col-name rt-name">👤 ${item.name}</div>
-        <div class="col-time rt-time">${cleanTime}</div>
-        <div class="col-late rt-late">${cleanLateToday}</div>
-        <div class="col-total rt-total">${cleanLateTotal}</div>
-      </div>
-    `;
-    container.innerHTML += rowHTML;
-  });
-}
-
-
-// 3. สั่งให้ทำงานทันที และตั้งรอบอัปเดตทุก 5 วินาที
-loadRealtimeMonitor();
-let realtimeTimer = setInterval(loadRealtimeMonitor, 5000);
-
-// 4. 🎯 ฟังก์ชันสลับขนาดเมื่อโดน แตะ 2 ครั้ง (Double Click)
-function toggleFullscreen() {
-  let monitorBox = document.getElementById('realtime-monitor-box');
-  if (monitorBox) monitorBox.classList.add('fullscreen');
-}
-
-
- function validateEmployeeFcode(el) {
+  // 4. ระบบตรวจสอบรหัสพนักงาน (Fetch API)
+  function validateEmployeeFcode(el) {
     const statusMsg = document.getElementById('auth-status-msg');
-    statusMsg.innerText = ""; 
+    if (statusMsg) statusMsg.innerText = ""; 
     el.value = el.value.replace(/[^0-9]/g, '');
 
     if (el.value.length === 4) {
         const codeValue = el.value;
         el.disabled = true; 
-        statusMsg.style.color = "#3b82f6";
-        statusMsg.innerText = "⌛ กำลังตรวจสอบรหัสพนักงาน...";
+        if (statusMsg) {
+          statusMsg.style.color = "#3b82f6";
+          statusMsg.innerText = "⌛ กำลังตรวจสอบรหัสพนักงาน...";
+        }
         
-        // 🚀 จังหวะตรวจสอบรหัสพนักงาน
+        // ส่งตรวจสอบไปยัง Apps Script
         fetch(`${WEB_APP_URL}?action=verifyFcode&passcode=${codeValue}`)
         .then(res => res.json())
         .then(data => {
             if (data.status === "success" || data.status === "success1234") {
                 window.currentLoggedPin = codeValue; 
-                statusMsg.style.color = "#10b981";
-                statusMsg.innerText = "✅ รหัสถูกต้อง กำลังเข้าสู่ระบบ...";
                 window.selectedWorkerName = data.name;
 
-                // 🎯 1. สั่งซ่อนหน้าต่างลอยทันทีเมื่อ Login สำเร็จพนักงานจะได้เห็นเมนูเต็มๆ
+                if (statusMsg) {
+                  statusMsg.style.color = "#10b981";
+                  statusMsg.innerText = "✅ รหัสถูกต้อง กำลังเข้าสู่ระบบ...";
+                }
+
+                // ซ่อนหน้าต่างลอย (ถ้ามี) และหยุดเวลา
                 let monitorBox = document.getElementById('realtime-monitor-box');
                 if (monitorBox) {
                   monitorBox.style.display = 'none';
-                  clearInterval(realtimeTimer); // หยุดลูปดึงข้อมูลชั่วคราวเพื่อประหยัดสเปกเครื่อง
+                  if (realtimeTimer) clearInterval(realtimeTimer);
                 }
 
-                // แกะเวลาสาย M1 แปะโชว์ที่ระบบ
+                // รับเวลาสาย
                 let timeFromM1 = data.lateLimit || "08:30";
                 window.lateLimitTimeFromSheets = timeFromM1;
                 let showBox = document.getElementById("lateLimitTime") || document.getElementById("m1Value");
                 if (showBox) showBox.innerText = timeFromM1;
 
-                // 🎯 [จังหวะสลับหน้าจอตามรูป]: เข้าหน้าเมนูพนักงาน ปุ่มกดแสตนบายรอหลังฉากทันที
+                // สลับหน้าจอ
                 document.getElementById('auth-screen').style.display = 'none';
                 document.getElementById('display-worker-name').innerText = "👤 ผู้ใช้งาน: " + data.name;
 
+                const startBtn = document.getElementById('start-camera');
                 if (data.status === "success1234") {
                     document.getElementById('btn-group').style.display = 'flex'; 
                     document.getElementById('special-group').style.display = 'flex'; 
-                    if (typeof startBtn !== 'undefined') startBtn.style.display = 'none'; 
+                    if (startBtn) startBtn.style.display = 'none'; 
                 } else {
                     document.getElementById('btn-group').style.display = 'none';
                     document.getElementById('special-group').style.display = 'none';
-                    if (typeof startBtn !== 'undefined') startBtn.style.display = 'block';
+                    if (startBtn) startBtn.style.display = 'block';
                 }
-                let delayTime = 400; // เวลาหน่วงกรณีมาลงเวลาครั้งแรกของวัน
 
-                // 🔍 ตรวจเงื่อนไขสั้น ๆ: ถ้าวันนี้เคยลงเวลาเข้างานไปแล้ว (คอลัมน์ D มีค่าส่งมาจากหลังบ้าน)
+                let delayTime = 400; 
+
+                // กรณีวันนี้เคยลงเวลาเข้างานไว้แล้ว
                 if (data.alreadyInTime && data.alreadyInTime !== "") {
-                    
                     let cleanIn = data.alreadyInTime;
-                    let cleanOut = data.alreadyOutTime || "--:--"; // ถ้ายังไม่กดออกงาน ให้ขึ้นขีดแทน
+                    let cleanOut = data.alreadyOutTime || "--:--";
                     
-                    // เสกหน้าต่างลอยโปร่งแสง (Overlay) โดยที่ปุ่มจริงตามรูปยังคงเห็นได้ลาง ๆ ด้านหลัง
                     let overlayHTML = `
                         <div id="transparent-popup-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.4); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px);">
                             <div style="background-color: rgba(255, 255, 255, 0.98); color: #1e40af; padding: 25px; border-radius: 16px; text-align: center; border: 2px solid #3b82f6; width: 85%; max-width: 340px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); animation: popScale 0.3s ease-out;">
@@ -416,12 +301,12 @@ function toggleFullscreen() {
                     `;
                     
                     document.body.insertAdjacentHTML('beforeend', overlayHTML);
-                    delayTime = 5000; // ⏳ เปลี่ยนเวลาล็อกหน้าจอไว้ 3 วินาที
+                    delayTime = 5000; 
                 }
-                // 3. ปลดล็อกหน้าต่างเมื่อครบเวลา
+
                 setTimeout(() => {
                     const transparentOverlay = document.getElementById('transparent-popup-overlay');
-                    if (transparentOverlay) transparentOverlay.remove(); // สลายหน้าต่างลอย เพื่อให้กดปุ่มเหลืองถ่ายรูปหลังจอได้
+                    if (transparentOverlay) transparentOverlay.remove(); 
 
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(pos => {
@@ -431,28 +316,39 @@ function toggleFullscreen() {
                 }, delayTime);
 
             } else {
-                statusMsg.style.color = "#ef4444";
-                statusMsg.innerText = data.message || "❌ รหัสไม่ถูกต้อง";
+                if (statusMsg) {
+                  statusMsg.style.color = "#ef4444";
+                  statusMsg.innerText = data.message || "❌ รหัสไม่ถูกต้อง";
+                }
                 el.value = ""; el.disabled = false; el.focus();
             }
         })
         .catch(err => {
-            statusMsg.style.color = "#ef4444";
-            statusMsg.innerText = "❌ เกิดข้อผิดพลาด กรุณาลองใหม่";
+            if (statusMsg) {
+              statusMsg.style.color = "#ef4444";
+              statusMsg.innerText = "❌ เกิดข้อผิดพลาด กรุณาลองใหม่";
+            }
             el.disabled = false; el.value = ""; el.focus();
         });
      }
-}
+  }
 
-        // 📸 การทำงานปุ่มเปิดกล้องถ่ายรูป (รองรับมือถือ iOS & Android)
-    startBtn.onclick = async () => {
-        // เปลี่ยนมาเช็กตัวแปรล็อกอินจริง หรือรับค่าจากกล่องแสดงชื่อ
+  // 5. ควบคุมการทำงานของกล้องถ่ายรูป
+  function initCameraControls() {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const startBtn = document.getElementById('start-camera');
+    const snapBtn = document.getElementById('snap');
+    const cameraBox = document.getElementById('camera-box');
+
+    if (startBtn) {
+      startBtn.onclick = async () => {
         if (!window.currentLoggedPin) return alert("กรุณาเข้าสู่ระบบด้วยรหัส 4 หลักก่อนครับ");
         
         try {
             const constraints = { 
                 video: { 
-                    facingMode: { ideal: "user" }, // ใช้กล้องหน้า
+                    facingMode: { ideal: "user" },
                     width: { ideal: 640 }, 
                     height: { ideal: 480 } 
                 }, 
@@ -463,18 +359,16 @@ function toggleFullscreen() {
             try { 
                 stream = await navigator.mediaDevices.getUserMedia(constraints); 
             } catch (e) { 
-                // Fallback กรณีมือถือไม่รองรับ constraints แบบระบุละเอียด
                 stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); 
             }
             
             video.srcObject = stream;
-            video.setAttribute("playsinline", true); // 👈 บังคับให้เล่นวิดีโอบนจอหลักของ iOS ไม่เด้ง Fullscreen
+            video.setAttribute("playsinline", true); 
             
-            // รอให้ Video โหลด Stream เสร็จก่อนเล่น ป้องกัน Error บนมือถือ
             video.onloadedmetadata = async () => {
                 try {
                     await video.play(); 
-                    cameraBox.style.display = 'block';
+                    if (cameraBox) cameraBox.style.display = 'block';
                     startBtn.style.display = 'none';
                 } catch (playErr) {
                     alert("ไม่สามารถเล่นไฟล์วิดีโอกล้องได้: " + playErr.message);
@@ -484,11 +378,11 @@ function toggleFullscreen() {
         } catch (err) { 
             alert("ไม่สามารถเปิดกล้องได้: " + err.message + "\n(กรุณาเปิดสิทธิ์ใช้กล้องในเบราว์เซอร์)"); 
         }
-    };
+      };
+    }
 
-    // 📸 ปุ่มกด Snap ล็อกพิกัด และภาพถ่าย
-    snapBtn.onclick = () => {
-        // ตรวจสอบขนาดของวิดีโอ ป้องกันกรณีกล้องยังไม่พร้อมแต่กดถ่ายก่อน
+    if (snapBtn) {
+      snapBtn.onclick = () => {
         if (video.videoWidth === 0 || video.videoHeight === 0) {
             alert("ภาพกล้องยังไม่พร้อม กรุณารอสักครู่แล้วกดถ่ายใหม่");
             return;
@@ -499,22 +393,27 @@ function toggleFullscreen() {
         canvas.getContext('2d').drawImage(video, 0, 0);
         imageDataUrl = canvas.toDataURL('image/jpeg'); 
         
-        // ดึงชื่อพนักงานจากหน้าจอหลัก
-        const workerNameText = document.getElementById('display-worker-name').innerText.replace('👤 ', '');
-        document.getElementById('res-name').innerText = workerNameText;
-        document.getElementById('res-time').innerText = new Date().toLocaleTimeString('th-TH');
+        const workerNameText = window.selectedWorkerName || document.getElementById('display-worker-name').innerText.replace('👤 ผู้ใช้งาน: ', '').replace('👤 ', '');
         
-        document.getElementById('result').style.display = 'flex';
-        cameraBox.style.display = 'none';
+        const resName = document.getElementById('res-name');
+        const resTime = document.getElementById('res-time');
+        if (resName) resName.innerText = workerNameText;
+        if (resTime) resTime.innerText = new Date().toLocaleTimeString('th-TH');
+        
+        const resultEl = document.getElementById('result');
+        if (resultEl) resultEl.style.display = 'flex';
+        if (cameraBox) cameraBox.style.display = 'none';
         
         document.getElementById('btn-group').style.display = 'flex';
         document.getElementById('special-group').style.display = 'flex';
         
-        // ปิดสตรีมกล้องทันทีเพื่อคืนหน่วยความจำและปิดไฟกล้อง
         if (video.srcObject) { 
             video.srcObject.getTracks().forEach(track => track.stop()); 
         }
-    };
+      };
+    }
+  }
+</script>
 
 
     // 🎯 ระบบคำนวณและกางหน้าต่างยืนยัน (Modal) ป้องกันพนักงานกดผิด
