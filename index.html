@@ -115,23 +115,26 @@
             100% { transform: translateY(20px) translateX(30px); }
         }
 
-        /* กำหนดขนาดกล่องกล้องและวิดีโอให้เป็น 2.5cm x 2.5cm */
-    #camera-box {
+    /* ขนาดกล้องถ่ายรูปที่เหมาะสมที่สุดบนมือถือ */
+#camera-box {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 15px;
+    justify-content: center;
+    margin: 15px 0;
+    width: 100%;
 }
 
-    #video {
-    width: 4cm !important;
-    height: 4cm !important;
-    object-fit: cover; /* ตัดขอบให้ภาพเต็มกล่องพอดี ไม่เบี้ยว */
-    border-radius: 8px;
+#video {
+    width: 200px !important;   /* ขนาดกำลังดี ชัดเจน (ประมาณ 5 ซม.) */
+    height: 200px !important;  /* สี่เหลี่ยมจัตุรัสลงตัวกับใบหน้า */
+    object-fit: cover;         /* ครอปวิดีโอให้เต็มกรอบ ไม่เบี้ยว */
+    border-radius: 16px;       /* มุมมนสวยงาม */
+    border: 3px solid #00ffcc; /* ขอบเรืองแสงสังเกตง่าย */
     background: #000;
-    border: 2px solid #00ffcc; /* ใส่ขอบให้ดูสวยงาม */
-    margin-bottom: 10px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.4);
 }
+
 
     </style>
 </head>
