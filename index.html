@@ -115,7 +115,7 @@
             100% { transform: translateY(20px) translateX(30px); }
         }
 
-    /* ขนาดกล้องถ่ายรูปที่เหมาะสมที่สุดบนมือถือ */
+        /* ขนาดกล้องถ่ายรูปที่เหมาะสมที่สุดบนมือถือ */
 #camera-box {
     display: flex;
     flex-direction: column;
@@ -134,7 +134,6 @@
     background: #000;
     box-shadow: 0 6px 15px rgba(0,0,0,0.4);
 }
-
 
     </style>
 </head>
@@ -210,7 +209,7 @@
   <script>
   window.currentLoggedPin = "";
 
- const WEB_APP_URL =  "https://script.google.com/macros/s/AKfycbwA8LiR8BCI4JUV-6RxCtQvuZf3BV0UPMT9d1HS-kxHxUCwyyK1O3jTmOffxldTUrp1/exec";
+ const WEB_APP_URL =  "https://script.google.com/macros/s/AKfycbwf_2zhJC3yWXSQ3tmOyX_TXgUONttvAWG411v-OYP5TCg4DUn8VrD-rnz-Y9MvpCZT/exec;
  
 
   // 1. นาฬิกาแบบเรียลไทม์
@@ -483,38 +482,53 @@ function toggleFullscreen() {
 }
 
     // 📸 ฟังก์ชันสั่งเปิดกล้องหน้าอัตโนมัติ
+// 📸 ฟังก์ชันเปิดกล้องหน้าอย่างสมบูรณ์แบบ
 async function autoStartCamera() {
-    if (!window.selectedWorkerName) return;
+    const video = document.getElementById('video');
+    const cameraBox = document.getElementById('camera-box');
     
-    const constraints = { 
-        video: { 
-            facingMode: "user", // บังคับกล้องหน้า
-            width: { ideal: 640 }, 
-            height: { ideal: 640 } 
-        }, 
-        audio: false 
-    };
+    if (!video) return;
 
-    try {
-        if (video.srcObject) {
-            video.srcObject.getTracks().forEach(track => track.stop());
+    // 1. แสดงกล่องวิดีโอก่อน
+    cameraBox.style.display = 'flex';
+
+    // 2. เคลียร์สตรีมกล้องเดิมถ้ามีค้าง
+    if (video.srcObject) {
+        let tracks = video.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+    }
+
+    // 3. กำหนดตัวเลือกกล้องหน้าแบบยืดหยุ่น
+    const constraintsList = [
+        { video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, audio: false },
+        { video: { facingMode: { exact: "user" } }, audio: false },
+        { video: true, audio: false } // ตัวเลือกสำรองสุดท้ายถ้าเจาะจงกล้องหน้าไม่ได้
+    ];
+
+    let stream = null;
+    for (let constraint of constraintsList) {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia(constraint);
+            if (stream) break; // ถ้าเปิดสำเร็จให้หยุดวนลูป
+        } catch (e) {
+            console.warn("ลองสตรีมแบบต่อไป:", e);
         }
+    }
 
-        let stream;
-        try { 
-            stream = await navigator.mediaDevices.getUserMedia(constraints); 
-        } catch (e) { 
-            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); 
-        }
-
+    if (stream) {
         video.srcObject = stream;
-        await video.play();
-        cameraBox.style.display = 'flex'; // แสดงกล่องวิดีโอ
-    } catch (err) { 
-        console.error("เปิดกล้องอัตโนมัติไม่สำเร็จ:", err);
-        alert("ไม่สามารถเปิดกล้องได้: " + err.message + "\nกรุณาตรวจสอบการอนุญาตใช้งานกล้องในเบราว์เซอร์"); 
+        
+        // บังคับให้เล่นวิดีโอทันทีที่ข้อมูลโหลดพร้อม
+        video.onloadedmetadata = () => {
+            video.play().catch(err => {
+                console.error("Video Play Error:", err);
+            });
+        };
+    } else {
+        alert("⚠️ ไม่สามารถเปิดกล้องได้ กรุณาเปิดเว็บผ่าน Chrome หรือ Safari และอนุญาตสิทธิ์การใช้กล้องครับ");
     }
 }
+
 
 // 📸 ปุ่มกด Snap เพื่อจับภาพ
 snapBtn.onclick = () => {
