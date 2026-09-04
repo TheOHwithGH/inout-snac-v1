@@ -180,7 +180,7 @@
   <script>
   window.currentLoggedPin = "";
 
- const WEB_APP_URL =  "https://script.google.com/macros/s/AKfycbyJMGQ6TLPAlIxs6aegkxN9TH8S4oHPcaxqA80qWB_FAjBxWoUUU74HkO4m1F2dTDo/exec";
+ const WEB_APP_URL =  "https://script.google.com/macros/s/AKfycbxTeH3zw4f1dFGRVJ3MS9GWbClVJaJPDmLN6UjZMXMjrcsyzGgs1BOaBrWC3J5d-BRr/exec";
  
 
   // 1. นาฬิกาแบบเรียลไทม์
@@ -445,29 +445,55 @@ function toggleFullscreen() {
      }
 }
 
-    // 📸 การทำงานปุ่มเปิดกล้องถ่ายรูป
+       // 📸 การทำงานปุ่มเปิดกล้องถ่ายรูป (แก้ไขให้รองรับการเปิดกล้องหน้ามือถือแน่นอน)
     startBtn.onclick = async () => {
         if (!window.selectedWorkerName) return alert("ระบบไม่พบชื่อผู้ใช้งาน");
+        
+        // กำหนดการขอสิทธิ์กล้องหน้า (user = กล้องหน้า)
+        const constraints = {
+            video: {
+                facingMode: "user", // บังคับเจาะจงกล้องหน้า
+                width: { ideal: 640 },
+                height: { ideal: 480 }
+            },
+            audio: false
+        };
+
         try {
-            let idealCamera = "user"; 
-            const constraints = { 
-                video: { facingMode: { ideal: idealCamera }, width: { ideal: 640 }, height: { ideal: 480 } }, 
-                audio: false 
-            };
-            let stream;
-            try { 
-                stream = await navigator.mediaDevices.getUserMedia(constraints); 
-            } catch (e) { 
-                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); 
+            // ปิดสตรีมกล้องเดิมก่อน (ถ้ามีค้างอยู่)
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
             }
+
+            let stream;
+            try {
+                // พยายามเรียกกล้องหน้าตามเงื่อนไข
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+            } catch (e1) {
+                console.warn("ไม่สามารถเรียก facingMode: user ได้ ลองดึงกล้องทั่วไป", e1);
+                // สำรอง: หากมือถือบางรุ่นไม่รองรับ facingMode แบบ strict ให้ขอวิดีโอทั่วไป
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            }
+
             video.srcObject = stream;
-            await video.play(); 
-            cameraBox.style.display = 'block';
-            startBtn.style.display = 'none';
+            
+            // ใช้ loadedmetadata เพื่อให้มั่นใจว่าวิดีโอพร้อมแสดงผลก่อนค่อย play
+            video.onloadedmetadata = async () => {
+                try {
+                    await video.play();
+                    cameraBox.style.display = 'block';
+                    startBtn.style.display = 'none';
+                } catch (playErr) {
+                    alert("ไม่สามารถเล่นวิดีโอจากกล้องได้: " + playErr.message);
+                }
+            };
+
         } catch (err) { 
-            alert("กล้องขัดข้อง: " + err.message); 
+            console.error("Camera error:", err);
+            alert("ไม่สามารถเปิดกล้องได้ กรุณาตรวจสอบว่าอนุญาตให้ใช้กล้องในเบราว์เซอร์แล้วหรือยัง\n(" + err.message + ")"); 
         }
     };
+
 
     // 📸 ปุ่มกด Snap ล็อกพิกัด และภาพถ่าย
     snapBtn.onclick = () => {
