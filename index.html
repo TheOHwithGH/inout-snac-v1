@@ -114,6 +114,25 @@
             50% { transform: translateY(-30px) translateX(-40px); }
             100% { transform: translateY(20px) translateX(30px); }
         }
+
+        /* กำหนดขนาดกล่องกล้องและวิดีโอให้เป็น 2.5cm x 2.5cm */
+    #camera-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+    #video {
+    width: 2.5cm !important;
+    height: 2.5cm !important;
+    object-fit: cover; /* ตัดขอบให้ภาพเต็มกล่องพอดี ไม่เบี้ยว */
+    border-radius: 8px;
+    background: #000;
+    border: 2px solid #00ffcc; /* ใส่ขอบให้ดูสวยงาม */
+    margin-bottom: 10px;
+}
+
     </style>
 </head>
 <body>
@@ -147,13 +166,21 @@
         <span id="display-worker-name">👤 กรุณาใส่รหัสล็อกอินด้านบน</span>
     </div>
     <label>ทำรายการ:</label>
-    <button class="btn btn-snap" id="start-camera">📷 เปิดกล้องถ่ายรูป</button>
-    <button class="btn btn-info-personal" id="get-personal-info" onclick="openPersonalDashboard()">🔎 ข้อมูลบุคคล</button>
-    <div id="camera-box">
-        <video id="video" autoplay playsinline muted></video>
-        <button class="btn btn-snap" id="snap">📷 กดเพื่อถ่ายภาพ</button>
-    </div>
-    <canvas id="canvas"></canvas>
+
+    <!-- **************************************** -->
+    <!-- ซ่อนปุ่มเปิดกล้องเดิม ไม่ต้องกดแล้ว --> 
+<!-- <button class="btn btn-snap" id="start-camera" style="display: none;">📷 เปิดกล้องถ่ายรูป</button> -->
+<button class="btn btn-info-personal" id="get-personal-info" onclick="openPersonalDashboard()">🔎 ข้อมูลบุคคล</button>
+
+<!-- กล่องกล้องจะแสดงผลและเปิดอัตโนมัติ -->
+<div id="camera-box">
+    <video id="video" autoplay playsinline muted></video>
+    <!-- ปุ่มกดถ่ายรูป -->
+    <button class="btn btn-snap" id="snap" style="width: auto; padding: 10px 20px;">📷 กดเพื่อถ่ายภาพ</button>
+</div>
+<canvas id="canvas"></canvas>
+
+
     <div id="result">
         <p style="margin:5px 0;"><b>ชื่อ:</b> <span id="res-name"></span></p>
         <p style="margin:5px 0;"><b>เวลา:</b> <span id="res-time"></span></p>
@@ -220,6 +247,13 @@
     } else {
       statusMsg.innerText = "";
     }
+    // 🎯 [จังหวะสลับหน้าจอตามรูป]: เข้าหน้าเมนูพนักงาน
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('display-worker-name').innerText = "👤 ผู้ใช้งาน: " + data.name;
+
+    // 🟢 เพิ่มบรรทัดนี้ลงไป เพื่อสั่งเปิดกล้องหน้าอัตโนมัติทันที!
+      autoStartCamera();
+
   }
 
   function onAuthSuccess(response) {
@@ -445,54 +479,67 @@ function toggleFullscreen() {
      }
 }
 
-       // 📸 การทำงานปุ่มเปิดกล้องถ่ายรูป (แก้ไขให้รองรับการเปิดกล้องหน้ามือถือแน่นอน)
-    startBtn.onclick = async () => {
-        if (!window.selectedWorkerName) return alert("ระบบไม่พบชื่อผู้ใช้งาน");
-        
-        // กำหนดการขอสิทธิ์กล้องหน้า (user = กล้องหน้า)
-        const constraints = {
-            video: {
-                facingMode: "user", // บังคับเจาะจงกล้องหน้า
-                width: { ideal: 640 },
-                height: { ideal: 480 }
-            },
-            audio: false
-        };
-
-        try {
-            // ปิดสตรีมกล้องเดิมก่อน (ถ้ามีค้างอยู่)
-            if (video.srcObject) {
-                video.srcObject.getTracks().forEach(track => track.stop());
-            }
-
-            let stream;
-            try {
-                // พยายามเรียกกล้องหน้าตามเงื่อนไข
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
-            } catch (e1) {
-                console.warn("ไม่สามารถเรียก facingMode: user ได้ ลองดึงกล้องทั่วไป", e1);
-                // สำรอง: หากมือถือบางรุ่นไม่รองรับ facingMode แบบ strict ให้ขอวิดีโอทั่วไป
-                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-            }
-
-            video.srcObject = stream;
-            
-            // ใช้ loadedmetadata เพื่อให้มั่นใจว่าวิดีโอพร้อมแสดงผลก่อนค่อย play
-            video.onloadedmetadata = async () => {
-                try {
-                    await video.play();
-                    cameraBox.style.display = 'block';
-                    startBtn.style.display = 'none';
-                } catch (playErr) {
-                    alert("ไม่สามารถเล่นวิดีโอจากกล้องได้: " + playErr.message);
-                }
-            };
-
-        } catch (err) { 
-            console.error("Camera error:", err);
-            alert("ไม่สามารถเปิดกล้องได้ กรุณาตรวจสอบว่าอนุญาตให้ใช้กล้องในเบราว์เซอร์แล้วหรือยัง\n(" + err.message + ")"); 
-        }
+    // 📸 ฟังก์ชันสั่งเปิดกล้องหน้าอัตโนมัติ
+async function autoStartCamera() {
+    if (!window.selectedWorkerName) return;
+    
+    const constraints = { 
+        video: { 
+            facingMode: "user", // บังคับกล้องหน้า
+            width: { ideal: 640 }, 
+            height: { ideal: 640 } 
+        }, 
+        audio: false 
     };
+
+    try {
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+        }
+
+        let stream;
+        try { 
+            stream = await navigator.mediaDevices.getUserMedia(constraints); 
+        } catch (e) { 
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); 
+        }
+
+        video.srcObject = stream;
+        await video.play();
+        cameraBox.style.display = 'flex'; // แสดงกล่องวิดีโอ
+    } catch (err) { 
+        console.error("เปิดกล้องอัตโนมัติไม่สำเร็จ:", err);
+        alert("ไม่สามารถเปิดกล้องได้: " + err.message + "\nกรุณาตรวจสอบการอนุญาตใช้งานกล้องในเบราว์เซอร์"); 
+    }
+}
+
+// 📸 ปุ่มกด Snap เพื่อจับภาพ
+snapBtn.onclick = () => {
+    // กำหนดขนาด canvas เป็นสี่เหลี่ยมจัตุรัสตามส่วนวิดีโอ
+    let captureSize = Math.min(video.videoWidth || 300, video.videoHeight || 300);
+    canvas.width = captureSize; 
+    canvas.height = captureSize;
+
+    // ครอปภาพให้ออกมาเป็นสี่เหลี่ยมจัตุรัสพอดี
+    let startX = (video.videoWidth - captureSize) / 2;
+    let startY = (video.videoHeight - captureSize) / 2;
+    
+    canvas.getContext('2d').drawImage(video, startX, startY, captureSize, captureSize, 0, 0, captureSize, captureSize);
+    imageDataUrl = canvas.toDataURL('image/jpeg'); 
+    
+    document.getElementById('res-name').innerText = window.selectedWorkerName;
+    document.getElementById('res-time').innerText = new Date().toLocaleTimeString('th-TH');
+    document.getElementById('result').style.display = 'flex';
+    cameraBox.style.display = 'none'; // ปิดส่วนกล้องเมื่อถ่ายรูปเสร็จแล้ว
+    
+    document.getElementById('btn-group').style.display = 'flex';
+    document.getElementById('special-group').style.display = 'flex';
+    
+    if(video.srcObject) { 
+        video.srcObject.getTracks().forEach(track => track.stop()); 
+    }
+};
+
 
 
     // 📸 ปุ่มกด Snap ล็อกพิกัด และภาพถ่าย
