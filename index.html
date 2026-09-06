@@ -357,7 +357,7 @@ if (navigator.userAgent.indexOf('Line') > -1) {
     window.location.href = window.location.href + (window.location.href.indexOf('?') > -1 ? '&' : '?') + 'openExternalBrowser=1';
 }
 
-    /* 🚀 ทำงานทันทีเมื่อโหลดหน้าเว็บเข้ามาที่หน้าล็อกอิน
+    // 🚀 ทำงานทันทีเมื่อโหลดหน้าเว็บเข้ามาที่หน้าล็อกอิน
         window.addEventListener("DOMContentLoaded", () => {
     
     // แสดงกล่องมอนิเตอร์ในหน้าล็อกอิน
@@ -380,14 +380,24 @@ if (navigator.userAgent.indexOf('Line') > -1) {
 });
 
 // ฟังก์ชันดึงข้อมูลจากหลังบ้าน
+// 3. ฟังก์ชันดึงข้อมูลจากหลังบ้าน (แก้ให้ใช้ fetch เพื่อให้รันบน Server นอกได้)
 function loadRealtimeMonitor() {
-  google.script.run
-    .withSuccessHandler(renderMonitorList)
-    .withFailureHandler(err => console.error("Error:", err))
-    .getTodayAttendanceData();
+  fetch(WEB_APP_URL + "?action=getTodayAttendance", {
+    method: "GET",
+    redirect: "follow"
+  })
+    .then(res => res.json())
+    .then(response => {
+      if (response.status === "success") {
+        renderMonitorList(response.data);
+      } else {
+        renderMonitorList([]);
+      }
+    })
+    .catch(err => console.error("Monitor Fetch Error:", err));
 }
 
-// ฟังก์ชันวาดรายการลงกล่องมอนิเตอร์ สีดำ
+// 4. ฟังก์ชันวาดรายการลงกล่องมอนิเตอร์ สีดำ
 function renderMonitorList(data) {
   let container = document.getElementById("rt-list-container");
   if (!container) return;
@@ -400,7 +410,6 @@ function renderMonitorList(data) {
   }
 
   data.forEach(item => {
-    // 🛡️ ป้องกันบั๊ก undefined น.
     let cleanTime = "--:-- น.";
     if (item.timeIn && item.timeIn !== "undefined") {
       let timeMatch = item.timeIn.toString().match(/\d{1,2}:\d{2}/);
@@ -417,10 +426,7 @@ function renderMonitorList(data) {
   });
 }
 
-// เรียกทำงานทันทีและอัปเดตทุก 5 วินาที
-loadRealtimeMonitor();
-let realtimeTimer = setInterval(loadRealtimeMonitor, 5000); */
-
+// 5. ตัวแปรและฟังก์ชันกล้อง
 const video = document.getElementById('video'), 
       canvas = document.getElementById('canvas'), 
       snapBtn = document.getElementById('snap'), 
@@ -432,6 +438,7 @@ window.selectedWorkerName = "";
 let imageDataUrl = "";
 let userGpsLocation = ""; 
 window.lateLimitTimeFromSheets = "08:30"; 
+
 
 // 📸 ฟังก์ชันเปิดกล้องหน้าอัตโนมัติอย่างสมบูรณ์
 async function autoStartCamera() {
