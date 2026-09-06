@@ -324,7 +324,10 @@
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwCT1XgaizmP0A4eXuNAvIoopaX0WVmhcnXh60FyAD_MO27Xqgv6Fgeh9Gbp_CmevvS/exec";
 
 function fetchNews() {
-  fetch(WEB_APP_URL + "?action=getNews")
+  fetch(WEB_APP_URL + "?action=getNews", {
+    method: "GET",
+    redirect: "follow"
+  })
     .then(res => res.json())
     .then(response => {
       if (response.status === "success" && response.data && response.data.length > 0) {
@@ -337,8 +340,9 @@ function fetchNews() {
       }
     })
     .catch(err => {
+      console.error("Fetch News Error:", err);
       document.getElementById("newsTicker").innerText = "ไม่สามารถดึงข่าวสารได้ในขณะนี้";
-    });
+    }); // 👈 แก้ตรงนี้ครับ ต้องเป็น }); ไม่ใช่ );
 }
 
 fetchNews();
