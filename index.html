@@ -98,7 +98,6 @@
         .table-wrap table th, .table-wrap th { background-color: #2c2c2c !important; color: #00ffcc !important; font-weight: bold !important; }
         .table-wrap table td, .table-wrap td { color: #ffffff !important; border-bottom: 1px solid #333333 !important; }
 
-       /* ประกาศสำตัญ
         .floating-banner {
             position: fixed; top: 20px; right: 20px; background: rgba(30, 30, 30, 0.95); border: 1px solid #333333; 
             border-left: 4px solid #00ffcc; border-radius: 15px; padding: 15px 20px; color: #ffffff; font-family: Arial, sans-serif; 
@@ -113,7 +112,7 @@
             0% { transform: translateY(0px) translateX(0px); }
             50% { transform: translateY(-30px) translateX(-40px); }
             100% { transform: translateY(20px) translateX(30px); }
-        }  */
+        }
 
         /* ขนาดกล้องถ่ายรูปที่เหมาะสมที่สุดบนมือถือ */
 #camera-box {
@@ -231,17 +230,10 @@
 
 <!-- 📰 กล่องข่าววิ่ง (จะแสดงเฉพาะตอนรอใส่รหัสผ่านล็อกอิน) -->
         <div style="background: #121212; border: 1px solid #333; color: #fff; padding: 6px 10px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center;">
-          <span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 13px; margin-right: 8px; flex-shrink: 0;">ข่าววันนี้</span>
-          <marquee id="newsTicker" behavior="scroll" direction="left" scrollamount="4" style="font-size: 15px; color: #ddd;">
-             กำลังโหลดข่าวล่าสุด...
+          <span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; margin-right: 8px; flex-shrink: 0;">ข่าววันนี้</span>
+          <marquee id="newsTicker" behavior="scroll" direction="left" scrollamount="4" style="font-size: 13px; color: #ddd;">
+            กำลังโหลดข่าวล่าสุด...
           </marquee>
-        </div>
-<!-- 📢 กล่องข่าววิ่ง ช่องที่ 2 (เพิ่มใหม่) -->
-        <div style="background: #121212; border: 1px solid #333; color: #fff; padding: 6px 10px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center;">
-        <span style="background: #00ffcc; color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; margin-right: 8px; flex-shrink: 0;">ประกาศ</span>
-        <marquee id="newsTicker2" behavior="scroll" direction="left" scrollamount="3" style="font-size: 13px; color: #00ffcc;">
-             ยินดีต้อนรับสู่ระบบลงเวลา หจก.แสงอนันต์การไฟฟ้า เข้างานก่อน 08:30 น. หักเงิน สาย สูงสุด 50บาทต่อวัน
-        </marquee>
         </div>
 
         <div style="font-size: 45px; margin-bottom: 12px;"><img src="SNAC.png" width="180" height="180" onerror="this.style.display='none'"></div>
@@ -264,12 +256,12 @@
     <div id="rt-list-container"></div>
 </div>
 
-<!-- กล่องหน้าต่างลอย ประกาศสำคัญ
+<!-- กล่องหน้าต่างลอย -->
 <div class="floating-banner">
   <div class="banner-line1">📢 ประกาศสำคัญ</div>
   <div class="banner-line2">เข้างานก่อน 08:30 น. กันด้วยนะครับ </div>
   <div class="banner-line3">หักเงิน สาย สูงสุด 50บาทต่อวัน </div>
-</div> -->
+</div>
 
 <a href="#" class="btn-back" onclick="location.reload();">⬅ ย้อนกลับ</a>
 
@@ -321,13 +313,10 @@
   <script>
   window.currentLoggedPin = "";
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxYCeYKMEqz6Jijcdqc_H3k1L9jAM5c4qrH3n6okb7xVTA3KnuuXHhvWAhuKPuGydqw/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxS7V1DooiDV0uehwyzHJTw_GTHUYpIRwYYQpI6rGD4t7DQLogSUY606tmLp-8Y-6XZ/exec";
 
 function fetchNews() {
-  fetch(WEB_APP_URL + "?action=getNews", {
-    method: "GET",
-    redirect: "follow"
-  })
+  fetch(WEB_APP_URL + "?action=getNews")
     .then(res => res.json())
     .then(response => {
       if (response.status === "success" && response.data && response.data.length > 0) {
@@ -336,13 +325,12 @@ function fetchNews() {
           .join(" &nbsp;&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;&nbsp; ");
         document.getElementById("newsTicker").innerHTML = newsText;
       } else {
-        document.getElementById("newsTicker").innerText = "ยินดีต้อนรับ ";
+        document.getElementById("newsTicker").innerText = "ยินดีต้อนรับสู่ระบบลงเวลา หจก.แสงอนันต์การไฟฟ้า";
       }
     })
     .catch(err => {
-      console.error("Fetch News Error:", err);
       document.getElementById("newsTicker").innerText = "ไม่สามารถดึงข่าวสารได้ในขณะนี้";
-    }); // 👈 แก้ตรงนี้ครับ ต้องเป็น }); ไม่ใช่ );
+    });
 }
 
 fetchNews();
