@@ -357,10 +357,10 @@ if (navigator.userAgent.indexOf('Line') > -1) {
     window.location.href = window.location.href + (window.location.href.indexOf('?') > -1 ? '&' : '?') + 'openExternalBrowser=1';
 }
 
-    // 🚀 ทำงานทันทีเมื่อโหลดหน้าเว็บเข้ามาที่หน้าล็อกอิน
+    /* 🚀 ทำงานทันทีเมื่อโหลดหน้าเว็บเข้ามาที่หน้าล็อกอิน
         window.addEventListener("DOMContentLoaded", () => {
     
-    /* แสดงกล่องมอนิเตอร์ในหน้าล็อกอิน
+    // แสดงกล่องมอนิเตอร์ในหน้าล็อกอิน
     let monitorBox = document.getElementById("realtime-monitor-box");
     if (monitorBox) {
         monitorBox.style.display = 'block';
