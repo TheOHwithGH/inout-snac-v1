@@ -98,6 +98,7 @@
         .table-wrap table th, .table-wrap th { background-color: #2c2c2c !important; color: #00ffcc !important; font-weight: bold !important; }
         .table-wrap table td, .table-wrap td { color: #ffffff !important; border-bottom: 1px solid #333333 !important; }
 
+       /* ประกาศสำตัญ
         .floating-banner {
             position: fixed; top: 20px; right: 20px; background: rgba(30, 30, 30, 0.95); border: 1px solid #333333; 
             border-left: 4px solid #00ffcc; border-radius: 15px; padding: 15px 20px; color: #ffffff; font-family: Arial, sans-serif; 
@@ -112,7 +113,7 @@
             0% { transform: translateY(0px) translateX(0px); }
             50% { transform: translateY(-30px) translateX(-40px); }
             100% { transform: translateY(20px) translateX(30px); }
-        }
+        }  */
 
         /* ขนาดกล้องถ่ายรูปที่เหมาะสมที่สุดบนมือถือ */
 #camera-box {
@@ -134,10 +135,10 @@
     box-shadow: 0 6px 15px rgba(0,0,0,0.4);
 }
 
-// กล่องมอนิเตอร์เรียลไทม์ (ขนาดเล็กกะทัดรัด + ลากขยับได้ + แสดง 2 รายชื่อ) 
+// กล่องมอนิเตอร์เรียลไทม์ สีดำ(ขนาดเล็กกะทัดรัด + ลากขยับได้ + แสดง 2 รายชื่อ) 
 #realtime-monitor-box {
     position: fixed;
-    top: 75%;
+    top: 40%;
     left: 50%;
     transform: translate(-50%, -50%);
     width: 90%;
@@ -218,7 +219,7 @@
 
 #realtime-monitor-box.expanded #rt-list-container {
     max-height: calc(80vh - 60px) !important; /* ขยายพื้นที่รายชื่อให้แสดงได้เต็มกล่อง */
-}   
+}
 
 </style>
 </head>
@@ -230,10 +231,17 @@
 
 <!-- 📰 กล่องข่าววิ่ง (จะแสดงเฉพาะตอนรอใส่รหัสผ่านล็อกอิน) -->
         <div style="background: #121212; border: 1px solid #333; color: #fff; padding: 6px 10px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center;">
-          <span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; margin-right: 8px; flex-shrink: 0;">ข่าววันนี้</span>
-          <marquee id="newsTicker" behavior="scroll" direction="left" scrollamount="4" style="font-size: 13px; color: #ddd;">
-            กำลังโหลดข่าวล่าสุด...
+          <span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 13px; margin-right: 8px; flex-shrink: 0;">ข่าววันนี้</span>
+          <marquee id="newsTicker" behavior="scroll" direction="left" scrollamount="4" style="font-size: 15px; color: #ddd;">
+             กำลังโหลดข่าวล่าสุด...
           </marquee>
+        </div>
+<!-- 📢 กล่องข่าววิ่ง ช่องที่ 2 (เพิ่มใหม่) -->
+        <div style="background: #121212; border: 1px solid #333; color: #fff; padding: 6px 10px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center;">
+        <span style="background: #00ffcc; color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; margin-right: 8px; flex-shrink: 0;">ประกาศ</span>
+        <marquee id="newsTicker2" behavior="scroll" direction="left" scrollamount="3" style="font-size: 13px; color: #00ffcc;">
+             ยินดีต้อนรับสู่ระบบลงเวลา หจก.แสงอนันต์การไฟฟ้า เข้างานก่อน 08:30 น. หักเงิน สาย สูงสุด 50บาทต่อวัน
+        </marquee>
         </div>
 
         <div style="font-size: 45px; margin-bottom: 12px;"><img src="SNAC.png" width="180" height="180" onerror="this.style.display='none'"></div>
@@ -249,19 +257,19 @@
     </div>
 </div>
 
-<!-- กล่องมอนิเตอร์เรียลไทม์ตรงกลางหน้าจอ -->
+<!-- กล่องมอนิเตอร์เรียลไทม์ตรงกลางหน้าจอ สีดำ-->
 <div id="realtime-monitor-box" ondblclick="toggleFullscreen()">
     <div class="rt-title">⏱️ วันนี้ใครมาทำงานบ้างนะ</div>
     <div class="rt-subtitle">** แตะแล้วลาก หรือ แตะ2ครั้งเพื่อ ขยาย / ย่อ **</div>
     <div id="rt-list-container"></div>
 </div>
 
-<!-- กล่องหน้าต่างลอย -->
+<!-- กล่องหน้าต่างลอย ประกาศสำคัญ
 <div class="floating-banner">
   <div class="banner-line1">📢 ประกาศสำคัญ</div>
   <div class="banner-line2">เข้างานก่อน 08:30 น. กันด้วยนะครับ </div>
   <div class="banner-line3">หักเงิน สาย สูงสุด 50บาทต่อวัน </div>
-</div>
+</div> -->
 
 <a href="#" class="btn-back" onclick="location.reload();">⬅ ย้อนกลับ</a>
 
@@ -313,28 +321,33 @@
   <script>
   window.currentLoggedPin = "";
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxS7V1DooiDV0uehwyzHJTw_GTHUYpIRwYYQpI6rGD4t7DQLogSUY606tmLp-8Y-6XZ/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzOWpoWd6-Ce05UhD8I9b5VNuycm3uNP-XOErKoBJN0rVxOlrt4VQ4p1QoUIidzectG/exec";
 
+// 📰 ดึงข่าวสารวิ่ง
 function fetchNews() {
-  fetch(WEB_APP_URL + "?action=getNews")
+  fetch(WEB_APP_URL + "?action=getNews", {
+    method: "GET",
+    redirect: "follow"
+  })
     .then(res => res.json())
     .then(response => {
       if (response.status === "success" && response.data && response.data.length > 0) {
         let newsText = response.data
           .map(item => `📰 ${item.title}`)
           .join(" &nbsp;&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;&nbsp; ");
-        document.getElementById("newsTicker").innerHTML = newsText;
+        let ticker = document.getElementById("newsTicker");
+        if (ticker) ticker.innerHTML = newsText;
       } else {
-        document.getElementById("newsTicker").innerText = "ยินดีต้อนรับสู่ระบบลงเวลา หจก.แสงอนันต์การไฟฟ้า";
+        let ticker = document.getElementById("newsTicker");
+        if (ticker) ticker.innerText = "ยินดีต้อนรับ ";
       }
     })
     .catch(err => {
-      document.getElementById("newsTicker").innerText = "ไม่สามารถดึงข่าวสารได้ในขณะนี้";
+      console.error("Fetch News Error:", err);
+      let ticker = document.getElementById("newsTicker");
+      if (ticker) ticker.innerText = "ไม่สามารถดึงข่าวสารได้ในขณะนี้";
     });
 }
-
-fetchNews();
-
 
 // 1. นาฬิกาเรียลไทม์
 window.addEventListener("DOMContentLoaded", () => {
@@ -350,6 +363,22 @@ window.addEventListener("DOMContentLoaded", () => {
             clockEl.innerHTML = "📅 " + dateThai + " | ⏰ " + hours + ":" + minutes + ":" + seconds + " น.";
         }
     }, 1000);
+
+    // ดึงข่าวสาร
+    fetchNews();
+
+    // แสดงกล่องมอนิเตอร์ในหน้าล็อกอิน
+    let monitorBox = document.getElementById("realtime-monitor-box");
+    if (monitorBox) {
+        monitorBox.style.display = 'block';
+        if (typeof makeElementDraggable === 'function') {
+            makeElementDraggable(monitorBox);
+        }
+    }
+
+    // ดึงข้อมูลมอนิเตอร์ครั้งแรก และตั้งเวลาอัปเดตทุก 5 วินาที
+    loadRealtimeMonitor();
+    setInterval(loadRealtimeMonitor, 5000);
 });
 
 // 2. เด้งออกจากแอป LINE ไปเบราว์เซอร์ปกติ
@@ -357,32 +386,9 @@ if (navigator.userAgent.indexOf('Line') > -1) {
     window.location.href = window.location.href + (window.location.href.indexOf('?') > -1 ? '&' : '?') + 'openExternalBrowser=1';
 }
 
-    // 🚀 ทำงานทันทีเมื่อโหลดหน้าเว็บเข้ามาที่หน้าล็อกอิน
-        window.addEventListener("DOMContentLoaded", () => {
-    
-    // แสดงกล่องมอนิเตอร์ในหน้าล็อกอิน
-    let monitorBox = document.getElementById("realtime-monitor-box");
-    if (monitorBox) {
-        monitorBox.style.display = 'block';
-        
-        // ถ้ามีฟังก์ชันทำให้ลากได้
-        if (typeof makeElementDraggable === 'function') {
-            makeElementDraggable(monitorBox);
-        }
-    }
-
-    // 1. ดึงข้อมูลครั้งแรกทันทีที่เปิดหน้าเว็บขึ้นมา
-    loadRealtimeMonitor();
-
-    // 2. ตั้งเวลาให้อัปเดตข้อมูลอัตโนมัติทุกๆ 5 วินาที
-    if (typeof realtimeTimer !== 'undefined') clearInterval(realtimeTimer);
-    realtimeTimer = setInterval(loadRealtimeMonitor, 5000);
-});
-
-// ฟังก์ชันดึงข้อมูลจากหลังบ้าน
 // 3. ฟังก์ชันดึงข้อมูลจากหลังบ้าน (แก้ให้ใช้ fetch เพื่อให้รันบน Server นอกได้)
 function loadRealtimeMonitor() {
-  fetch(WEB_APP_URL + "?action=getTodayAttendance", {
+  fetch(WEB_APP_URL+ "?action=getTodayAttendance", {
     method: "GET",
     redirect: "follow"
   })
@@ -398,28 +404,29 @@ function loadRealtimeMonitor() {
 }
 
 // 4. ฟังก์ชันวาดรายการลงกล่องมอนิเตอร์ สีดำ
+// 🖥️ ฟังก์ชันวาดรายการลงกล่องมอนิเตอร์เรียลไทม์
 function renderMonitorList(data) {
   let container = document.getElementById("rt-list-container");
   if (!container) return;
   
   container.innerHTML = "";
 
-  if (!data || data.length === 0) {
+  if (!data || !Array.isArray(data) || data.length === 0) {
     container.innerHTML = `<div style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูลการเข้างานวันนี้</div>`;
     return;
   }
 
   data.forEach(item => {
+    // 🎯 ใช้ค่า timeIn ที่ส่งมาจาก Apps Script ตรงๆ ไม่ต้อง regex ตัดคำเพิ่ม
     let cleanTime = "--:-- น.";
-    if (item.timeIn && item.timeIn !== "undefined") {
-      let timeMatch = item.timeIn.toString().match(/\d{1,2}:\d{2}/);
-      cleanTime = timeMatch ? timeMatch[0] + " น." : item.timeIn + " น.";
+    if (item.timeIn && item.timeIn !== "undefined" && item.timeIn !== "null") {
+      cleanTime = item.timeIn;
     }
 
     let rowHTML = `
-      <div class="rt-row">
-        <div class="rt-name">👤 ${item.name}</div>
-        <div class="rt-time">${cleanTime}</div>
+      <div class="rt-row" style="display: flex; justify-content: space-between; padding: 6px 10px; border-bottom: 1px solid #333;">
+        <div class="rt-name" style="color: #fff;">👤 ${item.name || 'ไม่ระบุชื่อ'}</div>
+        <div class="rt-time" style="color: #00ffcc;">${cleanTime}</div>
       </div>
     `;
     container.innerHTML += rowHTML;
@@ -439,12 +446,11 @@ let imageDataUrl = "";
 let userGpsLocation = ""; 
 window.lateLimitTimeFromSheets = "08:30"; 
 
-
 // 📸 ฟังก์ชันเปิดกล้องหน้าอัตโนมัติอย่างสมบูรณ์
 async function autoStartCamera() {
     if (!video) return;
 
-    cameraBox.style.display = 'flex';
+    if (cameraBox) cameraBox.style.display = 'flex';
 
     if (video.srcObject) {
         let tracks = video.srcObject.getTracks();
@@ -472,7 +478,7 @@ async function autoStartCamera() {
         video.onloadedmetadata = () => {
             video.play().catch(err => console.error("Video Play Error:", err));
         };
-    } else {
+  } else {
         alert("⚠️ ไม่สามารถเปิดกล้องได้ กรุณาเปิดเว็บผ่าน Chrome หรือ Safari และอนุญาตสิทธิ์การใช้กล้องครับ");
     }
 }
