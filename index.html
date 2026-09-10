@@ -390,6 +390,7 @@ if (navigator.userAgent.indexOf('Line') > -1) {
 function loadRealtimeMonitor() {
   fetch(WEB_APP_URL+ "?action=getTodayAttendance", {
     method: "GET",
+    mode: "cors",
     redirect: "follow"
   })
     .then(res => res.json())
