@@ -138,9 +138,9 @@
 // กล่องมอนิเตอร์เรียลไทม์ สีดำ(ขนาดเล็กกะทัดรัด + ลากขยับได้ + แสดง 2 รายชื่อ) 
 #realtime-monitor-box {
     position: fixed;
-    top: 40%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 15px;                /* 📍 ระยะห่างจากขอบบน */
+    left: 15px;               /* 📍 ระยะห่างจากขอบซ้าย */
+    /* ตัด transform: translate(-50%, -50%); ออกเพื่อให้จัดชิดซ้ายบนถูกต้อง */
     width: 90%;
     max-width: 320px;
     height: auto;             /* ปรับความสูงอัตโนมัติตามเนื้อหา */
@@ -160,6 +160,7 @@
     display: flex;
     flex-direction: column;
 }
+
 
 .rt-title {
     text-align: center;
