@@ -27,10 +27,10 @@
             margin: 0;
         }
 
-        .btn-back { 
-            position: absolute; 
-            top: 15px; 
-            left: 15px; 
+      /*  .btn-back { 
+            position: fixed; 
+            top: 50px; 
+            left: 50px; 
             padding: 5px 12px; 
             background: #2a2a2a; 
             border: 1px solid var(--border-dark); 
@@ -40,7 +40,7 @@
             font-size: 11px; 
             font-weight: bold; 
             box-shadow: 0 2px 4px rgba(0,0,0,0.5); 
-        }
+        } */
 
         .container { 
             max-width: 450px; 
@@ -126,41 +126,34 @@
 }
 
 #video {
-    width: 250px !important;   /* ขนาดกำลังดี ชัดเจน (ประมาณ 5 ซม.) */
-    height: 200px !important;  /* สี่เหลี่ยมจัตุรัสลงตัวกับใบหน้า */
-    object-fit: cover;         /* ครอปวิดีโอให้เต็มกรอบ ไม่เบี้ยว */
-    border-radius: 16px;       /* มุมมนสวยงาม */
-    border: 3px solid #00ffcc; /* ขอบเรืองแสงสังเกตง่าย */
+    width: 250px !important;
+    height: 200px !important;
+    object-fit: cover;
+    border-radius: 16px;
+    border: 3px solid #00ffcc;
     background: #000;
     box-shadow: 0 6px 15px rgba(0,0,0,0.4);
 }
 
-// กล่องมอนิเตอร์เรียลไทม์ สีดำ(ขนาดเล็กกะทัดรัด + ลากขยับได้ + แสดง 2 รายชื่อ) 
+/* 🎯 กล่องสีดำแบบเต็มจอ */
 #realtime-monitor-box {
     position: fixed;
-    top: 15px;                /* 📍 ระยะห่างจากขอบบน */
-    left: 15px;               /* 📍 ระยะห่างจากขอบซ้าย */
-    /* ตัด transform: translate(-50%, -50%); ออกเพื่อให้จัดชิดซ้ายบนถูกต้อง */
-    width: 90%;
-    max-width: 320px;
-    height: auto;             /* ปรับความสูงอัตโนมัติตามเนื้อหา */
-    max-height: 220px;        /* จำกัดความสูงรวมไม่ให้ใหญ่เกินไป */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100%;
+    max-height: 100%;
     background: #121212;
-    border: 3px solid #00ffcc; /* ขอบเขียวนีออน */
-    border-radius: 16px;
-    padding: 12px 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-    z-index: 9999;           /* z-index สูงกว่าหน้าล็อกอิน */
+    border: none;
+    padding: 20px 15px;
+    z-index: 9999;
     font-family: sans-serif;
     color: #fff;
-    cursor: move;             /* สัญลักษณ์ลากจับ */
-    user-select: none;
-    touch-action: none;
     box-sizing: border-box;
-    display: flex;
+    display: none;         /* ซ่อนไว้เป็นค่าเริ่มต้น */
     flex-direction: column;
 }
-
 
 .rt-title {
     text-align: center;
@@ -177,12 +170,13 @@
     margin-bottom: 8px;
 }
 
-/* พื้นที่แสดงรายชื่อพนักงาน (จำกัดความสูงพอดีกับ 2 รายชื่อ) */
+/* 🎯 ปรับให้พื้นที่รายชื่อขยายเต็มจอตามกล่อง (เลื่อนดูได้ยาวๆ) */
 #rt-list-container {
-    max-height: 110px;        /* แสดงพอดี 2 รายชื่อ */
-    overflow-y: auto;         /* เลื่อนดูรายชื่ออื่นได้ */
+    flex: 1;                  /* ยืดความสูงเต็มพื้นที่ที่เหลือ */
+    overflow-y: auto;         /* แสดง Scrollbar เมื่อรายการยาวเกินจอ */
     touch-action: pan-y;
     padding-right: 4px;
+    margin-top: 10px;
 }
 
 .rt-row {
@@ -191,7 +185,7 @@
     align-items: center;
     background: #1e1e1e;
     padding: 8px 12px;
-    height: 42px;             /* ล็อกความสูงแต่ละแถว */
+    height: 42px;
     border-radius: 8px;
     margin-bottom: 6px;
     border: 1px solid #2a2a2a;
@@ -207,19 +201,7 @@
 .rt-time {
     font-size: 13px;
     font-weight: bold;
-    color: #ffcc00;          /* สีเหลืองส้ม */
-}
-
-/* 🔍 สไตล์เมื่อกล่องขยายใหญ่ (แตะ 2 ครั้ง) */
-#realtime-monitor-box.expanded {
-    max-height: 80vh !important; /* ขยายความสูงกล่องเป็น 80% ของหน้าจอ */
-    height: 80vh !important;
-    width: 95% !important;
-    max-width: 400px !important;
-}
-
-#realtime-monitor-box.expanded #rt-list-container {
-    max-height: calc(80vh - 60px) !important; /* ขยายพื้นที่รายชื่อให้แสดงได้เต็มกล่อง */
+    color: #ffcc00;
 }
 
 </style>
@@ -227,23 +209,39 @@
 
 <body>
 
+ <a href="javascript:void(0);" class="btn-back" onclick="location.reload();">⬅ ย้อนกลับ</a> 
+ <!--  <button type="button" class="btn-back" onclick="closeRealtimeMonitor()" style="
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: transparent;
+        border: 1px solid #00ffcc;
+        color: #00ffcc;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        z-index: 99;">
+        ⬅ ย้อนกลับ (ออกจากระบบ)
+    </button>  -->
+
 <div id="auth-screen" style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0a; z-index: 8888; font-family: sans-serif;">
     <div style="background: #1e1e1e; border: 1px solid #333; padding: 35px 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); width: 85%; max-width: 350px; text-align: center; box-sizing: border-box;">
 
-<!-- 📰 กล่องข่าววิ่ง (จะแสดงเฉพาะตอนรอใส่รหัสผ่านล็อกอิน)
+<!-- 📰 กล่องข่าววิ่ง (จะแสดงเฉพาะตอนรอใส่รหัสผ่านล็อกอิน)-->
         <div style="background: #121212; border: 1px solid #333; color: #fff; padding: 6px 10px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center;">
-          <span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 13px; margin-right: 8px; flex-shrink: 0;">ข่าววันนี้</span>
+          <span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 13px; margin-right: 8px; flex-shrink: 0;">ประกาศ1</span>
           <marquee id="newsTicker" behavior="scroll" direction="left" scrollamount="4" style="font-size: 15px; color: #ddd;">
-             กำลังโหลดข่าวล่าสุด...
+             กำลังโหลด......
           </marquee>
         </div>
- 📢 กล่องข่าววิ่ง ช่องที่ 2 (เพิ่มใหม่) 
+
         <div style="background: #121212; border: 1px solid #333; color: #fff; padding: 6px 10px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center;">
-        <span style="background: #00ffcc; color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; margin-right: 8px; flex-shrink: 0;">ประกาศ</span>
+        <span style="background: #00ffcc; color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 13px; margin-right: 8px; flex-shrink: 0;">ประกาศ2</span>
         <marquee id="newsTicker2" behavior="scroll" direction="left" scrollamount="3" style="font-size: 13px; color: #00ffcc;">
-             ยินดีต้อนรับสู่ระบบลงเวลา หจก.แสงอนันต์การไฟฟ้า เข้างานก่อน 08:30 น. หักเงิน สาย สูงสุด 50บาทต่อวัน
+            เข้างานก่อน 08:30 น. หักเงินสาย นาทีละ 1บาท สูงสุด 50บาทต่อวัน
         </marquee>
-        </div> -->
+        </div>
 
         <div style="font-size: 45px; margin-bottom: 12px;"><img src="SNAC.png" width="180" height="180" onerror="this.style.display='none'"></div>
         <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; margin: 0 0 5px 0;">หจก.แสงอนันต์การไฟฟ้า</h2>
@@ -255,32 +253,31 @@
         
         <div id="auth-status-msg" style="font-size: 14px; font-weight: bold; margin-top: 15px; min-height: 20px; color: #ff4d4d;"></div>
         <div id="live-clock" style="text-align: center; font-size: 1.2rem; font-weight: bold; color: #ffcc00; background: #262626; padding: 10px; border-radius: 8px; margin-top: 15px; border: 1px solid #333;"></div>
+
+        <button type="button" id="btn-show-monitor" onclick="openRealtimeMonitor()" style="
+        width: 100%;
+        padding: 12px;
+        margin-top: 10px;
+        background-color: #1a1a1a;
+        color: #00ffcc;
+        border: 2px solid #00ffcc;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;"> 👥 คลิก ใครมาทำงานวันนี้
+        </button>
+        </div>
     </div>
-</div>
-
-<!-- กล่องมอนิเตอร์เรียลไทม์ตรงกลางหน้าจอ สีดำ-->
-<div id="realtime-monitor-box" ondblclick="toggleFullscreen()">
-    <div class="rt-title">⏱️ วันนี้ใครมาทำงานบ้างนะ</div>
-    <div class="rt-subtitle">** แตะแล้วลาก หรือ แตะ2ครั้งเพื่อ ขยาย / ย่อ **</div>
-    <div id="rt-list-container"></div>
-</div>
-
-<!-- กล่องหน้าต่างลอย ประกาศสำคัญ
-<div class="floating-banner">
-  <div class="banner-line1">📢 ประกาศสำคัญ</div>
-  <div class="banner-line2">เข้างานก่อน 08:30 น. กันด้วยนะครับ </div>
-  <div class="banner-line3">หักเงิน สาย สูงสุด 50บาทต่อวัน </div>
-</div> -->
-
-<a href="#" class="btn-back" onclick="location.reload();">⬅ ย้อนกลับ</a>
-
-<div class="container" id="main-interface">
+    <div class="container" id="main-interface">
     <h2>หจก.แสงอนันต์การไฟฟ้า<br>บันทึกเวลาทำงาน</h2>
     <div style="background: #262626; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 15px; color: #00ffcc; border: 1px solid #333;">
         <span id="display-worker-name">👤 กรุณาใส่รหัสล็อกอินด้านบน</span>
-    </div>
-  
+        <!-- ปุ่มกดเปิดดูรายชื่อพนักงาน -->
 
+    </div>
+
+
+  
     <!-- **************************************** -->
     <!-- ซ่อนปุ่มเปิดกล้องเดิม ไม่ต้องกดแล้ว --> 
 <!-- <button class="btn btn-snap" id="start-camera" style="display: none;">📷 เปิดกล้องถ่ายรูป</button> -->
@@ -317,42 +314,41 @@
     <div class="modal-box" id="modal-content-area"></div>
 </div>
 
+<div id="realtime-monitor-box">
+    <!-- Header กล่องเต็มจอ + ปุ่มปิด -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px;">
+        <h3 style="margin: 0; color: #00ffcc; font-size: 18px;">👥 รายชื่อพนักงานทำงานวันนี้</h3>
+        <button type="button" onclick="closeRealtimeMonitor()" style="
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;">✕ ปิด</button>
+    </div>
+
+    <!-- Container แสดงรายชื่อพนักงาน -->
+    <div id="rt-list-container">
+        <!-- รายชื่อจะถูกวาดลงตรงนี้ด้วย JavaScript -->
+    </div>
+</div>
 
 
-  <script>
+
+
+<script>
   window.currentLoggedPin = "";
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyXvlGrLhlbH2E7n29iOVWuQ_uCMYtOnMRObWyTQgtru5SE-4pQnteFKlUZy6Wu0V_5/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz2rK9I96NCX5uNqeBbcqwtAHbJ1J5d6WIGfC0i__dkxexAipL6hs-uDVbeppoLGSyz/exec";
 
 // 2. เด้งออกจากแอป LINE ไปเบราว์เซอร์ปกติ
 if (navigator.userAgent.indexOf('Line') > -1) {
     window.location.href = window.location.href + (window.location.href.indexOf('?') > -1 ? '&' : '?') + 'openExternalBrowser=1';
 }
-// 📰 ดึงข่าวสารวิ่ง
-function fetchNews() {
-  fetch(WEB_APP_URL + "?action=getNews", {
-    method: "GET",
-    redirect: "follow"
-  })
-    .then(function(res) { return res.json(); })
-    .then(function(response) {
-      if (response && response.status === "success" && response.data && response.data.length > 0) {
-        let newsText = response.data
-          .map(function(item) { return "📰 " + item.title; })
-          .join(" &nbsp;&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;&nbsp; ");
-        let ticker = document.getElementById("newsTicker");
-        if (ticker) ticker.innerHTML = newsText;
-      } else {
-        let ticker = document.getElementById("newsTicker");
-        if (ticker) ticker.innerText = "ยินดีต้อนรับ ";
-      }
-    })
-    .catch(function(err) {
-      console.error("Fetch News Error:", err);
-      let ticker = document.getElementById("newsTicker");
-      if (ticker) ticker.innerText = "ไม่สามารถดึงข่าวสารได้ในขณะนี้";
-    });
-}
+
+
 
 // 1. นาฬิกาเรียลไทม์ และระบบเริ่มต้นหน้าเว็บ
 window.addEventListener("DOMContentLoaded", function() {
@@ -369,31 +365,42 @@ window.addEventListener("DOMContentLoaded", function() {
             clockEl.innerHTML = "📅 " + dateThai + " | ⏰ " + hours + ":" + minutes + ":" + seconds + " น.";
         }
     }, 1000);
+ 
 
-    // ดึงข่าวสาร
-    fetchNews();
-
-    // แสดงกล่องมอนิเตอร์ในหน้าล็อกอิน
+    // 🎯 ซ่อนกล่องมอนิเตอร์ตั้งแต่วินาทีแรก
     let monitorBox = document.getElementById("realtime-monitor-box");
     if (monitorBox) {
-        monitorBox.style.display = 'block';
-        if (typeof makeElementDraggable === 'function') {
-            makeElementDraggable(monitorBox);
-        }
+        monitorBox.style.display = 'none';
     }
 
-    // ดึงข้อมูลมอนิเตอร์ครั้งแรก และตั้งเวลาอัปเดตทุก 5 วินาที
-    if (typeof loadRealtimeMonitor === 'function') {
-        loadRealtimeMonitor();
-        setInterval(loadRealtimeMonitor, 5000);
-    } else {
-        console.error("ไม่พบฟังก์ชัน loadRealtimeMonitor ในระบบ");
+    // 🎯 ดักจับปุ่มกด "พนักงานทำงานวันนี้" ป้องกันปัญหา onclick หาฟังก์ชันไม่เจอ
+    let btnMonitor = document.getElementById("btn-show-monitor");
+    if (btnMonitor) {
+        btnMonitor.addEventListener("click", openRealtimeMonitor);
     }
 });
 
+// 🟢 ฟังก์ชันเปิดกล่องสีดำแบบเต็มจอ + โหลดข้อมูล
+function openRealtimeMonitor() {
+    var monitorBox = document.getElementById("realtime-monitor-box");
+    if (monitorBox) {
+        monitorBox.style.setProperty("display", "flex", "important"); // แสดงกล่องเต็มจอ
+    }
+    if (typeof loadRealtimeMonitor === 'function') {
+        loadRealtimeMonitor(); // ดึงข้อมูลเมื่อเปิดกล่อง
+    }
+}
+
+// 🔴 ฟังก์ชันปิดกล่องสีดำ
+function closeRealtimeMonitor() {
+    var monitorBox = document.getElementById("realtime-monitor-box");
+    if (monitorBox) {
+        monitorBox.style.setProperty("display", "none", "important"); // ซ่อนกล่องกลับไป
+    }
+}
 
 
-// 🎯 ดึงข้อมูลแคชเก่ามาโชว์ทันทีแบบ 0 วินาที
+// 🎯 ดึงข้อมูลแคชเก่ามาโชว์ทันทีแบบ 0 วินาที แล้วดึงข้อมูลใหม่เบื้องหลัง
 function loadRealtimeMonitor() {
   var cachedData = localStorage.getItem("rt_monitor_cache");
   if (cachedData) {
@@ -419,6 +426,7 @@ function loadRealtimeMonitor() {
       console.error("Monitor Fetch Error:", err);
     });
 }
+
 
 
 // 4. ฟังก์ชันวาดรายการลงกล่องมอนิเตอร์สีดำ
@@ -466,6 +474,7 @@ window.addEventListener("DOMContentLoaded", function() {
   modal = document.getElementById('common-modal');
   modalArea = document.getElementById('modal-content-area');
 });
+
 
 
 // 📸 ฟังก์ชันเปิดกล้องหน้าอัตโนมัติอย่างสมบูรณ์
@@ -916,15 +925,7 @@ function openPersonalDashboard() {
     }
     setInterval(checkButtonDisplay, 1000); //นับเวลาให้ปุ่มทำงาน ทุก1วิ
 
-    // 🔍 ฟังก์ชันแตะ 2 ครั้ง เพื่อขยาย/ย่อ กล่องมอนิเตอร์
-  function toggleFullscreen() {
-  let monitorBox = document.getElementById("realtime-monitor-box");
-  if (!monitorBox) return;
-
-  // สลับคลาส 'expanded' เพื่อขยายหรือย่อ
-  monitorBox.classList.toggle("expanded");
-  }
-
+ 
     // 🚚 ระบบลากกล่องมอนิเตอร์ไปมา (รองรับทั้ง มือถือ และ เม้าส์คอม)
   function makeElementDraggable(elmnt) {
   let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
