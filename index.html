@@ -458,8 +458,7 @@ function renderMonitorList(data) {
   });
 }
 
-// 🎵 โหลดไฟล์เสียงชัตเตอร์เตรียมไว้
-const shutterSound = new Audio('shutter.mp3');
+
 
 // 5. ตัวแปรสำหรับกล้องและสถานะระบบ (ผูก DOM ปลอดภัย)
 window.selectedWorkerName = "";
@@ -631,82 +630,63 @@ function validateEmployeeFcode(el) {
 
 
     
-// 🎵 1. ประกาศสร้างเสียงชัตเตอร์พร้อม Preload
-const shutterSound = new Audio('shutter.mp3');
-shutterSound.preload = 'auto'; // สั่งให้เบราว์เซอร์ดึงไฟล์เสียงมารอไว้ทันที
-
-// 📸 2. กำหนดเหตุการณ์เมื่อกดปุ่มถ่ายรูป
-window.addEventListener("DOMContentLoaded", function() {
-    const snapBtn = document.getElementById('snap');
-    
-    if (snapBtn) {
-        snapBtn.onclick = function() {
-            // 🔊 เล่นเสียงชัตเตอร์
-            try {
-                shutterSound.currentTime = 0;
-                let playPromise = shutterSound.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        console.log("Autoplay blocked or audio missing:", error);
-                    });
-                }
-            } catch (e) {
-                console.log("Audio Error:", e);
-            }
-
-            // 📷 จับภาพลง Canvas
-            const video = document.getElementById('video');
-            const canvas = document.getElementById('canvas');
-            
-            if (video && canvas) {
-                let captureSize = Math.min(video.videoWidth || 300, video.videoHeight || 600);
-                canvas.width = captureSize; 
-                canvas.height = captureSize;
-
-                let startX = (video.videoWidth - captureSize) / 2;
-                let startY = (video.videoHeight - captureSize) / 2;
-
-                const ctx = canvas.getContext('2d');
-                if (ctx) {
-                    ctx.drawImage(video, startX, startY, captureSize, captureSize, 0, 0, captureSize, captureSize);
-                    imageDataUrl = canvas.toDataURL('image/jpeg');
-                }
-            }
-
-            // 👤 อัปเดตข้อความชื่อและเวลา
-            let resName = document.getElementById('res-name');
-            let resTime = document.getElementById('res-time');
-            if (resName) resName.innerText = window.selectedWorkerName || "";
-            if (resTime) resTime.innerText = new Date().toLocaleTimeString('th-TH');
-
-            // 🎯 สลับการแสดงผลหน้าจอ (ย้ายบังคับทุก Container ให้เปลี่ยนหน้าแน่นอน)
-            let cameraBox = document.getElementById('camera-box');
-            if (cameraBox) cameraBox.style.setProperty("display", "none", "important");
-
-            let resultBox = document.getElementById('result');
-            if (resultBox) resultBox.style.setProperty("display", "flex", "important");
-
-            let authScreen = document.getElementById('auth-screen');
-            if (authScreen) authScreen.style.setProperty("display", "none", "important");
-
-            let mainInterface = document.getElementById('main-interface');
-            if (mainInterface) mainInterface.style.setProperty("display", "block", "important");
-
-            let btnGroup = document.getElementById('btn-group');
-            if (btnGroup) btnGroup.style.setProperty("display", "flex", "important");
-
-            let specialGroup = document.getElementById('special-group');
-            if (specialGroup) specialGroup.style.setProperty("display", "flex", "important");
-
-            // 🛑 ปิดสตรีมกล้อง
-            if (video && video.srcObject) { 
-                let tracks = video.srcObject.getTracks();
-                tracks.forEach(track => track.stop()); 
-                video.srcObject = null;
-            }
-        };
+// 📸 ปุ่มกด ถ่ายภาพ (แก้เรื่องเล่นเสียง + สลับหน้าจอแน่นอน)
+snapBtn.onclick = () => {
+    // 🔊 1. เล่นเสียงชัตเตอร์ (มีระบบป้องกัน Error)
+    try {
+        shutterSound.currentTime = 0;
+        let playPromise = shutterSound.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(e => console.log("Audio Error/Blocked:", e));
+        }
+    } catch (e) {
+        console.log("Audio Error:", e);
     }
-});
+
+    // 📷 2. จับภาพลง Canvas
+    let captureSize = Math.min(video.videoWidth || 300, video.videoHeight || 600);
+    canvas.width = captureSize; 
+    canvas.height = captureSize;
+
+    let startX = (video.videoWidth - captureSize) / 2;
+    let startY = (video.videoHeight - captureSize) / 2;
+    
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+        ctx.drawImage(video, startX, startY, captureSize, captureSize, 0, 0, captureSize, captureSize);
+        imageDataUrl = canvas.toDataURL('image/jpeg'); 
+    }
+    
+    // 👤 3. อัปเดตข้อความชื่อและเวลา
+    let resName = document.getElementById('res-name');
+    let resTime = document.getElementById('res-time');
+    if (resName) resName.innerText = window.selectedWorkerName || "";
+    if (resTime) resTime.innerText = new Date().toLocaleTimeString('th-TH');
+
+    // 🎯 4. สลับหน้าจอ (บังคับแสดงผลหน้าหลักและปุ่มเข้างาน)
+    if (cameraBox) cameraBox.style.setProperty("display", "none", "important");
+
+    let resultBox = document.getElementById('result');
+    if (resultBox) resultBox.style.setProperty("display", "flex", "important");
+
+    let authScreen = document.getElementById('auth-screen');
+    if (authScreen) authScreen.style.setProperty("display", "none", "important");
+
+    let mainInterface = document.getElementById('main-interface');
+    if (mainInterface) mainInterface.style.setProperty("display", "block", "important");
+
+    let btnGroup = document.getElementById('btn-group');
+    if (btnGroup) btnGroup.style.setProperty("display", "flex", "important");
+
+    let specialGroup = document.getElementById('special-group');
+    if (specialGroup) specialGroup.style.setProperty("display", "flex", "important");
+    
+    // 🛑 5. หยุดสตรีมกล้อง
+    if (video && video.srcObject) { 
+        video.srcObject.getTracks().forEach(track => track.stop()); 
+        video.srcObject = null;
+    }
+};
 
 
 
