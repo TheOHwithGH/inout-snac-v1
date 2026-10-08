@@ -287,7 +287,8 @@
 <div id="camera-box">
     <video id="video" autoplay playsinline muted></video>
     <!-- ปุ่มกดถ่ายรูป -->
-    <button class="btn btn-snap" id="snap" style="width: auto; padding: 10px 20px;">📷 กดเพื่อถ่ายภาพ33</button>
+    <button class="btn btn-snap" id="snap" style="width: auto; padding: 10px 20px;">📷 กดเพื่อถ่ายภาพ</button>
+    
 </div>
 <canvas id="canvas"></canvas>
 
@@ -362,7 +363,7 @@ window.addEventListener("DOMContentLoaded", function() {
         
         let clockEl = document.getElementById("live-clock");
         if (clockEl) {
-            clockEl.innerHTML = "📅 " + dateThai + " | ⏰ " + hours + ":" + minutes + ":" + seconds + " น.";
+            clockEl.innerHTML = "📅 " + dateThai + " ⏰ " + hours + ":" + minutes + ":" + seconds + " น.";
         }
     }, 1000);
  
@@ -473,9 +474,8 @@ window.addEventListener("DOMContentLoaded", function() {
   cameraBox = document.getElementById('camera-box');
   modal = document.getElementById('common-modal');
   modalArea = document.getElementById('modal-content-area');
+
 });
-
-
 
 // 📸 ฟังก์ชันเปิดกล้องหน้าอัตโนมัติอย่างสมบูรณ์
 async function autoStartCamera() {
@@ -626,8 +626,12 @@ function validateEmployeeFcode(el) {
     }
 }
 
+
+    
 // 📸 ปุ่มกด ถ่ายภาพ (เหลือเพียงอันเดียว)
+// 📸 ปุ่มกด ถ่ายภาพ (ปรับปรุงการสลับหน้าจอและหยุดกล้อง)
 snapBtn.onclick = () => {
+    // 1. คำนวณขนาดภาพแบบสี่เหลี่ยมจัตุรัสลงตัว
     let captureSize = Math.min(video.videoWidth || 300, video.videoHeight || 600);
     canvas.width = captureSize; 
     canvas.height = captureSize;
@@ -635,24 +639,39 @@ snapBtn.onclick = () => {
     let startX = (video.videoWidth - captureSize) / 2;
     let startY = (video.videoHeight - captureSize) / 2;
     
+    // 2. จับภาพจากกล้องลงใน Canvas
     canvas.getContext('2d').drawImage(video, startX, startY, captureSize, captureSize, 0, 0, captureSize, captureSize);
     imageDataUrl = canvas.toDataURL('image/jpeg'); 
     
+    // 3. แสดงชื่อและเวลาที่ถ่ายรูป
     document.getElementById('res-name').innerText = window.selectedWorkerName;
     document.getElementById('res-time').innerText = new Date().toLocaleTimeString('th-TH');
-    document.getElementById('result').style.display = 'flex';
-    cameraBox.style.display = 'none';
-    if (video.srcObject) { 
-        video.srcObject.getTracks().forEach(track => track.stop()); 
-    }
-
-    document.getElementById('btn-group').style.display = 'flex';
-    document.getElementById('special-group').style.display = 'flex';
     
-    if (video.srcObject) { 
+    // 4. สลับการแสดงผลหน้าจอ
+    if (cameraBox) cameraBox.style.display = 'none';            // ซ่อนกล่องวิดีโอกล้อง
+    document.getElementById('result').style.display = 'flex';    // แสดงรูปที่ถ่ายได้
+    
+    // 🎯 [เพิ่มจุดสำคัญ] ซ่อนหน้าล็อกอิน และเปิดหน้าทำงานหลัก (ปุ่มเข้างาน/ออกงาน)
+    let authScreen = document.getElementById('auth-screen');
+    if (authScreen) authScreen.style.display = 'none';
+    
+    let mainInterface = document.getElementById('main-interface');
+    if (mainInterface) mainInterface.style.display = 'block';   // หรือ 'flex' ตาม CSS ของคุณ
+
+    // 5. แสดงกลุ่มปุ่มบันทึกเวลา
+    let btnGroup = document.getElementById('btn-group');
+    if (btnGroup) btnGroup.style.display = 'flex';
+    
+    let specialGroup = document.getElementById('special-group');
+    if (specialGroup) specialGroup.style.display = 'flex';
+    
+    // 6. ปิดสตรีมกล้องทันทีเพื่อประหยัดแบตเตอรี่
+    if (video && video.srcObject) { 
         video.srcObject.getTracks().forEach(track => track.stop()); 
+        video.srcObject = null;
     }
 };
+
 
 
 
