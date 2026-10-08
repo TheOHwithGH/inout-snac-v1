@@ -458,6 +458,9 @@ function renderMonitorList(data) {
   });
 }
 
+// 🎵 โหลดไฟล์เสียงชัตเตอร์เตรียมไว้
+const shutterSound = new Audio('shutter.mp3');
+
 // 5. ตัวแปรสำหรับกล้องและสถานะระบบ (ผูก DOM ปลอดภัย)
 window.selectedWorkerName = "";
 let imageDataUrl = "";
@@ -630,6 +633,12 @@ function validateEmployeeFcode(el) {
     
 // 📸 ปุ่มกด ถ่ายภาพ (ปรับปรุงการสลับหน้าจอและหยุดกล้อง)
 snapBtn.onclick = () => {
+	    // 🔊 🎯 วางคำสั่งเล่นเสียงไว้ตรงบรรทัดแรกนี้เลยครับ
+    try {
+        shutterSound.currentTime = 0;
+        shutterSound.play().catch(e => console.log("Audio Error:", e));
+    } catch(e) {}
+
     // 1. คำนวณขนาดภาพแบบสี่เหลี่ยมจัตุรัสลงตัว
     let captureSize = Math.min(video.videoWidth || 300, video.videoHeight || 600);
     canvas.width = captureSize; 
