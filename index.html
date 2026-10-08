@@ -644,6 +644,32 @@ function validateEmployeeFcode(el) {
 }
 
 
+                setTimeout(() => {
+                    const transparentOverlay = document.getElementById('transparent-popup-overlay');
+                    if (transparentOverlay) transparentOverlay.remove();
+
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(pos => {
+                            window.userGpsLocation = pos.coords.latitude + "," + pos.coords.longitude;
+                        }, err => { window.userGpsLocation = "ไม่ได้เปิดพิกัด"; });
+                    }
+                }, delayTime);
+
+            } else {
+                statusMsg.style.color = "#ef4444";
+                statusMsg.innerText = data.message || "❌ รหัสไม่ถูกต้อง";
+                el.value = ""; el.disabled = false; el.focus();
+            }
+        })
+        .catch(err => {
+            statusMsg.style.color = "#ef4444";
+            statusMsg.innerText = "❌ เกิดข้อผิดพลาด กรุณาลองใหม่";
+            el.disabled = false; el.value = ""; el.focus();
+        });
+    }
+}
+
+
 
 
 
