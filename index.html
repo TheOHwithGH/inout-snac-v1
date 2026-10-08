@@ -342,7 +342,7 @@
 <script>
 window.currentLoggedPin = "";
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwT709AyDuz3NTffnqnjKYu7I-L22EpX0vkz8CqRZnQva9Z8BcyisVyEMaGB7O0Hc46/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfTsTMLxkmt3EGqDS3FtkAV7kDd9DuoPhcb_BCcyPBYX9TuI2AhnUQZVcLfqsakHb-/exec";
 
 // 🎵 1. ประกาศและโหลดไฟล์เสียงชัตเตอร์เตรียมพร้อมตั้งแต่เริ่มต้น
 const shutterSound = new Audio('shutter.mp3');
@@ -941,79 +941,7 @@ function openPersonalDashboard() {
     setInterval(checkButtonDisplay, 1000); //นับเวลาให้ปุ่มทำงาน ทุก1วิ
 
  
-    // 🚚 ระบบลากกล่องมอนิเตอร์ไปมา (รองรับทั้ง มือถือ และ เม้าส์คอม)
-  function makeElementDraggable(elmnt) {
-  let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-
-  // สำหรับมือถือ (Touch Events)
-  elmnt.addEventListener('touchstart', dragTouchStart, { passive: false });
-  // สำหรับคอมพิวเตอร์ (Mouse Events)
-  elmnt.addEventListener('mousedown', dragMouseDown);
-
-  function dragMouseDown(e) {
-    e = e || window.event;
-    // ป้องกันการลากถ้าคลิกโดนพื้นที่เลื่อน (Scrollbar)
-    if (e.target.id === 'rt-list-container' || e.target.closest('#rt-list-container')) return;
-    
-    e.preventDefault();
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    document.onmouseup = closeDragElement;
-    document.onmousemove = elementDrag;
-  }
-
-  function elementDrag(e) {
-    e = e || window.event;
-    e.preventDefault();
-    pos1 = pos3 - e.clientX;
-    pos2 = pos4 - e.clientY;
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    
-    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-    elmnt.style.transform = "none"; // ยกเลิก translate เดิมเพื่อไม่ให้ตำแหน่งรวน
-  }
-
-  function dragTouchStart(e) {
-    // ป้องกันการลากถ้าแตะโดนพื้นที่เลื่อนรายการด้านใน
-    if (e.target.id === 'rt-list-container' || e.target.closest('#rt-list-container')) return;
-
-    let touch = e.touches[0];
-    pos3 = touch.clientX;
-    pos4 = touch.clientY;
-    
-    document.addEventListener('touchend', closeDragElement);
-    document.addEventListener('touchmove', elementTouchDrag, { passive: false });
-  }
-
-  function elementTouchDrag(e) {
-    let touch = e.touches[0];
-    pos1 = pos3 - touch.clientX;
-    pos2 = pos4 - touch.clientY;
-    pos3 = touch.clientX;
-    pos4 = touch.clientY;
-
-    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-    elmnt.style.transform = "none";
-  }
-
-  function closeDragElement() {
-    document.onmouseup = null;
-    document.onmousemove = null;
-    document.removeEventListener('touchend', closeDragElement);
-    document.removeEventListener('touchmove', elementTouchDrag);
-  }
-}
-
-/* 🚀 สั่งเปิดระบบลากเมื่อโหลดหน้าเว็บเสร็จ
-window.addEventListener('DOMContentLoaded', () => {
-  let monitorBox = document.getElementById("realtime-monitor-box");
-  if (monitorBox) {
-    makeElementDraggable(monitorBox);
-  }
-}); */
+   
 
 </script>
 </body>
