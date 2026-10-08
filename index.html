@@ -593,62 +593,56 @@ function validateEmployeeFcode(el) {
 
                 let delayTime = 400;
                 if (data.alreadyInTime && data.alreadyInTime !== "") {
-                    if (video && video.srcObject) {
-                        let tracks = video.srcObject.getTracks();
-                        tracks.forEach(track => track.stop());
-                        video.srcObject = null;
-                    }
-                    if (cameraBox) cameraBox.style.display = 'none';
 
-                    let cleanIn = data.alreadyInTime;
-                    let cleanOut = data.alreadyOutTime || "--:--";
-                    let overlayHTML = `
-                        <div id="transparent-popup-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.4); z-index: 8888; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px);">
-                            <div style="background-color: rgba(255, 255, 255, 0.98); color: #1e40af; padding: 25px; border-radius: 16px; text-align: center; border: 2px solid #3b82f6; width: 85%; max-width: 340px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
-                                <div style="font-size: 26px; margin-bottom: 5px;">📣</div>
-                                <div style="font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #1e3a8a;">บันทึกเวลาของวันนี้</div>
-                                <div style="display: flex; justify-content: space-between; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 15px;">
-                                    <div style="flex: 1; border-right: 1px solid #e2e8f0; padding-right: 5px;">
-                                        <div style="font-size: 13px; color: #64748b; font-weight: bold;">💵 เข้างาน</div>
-                                        <div style="color: #10b981; font-size: 22px; font-weight: 800; margin-top: 5px;">${cleanIn}</div>
-                                    </div>
-                                    <div style="flex: 1; padding-left: 5px;">
-                                        <div style="font-size: 13px; color: #64748b; font-weight: bold;">⛔ ออกงาน</div>
-                                        <div style="color: ${cleanOut === '--:--' ? '#94a3b8' : '#ef4444'}; font-size: 22px; font-weight: 800; margin-top: 5px;">${cleanOut}</div>
-                                    </div>
-                                </div>
-                                <div style="font-size: 12px; color: #6b7280; letter-spacing: 0.5px;">(สุขขี สุขขัง มีพลัง มีเงินเป็นถัง มีทองเป็นกะละมัง)</div>
-                            </div>
-                        </div>
-                    `;
-                    document.body.insertAdjacentHTML('beforeend', overlayHTML);
-                    delayTime = 5000;
-                }
-
-                setTimeout(() => {
-                    const transparentOverlay = document.getElementById('transparent-popup-overlay');
-                    if (transparentOverlay) transparentOverlay.remove();
-
-                    if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(pos => {
-                            window.userGpsLocation = pos.coords.latitude + "," + pos.coords.longitude;
-                        }, err => { window.userGpsLocation = "ไม่ได้เปิดพิกัด"; });
-                    }
-                }, delayTime);
-
-            } else {
-                statusMsg.style.color = "#ef4444";
-                statusMsg.innerText = data.message || "❌ รหัสไม่ถูกต้อง";
-                el.value = ""; el.disabled = false; el.focus();
-            }
-        })
-        .catch(err => {
-            statusMsg.style.color = "#ef4444";
-            statusMsg.innerText = "❌ เกิดข้อผิดพลาด กรุณาลองใหม่";
-            el.disabled = false; el.value = ""; el.focus();
-        });
+    // 🛑 1. ปิดกล้องและหยุดสตรีม
+    if (video && video.srcObject) {
+        let tracks = video.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+        video.srcObject = null;
     }
+    if (cameraBox) {
+        cameraBox.style.display = 'none';
+    }
+
+    // 🟢 2. เพิ่มส่วนนี้: สลับฉากหลังให้แสดงหน้าหลัก (ปุ่ม เข้า/ออก/สาย) ทันที
+    let authScreen = document.getElementById('auth-screen');
+    if (authScreen) authScreen.style.setProperty("display", "none", "important");
+
+    let mainInterface = document.getElementById('main-interface');
+    if (mainInterface) mainInterface.style.setProperty("display", "block", "important");
+
+    let btnGroup = document.getElementById('btn-group');
+    if (btnGroup) btnGroup.style.setProperty("display", "flex", "important");
+
+    let specialGroup = document.getElementById('special-group');
+    if (specialGroup) specialGroup.style.setProperty("display", "flex", "important");
+
+    // 3. แสดง Pop-up สรุปเวลาบันทึก
+    let cleanIn = data.alreadyInTime;
+    let cleanOut = data.alreadyOutTime || "--:--";
+    let overlayHTML = `
+        <div id="transparent-popup-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.4); z-index: 8888; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px);">
+            <div style="background-color: rgba(255, 255, 255, 0.98); color: #1e40af; padding: 25px; border-radius: 16px; text-align: center; border: 2px solid #3b82f6; width: 85%; max-width: 340px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+                <div style="font-size: 26px; margin-bottom: 5px;">📣</div>
+                <div style="font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #1e3a8a;">บันทึกเวลาของวันนี้</div>
+                <div style="display: flex; justify-content: space-between; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 15px;">
+                    <div style="flex: 1; border-right: 1px solid #e2e8f0; padding-right: 5px;">
+                        <div style="font-size: 13px; color: #64748b; font-weight: bold;">💵 เข้างาน</div>
+                        <div style="color: #10b981; font-size: 22px; font-weight: 800; margin-top: 5px;">${cleanIn}</div>
+                    </div>
+                    <div style="flex: 1; padding-left: 5px;">
+                        <div style="font-size: 13px; color: #64748b; font-weight: bold;">⛔ ออกงาน</div>
+                        <div style="color: ${cleanOut === '--:--' ? '#94a3b8' : '#ef4444'}; font-size: 22px; font-weight: 800; margin-top: 5px;">${cleanOut}</div>
+                    </div>
+                </div>
+                <div style="font-size: 12px; color: #6b7280; letter-spacing: 0.5px;">(สุขขี สุขขัง มีพลัง มีเงินเป็นถัง มีทองเป็นกะละมัง)</div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', overlayHTML);
+    delayTime = 5000;
 }
+
 
 
 
