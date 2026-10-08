@@ -252,7 +252,7 @@
                style="width: 100%; letter-spacing: 15px; text-align: center; font-size: 32px; padding: 10px; border: 2px solid #444; border-radius: 12px; outline: none; background: #121212; box-sizing: border-box; font-weight: bold; color: #00ffcc;">
         
         <div id="auth-status-msg" style="font-size: 14px; font-weight: bold; margin-top: 15px; min-height: 20px; color: #ff4d4d;"></div>
-        <div id="live-clock" style="text-align: center; font-size: 1.2rem; font-weight: bold; color: #ffcc00; background: #262626; padding: 10px; border-radius: 8px; margin-top: 15px; border: 1px solid #333;"></div>
+        <div id="live-clock" style="text-align: center; font-size: 1rem; font-weight: bold; color: #ffcc00; background: #262626; padding: 10px; border-radius: 8px; margin-top: 15px; border: 1px solid #333;"></div>
 
         <button type="button" id="btn-show-monitor" onclick="openRealtimeMonitor()" style="
         width: 100%;
@@ -281,7 +281,7 @@
     <!-- **************************************** -->
     <!-- ซ่อนปุ่มเปิดกล้องเดิม ไม่ต้องกดแล้ว --> 
 <!-- <button class="btn btn-snap" id="start-camera" style="display: none;">📷 เปิดกล้องถ่ายรูป</button> -->
-<button class="btn btn-info-personal" id="get-personal-info" onclick="openPersonalDashboard()">🔎 ข้อมูลบุคคล</button>
+<button class="btn btn-info-personal" id="get-personal-info" onclick="openPersonalDashboard()" style="background-color: #eac70c; color: #ffffff; border: none;">🔎 ดูข้อมูลทำงาน</button>
 
 <!-- กล่องกล้องจะแสดงผลและเปิดอัตโนมัติ -->
 <div id="camera-box">
@@ -872,7 +872,7 @@ function openPersonalDashboard() {
             }
 
             modalAreaElement.innerHTML = `
-                <h3 style="font-size:18px;font-weight:bold;color:#00ffcc;text-align:center;margin-bottom:10px;">📊 ข้อมูลบุคคล</h3>
+                <h3 style="font-size:18px;font-weight:bold;color:#00ffcc;text-align:center;margin-bottom:10px;">📊 ข้อมูลทำงาน</h3>
                 <p style="margin:5px 0;font-size:15px;"><b>👤 ชื่อ:</b> ${db.name}</p>
                 
                 <div style="background:#fff9db;padding:10px;border-radius:6px;font-size:14px;font-weight:bold;color:#b45309;border-left:4px solid #f59e0b;margin-bottom:10px;text-align:center;">
