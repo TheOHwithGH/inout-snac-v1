@@ -631,54 +631,83 @@ function validateEmployeeFcode(el) {
 
 
     
-// 📸 ปุ่มกด ถ่ายภาพ (ปรับปรุงการสลับหน้าจอและหยุดกล้อง)
-snapBtn.onclick = () => {
-	    // 🔊 🎯 วางคำสั่งเล่นเสียงไว้ตรงบรรทัดแรกนี้เลยครับ
-    try {
-        shutterSound.currentTime = 0;
-        shutterSound.play().catch(e => console.log("Audio Error:", e));
-    } catch(e) {}
+// 🎵 1. ประกาศสร้างเสียงชัตเตอร์พร้อม Preload
+const shutterSound = new Audio('shutter.mp3');
+shutterSound.preload = 'auto'; // สั่งให้เบราว์เซอร์ดึงไฟล์เสียงมารอไว้ทันที
 
-    // 1. คำนวณขนาดภาพแบบสี่เหลี่ยมจัตุรัสลงตัว
-    let captureSize = Math.min(video.videoWidth || 300, video.videoHeight || 600);
-    canvas.width = captureSize; 
-    canvas.height = captureSize;
+// 📸 2. กำหนดเหตุการณ์เมื่อกดปุ่มถ่ายรูป
+window.addEventListener("DOMContentLoaded", function() {
+    const snapBtn = document.getElementById('snap');
+    
+    if (snapBtn) {
+        snapBtn.onclick = function() {
+            // 🔊 เล่นเสียงชัตเตอร์
+            try {
+                shutterSound.currentTime = 0;
+                let playPromise = shutterSound.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log("Autoplay blocked or audio missing:", error);
+                    });
+                }
+            } catch (e) {
+                console.log("Audio Error:", e);
+            }
 
-    let startX = (video.videoWidth - captureSize) / 2;
-    let startY = (video.videoHeight - captureSize) / 2;
-    
-    // 2. จับภาพจากกล้องลงใน Canvas
-    canvas.getContext('2d').drawImage(video, startX, startY, captureSize, captureSize, 0, 0, captureSize, captureSize);
-    imageDataUrl = canvas.toDataURL('image/jpeg'); 
-    
-    // 3. แสดงชื่อและเวลาที่ถ่ายรูป
-    document.getElementById('res-name').innerText = window.selectedWorkerName;
-    document.getElementById('res-time').innerText = new Date().toLocaleTimeString('th-TH');
-    
-    // 4. สลับการแสดงผลหน้าจอ
-    if (cameraBox) cameraBox.style.display = 'none';            // ซ่อนกล่องวิดีโอกล้อง
-    document.getElementById('result').style.display = 'flex';    // แสดงรูปที่ถ่ายได้
-    
-    // 🎯 [เพิ่มจุดสำคัญ] ซ่อนหน้าล็อกอิน และเปิดหน้าทำงานหลัก (ปุ่มเข้างาน/ออกงาน)
-    let authScreen = document.getElementById('auth-screen');
-    if (authScreen) authScreen.style.display = 'none';
-    
-    let mainInterface = document.getElementById('main-interface');
-    if (mainInterface) mainInterface.style.display = 'block';   // หรือ 'flex' ตาม CSS ของคุณ
+            // 📷 จับภาพลง Canvas
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            
+            if (video && canvas) {
+                let captureSize = Math.min(video.videoWidth || 300, video.videoHeight || 600);
+                canvas.width = captureSize; 
+                canvas.height = captureSize;
 
-    // 5. แสดงกลุ่มปุ่มบันทึกเวลา
-    let btnGroup = document.getElementById('btn-group');
-    if (btnGroup) btnGroup.style.display = 'flex';
-    
-    let specialGroup = document.getElementById('special-group');
-    if (specialGroup) specialGroup.style.display = 'flex';
-    
-    // 6. ปิดสตรีมกล้องทันทีเพื่อประหยัดแบตเตอรี่
-    if (video && video.srcObject) { 
-        video.srcObject.getTracks().forEach(track => track.stop()); 
-        video.srcObject = null;
+                let startX = (video.videoWidth - captureSize) / 2;
+                let startY = (video.videoHeight - captureSize) / 2;
+
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(video, startX, startY, captureSize, captureSize, 0, 0, captureSize, captureSize);
+                    imageDataUrl = canvas.toDataURL('image/jpeg');
+                }
+            }
+
+            // 👤 อัปเดตข้อความชื่อและเวลา
+            let resName = document.getElementById('res-name');
+            let resTime = document.getElementById('res-time');
+            if (resName) resName.innerText = window.selectedWorkerName || "";
+            if (resTime) resTime.innerText = new Date().toLocaleTimeString('th-TH');
+
+            // 🎯 สลับการแสดงผลหน้าจอ (ย้ายบังคับทุก Container ให้เปลี่ยนหน้าแน่นอน)
+            let cameraBox = document.getElementById('camera-box');
+            if (cameraBox) cameraBox.style.setProperty("display", "none", "important");
+
+            let resultBox = document.getElementById('result');
+            if (resultBox) resultBox.style.setProperty("display", "flex", "important");
+
+            let authScreen = document.getElementById('auth-screen');
+            if (authScreen) authScreen.style.setProperty("display", "none", "important");
+
+            let mainInterface = document.getElementById('main-interface');
+            if (mainInterface) mainInterface.style.setProperty("display", "block", "important");
+
+            let btnGroup = document.getElementById('btn-group');
+            if (btnGroup) btnGroup.style.setProperty("display", "flex", "important");
+
+            let specialGroup = document.getElementById('special-group');
+            if (specialGroup) specialGroup.style.setProperty("display", "flex", "important");
+
+            // 🛑 ปิดสตรีมกล้อง
+            if (video && video.srcObject) { 
+                let tracks = video.srcObject.getTracks();
+                tracks.forEach(track => track.stop()); 
+                video.srcObject = null;
+            }
+        };
     }
-};
+});
+
 
 
 
