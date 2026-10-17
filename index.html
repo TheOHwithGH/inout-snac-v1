@@ -342,7 +342,7 @@
 <script>
 window.currentLoggedPin = "";
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfTsTMLxkmt3EGqDS3FtkAV7kDd9DuoPhcb_BCcyPBYX9TuI2AhnUQZVcLfqsakHb-/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJdNyszfoi7ZnGSKtKgDYOZjrOzgn-X8R0iWzvUQNLz4-wikDTVB3-I3JG8MbmZA6h/exec";
 
 // 🎵 1. ประกาศและโหลดไฟล์เสียงชัตเตอร์เตรียมพร้อมตั้งแต่เริ่มต้น
 const shutterSound = new Audio('shutter.mp3');
@@ -491,19 +491,43 @@ function renderMonitorList(data) {
     var container = document.getElementById("rt-list-container");
     if (!container) return;
     container.innerHTML = "";
+
+    // 1. เพิ่มหัวตาราง (Header)
+    var headerHTML = 
+        '<div style="display: flex; justify-content: space-between; padding: 10px; background: #333; color: #ffcc00; font-weight: bold; border-radius: 6px; margin-top: 10px; font-size: 0.9rem;">' +
+            '<div style="flex: 2;">ชื่อพนักงาน</div>' +
+            '<div style="flex: 2; text-align: center;">เวลาเข้างาน</div>' +
+            '<div style="flex: 1.5; text-align: right;">หักเงินสาย</div>' +
+        '</div>';
+    
     if (!data || !Array.isArray(data) || data.length === 0) {
-        container.innerHTML = '<div style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูลการเข้างานวันนี้</div>';
+        container.innerHTML = headerHTML + '<div style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูลการเข้างานวันนี้</div>';
         return;
     }
+
+    var listHTML = headerHTML + '<div style="max-height: 350px; overflow-y: auto; margin-top: 5px;">';
+
     data.forEach(function(item) {
         var cleanTime = (item.timeIn && item.timeIn !== "undefined" && item.timeIn !== "null") ? item.timeIn : "--:-- น.";
-        container.innerHTML += 
-            '<div class="rt-row" style="display: flex; justify-content: space-between; padding: 6px 10px; border-bottom: 1px solid #333;">' +
-                '<div class="rt-name" style="color: #fff;">👤 ' + (item.name || 'ไม่ระบุชื่อ') + '</div>' +
-                '<div class="rt-time" style="color: #00ffcc;">' + cleanTime + '</div>' +
+        if (cleanTime.includes(" ")) {
+            cleanTime = cleanTime.split(" ").pop(); 
+        }
+
+        var fineAmount = item.fine !== undefined ? item.fine : "-"; 
+        var fineColor = (fineAmount !== "-" && Number(fineAmount) < 0) ? '#ff6b6b' : '#00ffcc';
+
+        listHTML += 
+            '<div class="rt-row" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; font-size: 0.9rem;">' +
+                '<div class="rt-name" style="flex: 2; color: #fff;">👤 ' + (item.name || 'ไม่ระบุชื่อ') + '</div>' +
+                '<div class="rt-time" style="flex: 2; text-align: center; color: #00ffcc;">' + cleanTime + '</div>' +
+                '<div class="rt-fine" style="flex: 1.5; text-align: right; color: ' + fineColor + ';">' + fineAmount + '</div>' +
             '</div>';
     });
+
+    listHTML += '</div>';
+    container.innerHTML = listHTML;
 }
+
 
 // 📸 เปิดกล้องอัตโนมัติ
 async function autoStartCamera() {
