@@ -342,7 +342,7 @@
 <script>
 window.currentLoggedPin = "";
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwlNeod8aBJw0uWpeT6pxfxranDoci4OsviPH2LEo8pIWGKJ0aiDUWyzuyklarhgQEr/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwUBzgdUAxUPlsZ2pXpxBxNSYBr46IhMDLQRY1vdeVeXzfo013e76cFEHEfzBwGzIQ6/exec";
 
 // 🎵 1. ประกาศและโหลดไฟล์เสียงชัตเตอร์เตรียมพร้อมตั้งแต่เริ่มต้น
 const shutterSound = new Audio('shutter.mp3');
@@ -492,7 +492,7 @@ function renderMonitorList(data) {
     if (!container) return;
     container.innerHTML = "";
 
-    // 1. เพิ่มหัวตาราง (Header)
+    // 1. หัวตาราง (Header) แบบเดิม
     var headerHTML = 
         '<div style="display: flex; justify-content: space-between; padding: 10px; background: #333; color: #ffcc00; font-weight: bold; border-radius: 6px; margin-top: 10px; font-size: 0.9rem;">' +
             '<div style="flex: 2;">ชื่อพนักงาน</div>' +
@@ -504,13 +504,33 @@ function renderMonitorList(data) {
         container.innerHTML = headerHTML + '<div style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูลการเข้างานวันนี้</div>';
         return;
     }
-
-    var listHTML = headerHTML + '<div style="max-height: 350px; overflow-y: auto; margin-top: 5px;">';
+    //ปรับขนาดตาราง
+    var listHTML = headerHTML + '<div style="max-height: 550px; overflow-y: auto; margin-top: 5px;">';
 
     data.forEach(function(item) {
-        var cleanTime = (item.timeIn && item.timeIn !== "undefined" && item.timeIn !== "null") ? item.timeIn : "--:-- น.";
-        if (cleanTime.includes(" ")) {
-            cleanTime = cleanTime.split(" ").pop(); 
+        var statusText = "";
+        var statusColor = "#00ffcc"; // สีเขียวปกติสำหรับเวลาเข้างาน
+
+        // 🔍 ตรวจสอบค่าสถานะทั้ง 4 กรณี
+        if (item.Vacation) {
+            statusText = "พักร้อน1วัน";
+            statusColor = "#007bff"; // สีฟ้า
+        } else if (item.Vacationhalf) {
+            statusText = "พักร้อน0.5วัน";
+            statusColor = "#74b9ff"; // สีฟ้า
+        } else if (item.Absent) {
+            statusText = "ขาดงาน";
+            statusColor = "#ff7675"; // สีแดง
+        } else if (item.Sick) {
+            statusText = "ป่วย";
+            statusColor = "#ffeaa7"; // สีเหลือง
+        } else {
+            // ถ้าไม่มีสถานะลา/ขาด ให้แสดงเวลาเข้างานปกติ
+            var cleanTime = (item.timeIn && item.timeIn !== "undefined" && item.timeIn !== "null") ? item.timeIn : "--:-- น.";
+            if (cleanTime.includes(" ")) {
+                cleanTime = cleanTime.split(" ").pop(); 
+            }
+            statusText = cleanTime;
         }
 
         var fineAmount = item.fine !== undefined ? item.fine : "-"; 
@@ -519,7 +539,7 @@ function renderMonitorList(data) {
         listHTML += 
             '<div class="rt-row" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; font-size: 0.9rem;">' +
                 '<div class="rt-name" style="flex: 2; color: #fff;">👤 ' + (item.name || 'ไม่ระบุชื่อ') + '</div>' +
-                '<div class="rt-time" style="flex: 2; text-align: center; color: #00ffcc;">' + cleanTime + '</div>' +
+                '<div class="rt-time" style="flex: 2; text-align: center; color: ' + statusColor + '; font-weight: bold;">' + statusText + '</div>' +
                 '<div class="rt-fine" style="flex: 1.5; text-align: right; color: ' + fineColor + ';">' + fineAmount + '</div>' +
             '</div>';
     });
@@ -527,7 +547,6 @@ function renderMonitorList(data) {
     listHTML += '</div>';
     container.innerHTML = listHTML;
 }
-
 
 // 📸 เปิดกล้องอัตโนมัติ
 async function autoStartCamera() {
