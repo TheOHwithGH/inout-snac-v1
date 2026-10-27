@@ -342,7 +342,7 @@
 <script>
 window.currentLoggedPin = "";
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwUBzgdUAxUPlsZ2pXpxBxNSYBr46IhMDLQRY1vdeVeXzfo013e76cFEHEfzBwGzIQ6/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw_SEKiH6qtx7M3z2VAuJtjWdHvkHGzVqF0C3UDkCBBtvmpL-x3luHyC9KlwKk4GjqSfQ/exec";
 
 // 🎵 1. ประกาศและโหลดไฟล์เสียงชัตเตอร์เตรียมพร้อมตั้งแต่เริ่มต้น
 const shutterSound = new Audio('shutter.mp3');
@@ -713,7 +713,6 @@ function validateEmployeeFcode(el) {
 }
 
 
-
     // 🎯 ระบบคำนวณและกางหน้าต่างยืนยัน (Modal) ป้องกันพนักงานกดผิด
     // (เรียกใช้ค่าเวลาแปรผันตาม M1 จากหน้าบ้านตรง ๆ ไม่สับสน)
     function confirmAndSend(status) {
@@ -800,13 +799,13 @@ function validateEmployeeFcode(el) {
         let gpsData = window.userGpsLocation || "ไม่ได้เปิดพิกัด";
         let finalImg = imageDataUrl || "";
 
-        let payload = {
-            name: window.selectedWorkerName,
-            status: status,
-            time: timeStr,   
-            gps: gpsData, // ส่งพิกัด GPS
-            image: finalImg
-        };
+let payload = {
+    name: window.selectedWorkerName,
+    status: status,
+    time: timeStr,   
+    gps: gpsData, // ส่งพิกัด GPS
+    image: finalImg // 👈 มีการแนบรูปภาพส่งไปพร้อมกับข้อมูลเรียบร้อยแล้วครับ!
+};
 
         fetch(WEB_APP_URL, {
             method: "POST",
