@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html>   //052026
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -293,23 +293,25 @@
 <canvas id="canvas"></canvas>
 
 
-    <div id="result">
+   <div id="result">
         <p style="margin:5px 0;"><b>ชื่อ:</b> <span id="res-name"></span></p>
         <p style="margin:5px 0;"><b>เวลา:</b> <span id="res-time"></span></p>
     </div>
-    <div class="btn-group" id="btn-group"style="display: none;">
+    <div class="btn-group" id="btn-group" style="display: none;">
         <button class="btn btn-in" onclick="confirmAndSend('In')">เข้างาน</button>
         <button class="btn btn-out" onclick="confirmAndSend('Out')">ออกงาน</button>
         <button class="btn btn-afternoon" id="btn-afternoon" onclick="confirmAndSend('เข้างานบ่าย')">เข้างานบ่าย</button>
     </div>
-    <div class="special-group" id="special-group"style="display: none;">
+    <div class="special-group" id="special-group" style="display: none;">
         <p style="text-align:center; font-size: 0.85rem; color: #aaa; margin-bottom: 10px;">-- กรณีอื่นๆ --</p>
-        <button class="btn btn-leave" onclick="confirmAndSend('Vacation')">🌴 พักร้อน 1วัน</button>
+        <!-- 📌 เปลี่ยนปุ่มลาพักร้อนเดิมให้เรียกฟังก์ชันเปิดเมนูย่อย -->
+        <button class="btn btn-leave" onclick="openVacationMenu()">🌴 ลาพักร้อน</button>
         <button class="btn btn-absent" onclick="confirmAndSend('Absent')">🚫 ขาดงาน 1วัน</button>
         <button class="btn btn-sick" onclick="confirmAndSend('Sick')">🚀 ป่วย</button>
     </div>
     <div id="loader">⏳ ระบบกำลังบันทึกข้อมูล...</div>
 </div>
+
 
 <div class="modal-overlay" id="common-modal">
     <div class="modal-box" id="modal-content-area"></div>
@@ -342,7 +344,7 @@
 <script>
 window.currentLoggedPin = "";
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwrIMgfV1wwpVDZ3F7WsQNe3c-1V-Qm-aGZD02roQodcZGmlPEh-tzZLAFc2KTF0Vk0/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzblc37tKt9uNdLI_guIiOEZn-nY9cCqfRtz9tApl5dEW7rU2yifsSnm4DGpjoRIoOj/exec";
 
 // 🎵 1. ประกาศและโหลดไฟล์เสียงชัตเตอร์เตรียมพร้อมตั้งแต่เริ่มต้น
 const shutterSound = new Audio('shutter.mp3');
@@ -610,6 +612,10 @@ function validateEmployeeFcode(el) {
                 statusMsg.innerText = "✅ รหัสถูกต้อง กำลังเข้าสู่ระบบ...";
                 window.selectedWorkerName = data.name;
 
+                // 📌 บันทึกสถานะลงในเครื่องว่าพนักงานคนนี้ล็อกอินแล้ว (เช็ควันที่ปัจจุบัน)
+                let todayStr = new Date().toISOString().slice(0, 10);
+                localStorage.setItem('checkedIn_' + data.name, todayStr);
+
                 let monitorBox = document.getElementById('realtime-monitor-box');
                 if (monitorBox) {
                   monitorBox.style.display = 'none';
@@ -637,55 +643,55 @@ function validateEmployeeFcode(el) {
                 let delayTime = 400;
                 if (data.alreadyInTime && data.alreadyInTime !== "") {
 
-    // 🛑 1. ปิดกล้องและหยุดสตรีม
-    if (video && video.srcObject) {
-        let tracks = video.srcObject.getTracks();
-        tracks.forEach(track => track.stop());
-        video.srcObject = null;
-    }
-    if (cameraBox) {
-        cameraBox.style.display = 'none';
-    }
+                    // 🛑 1. ปิดกล้องและหยุดสตรีม
+                    if (video && video.srcObject) {
+                        let tracks = video.srcObject.getTracks();
+                        tracks.forEach(track => track.stop());
+                        video.srcObject = null;
+                    }
+                    let cameraBox = document.getElementById('camera-box');
+                    if (cameraBox) {
+                        cameraBox.style.display = 'none';
+                    }
 
-    // 🟢 2. เพิ่มส่วนนี้: สลับฉากหลังให้แสดงหน้าหลัก (ปุ่ม เข้า/ออก/สาย) ทันที
-    let authScreen = document.getElementById('auth-screen');
-    if (authScreen) authScreen.style.setProperty("display", "none", "important");
+                    // 🟢 2. สลับฉากหลังให้แสดงหน้าหลักทันที
+                    let authScreen = document.getElementById('auth-screen');
+                    if (authScreen) authScreen.style.setProperty("display", "none", "important");
 
-    let mainInterface = document.getElementById('main-interface');
-    if (mainInterface) mainInterface.style.setProperty("display", "block", "important");
+                    let mainInterface = document.getElementById('main-interface');
+                    if (mainInterface) mainInterface.style.setProperty("display", "block", "important");
 
-    let btnGroup = document.getElementById('btn-group');
-    if (btnGroup) btnGroup.style.setProperty("display", "flex", "important");
+                    let btnGroup = document.getElementById('btn-group');
+                    if (btnGroup) btnGroup.style.setProperty("display", "flex", "important");
 
-    let specialGroup = document.getElementById('special-group');
-    if (specialGroup) specialGroup.style.setProperty("display", "flex", "important");
+                    let specialGroup = document.getElementById('special-group');
+                    if (specialGroup) specialGroup.style.setProperty("display", "flex", "important");
 
-    // 3. แสดง Pop-up สรุปเวลาบันทึก
-    let cleanIn = data.alreadyInTime;
-    let cleanOut = data.alreadyOutTime || "--:--";
-    let overlayHTML = `
-        <div id="transparent-popup-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.4); z-index: 8888; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px);">
-            <div style="background-color: rgba(255, 255, 255, 0.98); color: #1e40af; padding: 25px; border-radius: 16px; text-align: center; border: 2px solid #3b82f6; width: 85%; max-width: 340px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
-                <div style="font-size: 26px; margin-bottom: 5px;">📣</div>
-                <div style="font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #1e3a8a;">บันทึกเวลาของวันนี้</div>
-                <div style="display: flex; justify-content: space-between; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 15px;">
-                    <div style="flex: 1; border-right: 1px solid #e2e8f0; padding-right: 5px;">
-                        <div style="font-size: 13px; color: #64748b; font-weight: bold;">💵 เข้างาน</div>
-                        <div style="color: #10b981; font-size: 22px; font-weight: 800; margin-top: 5px;">${cleanIn}</div>
-                    </div>
-                    <div style="flex: 1; padding-left: 5px;">
-                        <div style="font-size: 13px; color: #64748b; font-weight: bold;">⛔ ออกงาน</div>
-                        <div style="color: ${cleanOut === '--:--' ? '#94a3b8' : '#ef4444'}; font-size: 22px; font-weight: 800; margin-top: 5px;">${cleanOut}</div>
-                    </div>
-                </div>
-                <div style="font-size: 12px; color: #6b7280; letter-spacing: 0.5px;">(สุขขี สุขขัง มีพลัง มีเงินเป็นถัง มีทองเป็นกะละมัง)</div>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', overlayHTML);
-    delayTime = 5000;
-}
-
+                    // 3. แสดง Pop-up สรุปเวลาบันทึก
+                    let cleanIn = data.alreadyInTime;
+                    let cleanOut = data.alreadyOutTime || "--:--";
+                    let overlayHTML = `
+                        <div id="transparent-popup-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.4); z-index: 8888; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px);">
+                            <div style="background-color: rgba(255, 255, 255, 0.98); color: #1e40af; padding: 25px; border-radius: 16px; text-align: center; border: 2px solid #3b82f6; width: 85%; max-width: 340px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+                                <div style="font-size: 26px; margin-bottom: 5px;">📣</div>
+                                <div style="font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #1e3a8a;">บันทึกเวลาของวันนี้</div>
+                                <div style="display: flex; justify-content: space-between; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 15px;">
+                                    <div style="flex: 1; border-right: 1px solid #e2e8f0; padding-right: 5px;">
+                                        <div style="font-size: 13px; color: #64748b; font-weight: bold;">💵 เข้างาน</div>
+                                        <div style="color: #10b981; font-size: 22px; font-weight: 800; margin-top: 5px;">${cleanIn}</div>
+                                    </div>
+                                    <div style="flex: 1; padding-left: 5px;">
+                                        <div style="font-size: 13px; color: #f03e71; font-weight: bold;">⛔ ออกงาน</div>
+                                        <div style="color: ${cleanOut === '--:--' ? '#94a3b8' : '#ef4444'}; font-size: 22px; font-weight: 800; margin-top: 5px;">${cleanOut}</div>
+                                    </div>
+                                </div>
+                                <div style="font-size: 12px; color: #6b7280; letter-spacing: 0.5px;">(สุขขี สุขขัง มีพลัง มีเงินเป็นถัง มีทองเป็นกะละมัง)</div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.insertAdjacentHTML('beforeend', overlayHTML);
+                    delayTime = 5000;
+                }
 
                 setTimeout(() => {
                     const transparentOverlay = document.getElementById('transparent-popup-overlay');
@@ -713,73 +719,186 @@ function validateEmployeeFcode(el) {
 }
 
 
-    // 🎯 ระบบคำนวณและกางหน้าต่างยืนยัน (Modal) ป้องกันพนักงานกดผิด
-    // (เรียกใช้ค่าเวลาแปรผันตาม M1 จากหน้าบ้านตรง ๆ ไม่สับสน)
-    function confirmAndSend(status) {
-        if (!window.selectedWorkerName) return alert("ไม่พบข้อมูลพนักงาน");
+// 🛠️ ฟังก์ชันกลางสำหรับปิดกล้องและซ่อนกรอบกล้อง
+function stopCameraAndHide() {
+    let vid = document.getElementById('video');
+    if (vid && vid.srcObject) {
+        let tracks = vid.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+        vid.srcObject = null;
+    }
+    let camBox = document.getElementById('camera-box');
+    if (camBox) camBox.style.display = 'none';
+    window.skipPhoto = true; // ตั้งค่าข้ามการใช้รูปถ่าย
+}
 
-        if (status === 'In') {
-            let now = new Date();
-            let currentMinutes = (now.getHours() * 60) + now.getMinutes();
-            
-            let hh = 8;
-            let mm = 30; // ค่าเริ่มต้นแบคอัพคือ 08:30 น.
+// 🎯 ระบบคำนวณและกางหน้าต่างยืนยัน (Modal) ป้องกันพนักงานกดผิด
+function confirmAndSend(status) {
+    if (!window.selectedWorkerName) return alert("ไม่พบข้อมูลพนักงาน");
 
-            // 🛠️ ดึงค่าเวลาสายที่บราวเซอร์จำไว้จาก M1 (เช่น "08:30" หรือเวลารูปแบบอื่น)
-            let m1Time = window.lateLimitTimeFromSheets;
-            if (m1Time && m1Time.indexOf(":") !== -1) {
-                let parts = m1Time.split(":");
-                hh = parseInt(parts[0], 10);
-                mm = parseInt(parts[1], 10);
-            }
+    if (status === 'In') {
+        let now = new Date();
+        let currentMinutes = (now.getHours() * 60) + now.getMinutes();
+        
+        let hh = 8;
+        let mm = 30; // ค่าเริ่มต้นแบคอัพคือ 08:30 น.
 
-            let limitMinutes = (hh * 60) + mm; 
-
-            if (currentMinutes > limitMinutes) { 
-                status = 'Late'; 
-            }
+        let m1Time = window.lateLimitTimeFromSheets;
+        if (m1Time && m1Time.indexOf(":") !== -1) {
+            let parts = m1Time.split(":");
+            hh = parseInt(parts[0], 10);
+            mm = parseInt(parts[1], 10);
         }
 
-        if (status === 'Out') {
-            let now = new Date();
-            if (now.getHours() < 13) {
-                return alert("🛑 ยังไม่ถึงเวลาเลิกงาน! ปุ่มออกงานจะเปิดให้ใช้งานหลังเวลา 13:00 น. เป็นต้นไปครับ");
-            }
-        }
+        let limitMinutes = (hh * 60) + mm; 
 
-        const labels = { 
-            'In': 'เข้างานปกติ', 'Late': 'เข้างานสาย ⚠️', 'เข้างานบ่าย': 'เข้างานบ่าย', 
-            'Out': 'ออกงาน', 'Vacation': 'พักร้อน 1วัน', 'VacationHalf': 'พักร้อน 1/2 วัน', 
-            'Absent': 'ขาดงาน 1วัน', 'Sick': 'ป่วย' 
-        };
-        let currentTimeText = new Date().toLocaleTimeString('th-TH');
-        let btnHtml = `
+        if (currentMinutes > limitMinutes) { 
+            status = 'Late'; 
+        }
+    }
+
+    if (status === 'Out') {
+        let now = new Date();
+        if (now.getHours() < 13) {
+            return alert("🛑 ยังไม่ถึงเวลาเลิกงาน! ปุ่มออกงานจะเปิดให้ใช้งานหลังเวลา 13:00 น. เป็นต้นไปครับ");
+        }
+    }
+
+        // 🟢 ถ้าเป็นสถานะกลุ่ม ลา / ขาด / ป่วย ให้สั่งปิดกล้องทันที (ยุบรวมครึ่งวันใช้ VacationHalf ร่วมกัน)
+    const leaveStatuses = ['Vacation', 'VacationHalf', 'Absent', 'Sick'];
+    if (leaveStatuses.includes(status)) {
+        stopCameraAndHide();
+    }
+
+    // 📌 ป้ายข้อความสถานะทั้งหมด
+    const labels = { 
+        'In': 'เข้างานปกติ', 
+        'Late': 'เข้างานสาย ⚠️', 
+        'เข้างานบ่าย': 'เข้างานบ่าย', 
+        'Out': 'ออกงาน', 
+        'Vacation': 'ลาพักร้อน 1 วัน', 
+        'VacationHalf': 'ลาพักร้อน 1/2 วัน', 
+        'Absent': 'ขาดงาน 1 วัน', 
+        'Sick': 'ป่วย' 
+    };
+
+
+    let currentTimeText = new Date().toLocaleTimeString('th-TH');
+    let btnHtml = `
+        <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+            <button class="btn" style="background:#10b981; color:white; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:0;" onclick="sendToSheet('${status}')">บันทึก ${labels[status] || status}</button>
+            <button class="btn" style="background:#64748b; color:white; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:0;" onclick="closeModal()">❌ ยกเลิก</button>
+        </div>
+    `;
+
+    if (status === 'Late') {
+        btnHtml = `
             <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
-                <button class="btn" style="background:#10b981; color:white; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:0;" onclick="sendToSheet('${status}')">บันทึก ${labels[status]}</button>
+                <button class="btn" style="background:#ef4444; color:white; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:0;" onclick="sendToSheet('Late')">⚠️ ยืนยันเข้างานสาย</button>
                 <button class="btn" style="background:#64748b; color:white; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:0;" onclick="closeModal()">❌ ยกเลิก</button>
             </div>
         `;
-        if (status === 'Late') {
-            btnHtml = `
-                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
-                    <button class="btn" style="background:#ef4444; color:white; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:0;" onclick="sendToSheet('Late')">⚠️ ยืนยันเข้างานสาย</button>
-                    <button class="btn" style="background:#8b5cf6; color:white; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:0;" onclick="closeModal(); confirmAndSend('VacationHalf');">🌗 เปลี่ยนเป็นลาพักร้อน 1/2 วัน</button>
-                    <button class="btn" style="background:#64748b; color:white; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:0;" onclick="closeModal()">❌ ยกเลิก</button>
-                </div>
-            `; // 💡 ปรับปุ่มยกเลิกของสายเป็น closeModal() หน้าจอจะได้ไม่กระตุกครับ
-        }
-
-        modalArea.innerHTML = `
-            <h3 style="margin-top:0; color:#00ffcc; text-align:center;">ยืนยันข้อมูลลงเวลา</h3>
-            <p style="margin:6px 0;"><b>👤 พนักงาน:</b> ${window.selectedWorkerName}</p>
-            <p style="margin:6px 0;"><b>📌 Status:</b> <span style="color:#3b82f6; font-weight:bold;">${labels[status]}</span></p>
-            <p style="margin:6px 0; margin-bottom:20px;"><b>⏰ เวลาปัจจุบัน:</b> ${currentTimeText}</p>
-            ${btnHtml}
-        `;
-        modal.style.display = 'flex';
     }
 
-    function closeModal() { modal.style.display = 'none'; }	
+    let modal = document.getElementById('common-modal');
+    let modalArea = document.getElementById('modal-content-area');
+
+    if (!modal || !modalArea) {
+        console.error("⚠️ ไม่พบ Element ของ Modal ในหน้า HTML");
+        return;
+    }
+
+    modalArea.innerHTML = `
+        <h3 style="margin-top:0; color:#00ffcc; text-align:center;">ยืนยันข้อมูลลงเวลา</h3>
+        <p style="margin:6px 0;"><b>👤 พนักงาน:</b> ${window.selectedWorkerName}</p>
+        <p style="margin:6px 0;"><b>📌 Status:</b> <span style="color:#3b82f6; font-weight:bold;">${labels[status] || status}</span></p>
+        <p style="margin:6px 0; margin-bottom:20px;"><b>⏰ เวลาปัจจุบัน:</b> ${currentTimeText}</p>
+        ${btnHtml}
+    `;
+    modal.style.display = 'flex';
+}
+
+// 📌 ฟังก์ชันเปิดเมนูย่อยเลือกประเภทการลาพักร้อน (ฉบับกำหนดช่วงเวลาบ่าย 13:00 - 24:00 น.)
+function openVacationMenu() {
+    stopCameraAndHide();
+
+    let modal = document.getElementById('common-modal');
+    let modalArea = document.getElementById('modal-content-area');
+    
+    if (!modal || !modalArea) {
+        alert("⚠️ ไม่พบ Element ของ Modal ในหน้า HTML");
+        return;
+    }
+
+    let now = new Date();
+    let currentHour = now.getHours(); // 0 ถึง 23
+
+    // เช็กช่วงเวลา
+    let isMorning = currentHour < 13;          // ช่วงเช้า (00:00 - 12:59)
+    let isAfternoonOrNight = currentHour >= 13; // ช่วงบ่ายถึงเที่ยงคืน (13:00 - 24:00)
+
+    // ดึงสถานะตัวแปรที่รับมาตอนล็อกอิน
+    let hasMorningLeave = window.empHasMorningLeave || false; // เคยลาเช้าไปแล้ว (0.5)
+    let hasCheckedIn = window.empHasCheckedIn || false;       // เช็กอินเข้างานแล้ว (Col D)
+
+    // สไตล์ปุ่ม
+    let activeStyle = "background:#8b5cf6; color:white; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;";
+    let activeDayStyle = "background:#10b981; color:white; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;";
+    let disabledStyle = "background:#475569; color:#94a3b8; padding:12px; border-radius:8px; font-weight:bold; cursor:not-allowed; opacity:0.5;";
+
+    // ค่าเริ่มต้น เปิด Enable ทั้งหมดไว้ก่อน
+    let morningBtnAttr = `style="${activeStyle}" onclick="closeModal(); confirmAndSend('VacationHalfMorning');"`;
+    let afternoonBtnAttr = `style="${activeStyle}" onclick="closeModal(); confirmAndSend('VacationHalfAfternoon');"`;
+    let dayBtnAttr = `style="${activeDayStyle}" onclick="closeModal(); confirmAndSend('Vacation');"`;
+
+    // 🎯 เงื่อนไขการเปิด/ปิดปุ่มตามเวลาและประวัติการลา
+    if (hasMorningLeave) {
+        // เคสเคยลาเช้าไปแล้ว -> ห้ามกดเช้ากับ 1 วันซ้ำ
+        morningBtnAttr = `disabled style="${disabledStyle}"`;
+        dayBtnAttr = `disabled style="${disabledStyle}"`;
+        
+        // ถ้าอยู่ช่วงบ่าย (13:00 - 24:00) เปิดปุ่มบ่ายให้กดต่อยอด (อัปเกรดเป็นเต็มวัน) ได้เลย
+        if (isMorning) {
+            afternoonBtnAttr = `disabled style="${disabledStyle}" title="ต้องหลัง 13:00 น."`;
+        }
+    } 
+    else if (isAfternoonOrNight) {
+        // 🟢 ถ้าอยู่ช่วงเวลา 13:00 - 24:00 น. (ยังไม่เคยลาเช้า)
+        // ปิดปุ่มเช้าและ 1 วัน เพราะเลยเวลาแล้ว
+        morningBtnAttr = `disabled style="${disabledStyle}"`;
+        dayBtnAttr = `disabled style="${disabledStyle}"`;
+
+        // ปุ่มบ่าย Enable ตามที่คุณต้องการในช่วง 13:00-24:00 น. 
+        // (สามารถเช็กเพิ่มได้ว่าต้องเช็กอินก่อนไหม หรือปล่อยให้กดได้เลยตามเงื่อนไขเวลา)
+    } 
+    else {
+        // ช่วงเช้า (ก่อน 13:00 น.) -> เปิดเช้ากับ 1 วัน, ปิดปุ่มบ่าย
+        afternoonBtnAttr = `disabled style="${disabledStyle}" title="เปิดให้ลาบ่ายหลัง 13:00 น."`;
+    }
+
+    modalArea.innerHTML = `
+        <h3 style="margin-top:0; color:#00ffcc; text-align:center;">เลือกประเภทการลาพักร้อน</h3>
+        <p style="margin:6px 0; text-align:center;"><b>👤 พนักงาน:</b> ${window.selectedWorkerName || '-'}</p>
+        <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 15px;">
+            <button class="btn" ${morningBtnAttr}>🌅 ลาพักร้อน 1/2 เช้า</button>
+            <button class="btn" ${afternoonBtnAttr}>🌇 ลาพักร้อน 1/2 บ่าย</button>
+            <button class="btn" ${dayBtnAttr}>🌴 ลาพักร้อน 1 วัน</button>
+            <button class="btn" style="background:#64748b; color:white; padding:12px; border-radius:8px; font-weight:bold;" onclick="closeModal()">❌ ยกเลิก</button>
+        </div>
+    `;
+    modal.style.display = 'flex';
+}
+
+
+
+
+// 📌 ฟังก์ชันปิด Modal
+function closeModal() { 
+    let modal = document.getElementById('common-modal');
+    if (modal) modal.style.display = 'none'; 
+}
+
+
 
     // 🚀 ฟังก์ชันเด็ดขาด ส่งข้อมูลพุ่งตรงไปยังหลังบ้าน Google Sheets เช็กกฎเหล็ก
     function sendToSheet(status) {
