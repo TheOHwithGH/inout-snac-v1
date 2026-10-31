@@ -1,5 +1,5 @@
 //052026
-<!DOCTYPE html> 
+<!DOCTYPE html>   
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -345,7 +345,7 @@
 <script>
 window.currentLoggedPin = "";
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwucLCTFaAN1B5Fbh0myVKIpeMm5XWGeUPrnGujhbXGdFwgzssqHSFtCt1c7fLjhx_bjg/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyWCJNiES5EzBqg5SMvM4Yop3ARzgDzOnqnd03PXhdYNCxy65Lkly5HcKmgUARPvZhU/exec";
 
 // 🎵 1. ประกาศและโหลดไฟล์เสียงชัตเตอร์เตรียมพร้อมตั้งแต่เริ่มต้น
 const shutterSound = new Audio('shutter.mp3');
@@ -534,6 +534,11 @@ function renderMonitorList(data) {
                 cleanTime = cleanTime.split(" ").pop(); 
             }
             statusText = cleanTime;
+
+            // 🛠️ เพิ่มจุดนี้: ถ้าเวลาเป็น 00:00 หรือ 0:00 ให้เปลี่ยนเป็นสีเทาอ่อน
+            if (statusText === "00:00" || statusText === "0:00") {
+                statusColor = "#888888"; // สีเทาอ่อนกลมกลืนกับ Dark Mode
+            }
         }
 
         var fineAmount = item.fine !== undefined ? item.fine : "-"; 
